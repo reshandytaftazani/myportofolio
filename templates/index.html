@@ -31,8 +31,8 @@
                 <a href="{% url 'main:show_main' %}" style="--i: 1;">Profile</a>
                 <a href="{% url 'main:show_experience' %}" style="--i: 2;">Experience</a>
                 <a href="{% url 'main:show_skills' %}" style="--i: 3;">Skills</a>
-                <a href="#tech-stack" style="--i: 4;">Tools</a>
-                <a href="#education" style="--i: 5;">Education</a>
+                <a href="{% url 'main:show_main' %}#tech-stack" style="--i: 4;">Tools</a>
+                <a href="{% url 'main:show_main' %}#education" style="--i: 5;">Education</a>
             </nav>
         </div>
     </header>
