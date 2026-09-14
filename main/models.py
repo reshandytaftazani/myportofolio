@@ -36,3 +36,15 @@ class Skill(models.Model):
     
     def __str__(self):
         return self.title
+
+class Education(models.Model):
+    school_name = models.CharField(max_length=255)
+    period = models.CharField(max_length=50) 
+    detail = models.CharField(max_length=255)
+    start_year = models.IntegerField()
+
+    class Meta:
+        ordering = ['-start_year']
+
+    def __str__(self):
+        return self.school_name

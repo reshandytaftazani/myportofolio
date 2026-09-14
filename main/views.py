@@ -1,9 +1,11 @@
 from django.shortcuts import render
 
-from main.models import Experience, Skill
+from main.models import Experience, Skill, Education
 
 
 def show_main(request):
+    educations = Education.objects.all()
+
     context = {
         "name": "Reshandy",
         "npm": "2506547651",
@@ -11,6 +13,7 @@ def show_main(request):
         "bio": (
             "CS student at Universitas Indonesia."
         ),
+        'education_list': educations,
     }
     return render(request, "index.html", context)
 

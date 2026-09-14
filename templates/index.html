@@ -136,41 +136,18 @@
                 
                 <div class="timeline">
                     
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="timeline-date">2025 - Present</span>
-                            <h3 class="timeline-school">Universitas Indonesia</h3>
-                            <p class="timeline-detail">Bachelor's Degree - Computer Science</p>
+                    {% for edu in education_list %}
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <span class="timeline-date">{{ edu.period }}</span>
+                                <h3 class="timeline-school">{{ edu.school_name }}</h3>
+                                <p class="timeline-detail">{{ edu.detail }}</p>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="timeline-date">2022 - 2025</span>
-                            <h3 class="timeline-school">SMA Taruna Nusantara</h3>
-                            <p class="timeline-detail">GPA : 93.5</p>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="timeline-date">2019 - 2022</span>
-                            <h3 class="timeline-school">SMP Negeri 1 Lamongan</h3>
-                            <p class="timeline-detail">GPA : 93.5</p>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="timeline-date">2013 - 2019</span>
-                            <h3 class="timeline-school">MI Nurul Huda Majenang</h3>
-                            <p class="timeline-detail">GPA : 93</p>
-                        </div>
-                    </div>
+                    {% empty %}
+                        <p class="empty-state">Data pendidikan belum ditambahkan.</p>
+                    {% endfor %}
 
                 </div>
             </div>
