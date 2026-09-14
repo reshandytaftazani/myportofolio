@@ -1,0 +1,94 @@
+.timeline-container {
+    position: relative;
+    max-width: 800px;
+    margin: 40px auto;
+    padding-left: 30px;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 8px;
+    height: 100%;
+    width: 2px;
+    background: #e0e0e0;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -28px;
+    top: 20px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #d35400; 
+    border: 3px solid #fdfbf7; 
+    box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.2);
+    z-index: 1;
+}
+
+.timeline-card {
+    background: #ffffff;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    padding: 24px 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    transition: all 0.3s ease;
+}
+
+.timeline-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    border-color: #d35400;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.experience-title {
+    font-size: 1.4rem;
+    color: #111;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+}
+
+.experience-desc {
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.category-badge {
+    background-color: #fff0e6;
+    color: #d35400;
+}
+
+.status-ongoing {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+.status-completed {
+    background-color: #f5f5f5;
+    color: #666;
+    border: 1px solid #ddd;
+}
