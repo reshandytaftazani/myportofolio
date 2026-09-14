@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="/static/css/experience.css">
+    <meta name="color-scheme" content="light dark">
 </head>
 <body>
     <header class="site-header">
@@ -19,6 +20,8 @@
                 <span class="bar bar-2"></span>
                 <span class="bar bar-3"></span>
             </button>
+
+            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode">🌙</button>
 
             <div class="nav-overlay" id="nav-overlay"></div>
 
@@ -104,6 +107,29 @@
                     toggleMenu();
                 }
             });
+        });
+
+        // Dark Mode
+        const themeToggleBtn = document.getElementById('theme-toggle');
+    
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeToggleBtn.textContent = '☀️';
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            let theme = document.documentElement.getAttribute('data-theme');
+            
+            if (theme === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                themeToggleBtn.textContent = '🌙';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                themeToggleBtn.textContent = '☀️';
+            }
         });
     </script>
 </body>

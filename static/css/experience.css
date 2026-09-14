@@ -92,3 +92,49 @@
     color: #666;
     border: 1px solid #ddd;
 }
+
+/* --- DARK MODE UNTUK EXPERIENCE TIMELINE --- */
+
+[data-theme="dark"] .timeline-container::before {
+    background: #333333;
+}
+
+[data-theme="dark"] .timeline-dot {
+    border-color: #121212; 
+}
+
+[data-theme="dark"] .timeline-card {
+    background: #1e1e1e;
+    border-color: #333333;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] .timeline-card:hover {
+    border-color: #d35400;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] .experience-title {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .experience-desc {
+    color: #a3a3a3;
+}
+
+[data-theme="dark"] .category-badge {
+    background-color: rgba(211, 84, 0, 0.15);
+    color: #ff9a55;
+}
+
+[data-theme="dark"] .status-ongoing {
+    background-color: rgba(46, 125, 50, 0.15);
+    color: #81c784;
+    border-color: rgba(129, 199, 132, 0.3);
+}
+
+[data-theme="dark"] .status-completed {
+    background-color: #2a2a2a;
+    color: #b0b0b0;
+    border-color: #444444;
+}
