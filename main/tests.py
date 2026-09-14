@@ -2,11 +2,12 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
 
-from main.models import Experience, Skill
+from main.models import Experience, Skill, Education
 
 
 class MainTest(TestCase):
     def setUp(self):
+        self.client = Client()
         # test untuk experience
         self.experience = Experience.objects.create(
             title="Asisten Dosen PBP",
@@ -32,6 +33,20 @@ class MainTest(TestCase):
             level="Intermediate",
             description="Python backend.",
             code_snippet="import django\nprint('Hello')"
+        )
+
+        # Setup data education
+        self.edu_sma = Education.objects.create(
+            school_name="SMA Taruna Nusantara",
+            period="2022 - 2025",
+            detail="GPA : 93.5",
+            start_year=2022
+        )
+        self.edu_ui = Education.objects.create(
+            school_name="Universitas Indonesia",
+            period="2025 - Present",
+            detail="Bachelor's Degree - Computer Science",
+            start_year=2025
         )
 
     # Test experience
@@ -60,7 +75,7 @@ class MainTest(TestCase):
         self.assertTemplateUsed(response, "experience.html")
         self.assertContains(response, self.experience.title)
         self.assertContains(response, self.experience.description)
-        self.assertContains(response, "Part-Time")
+        self.assertContains(response, "PART-TIME")
         self.assertContains(response, "Sedang berlangsung")
         self.assertContains(response, f'href="{reverse("main:show_main")}"')
 
@@ -119,3 +134,25 @@ class MainTest(TestCase):
         self.assertIn('mathjax@3', content)
         self.assertIn('highlight.min.js', content)
         self.assertIn('hljs.highlightAll()', content)
+
+    # Test untuk education
+    def test_education_model_and_ordering(self):
+        """Memastikan pengurutan berjalan otomatis dari tahun terbaru (-start_year)"""
+        self.assertEqual(str(self.edu_ui), "Universitas Indonesia")
+        educations = Education.objects.all()
+        self.assertEqual(educations[0], self.edu_ui)
+        self.assertEqual(educations[1], self.edu_sma)
+
+    def test_main_context_contains_education(self):
+        """Memastikan data education dikirim ke index.html"""
+        response = self.client.get(reverse("main:show_main"))
+        self.assertTrue('education_list' in response.context)
+        self.assertEqual(len(response.context['education_list']), 2)
+
+    def test_education_rendering_on_main_page(self):
+        """Memastikan data education dirender dengan benar di HTML"""
+        response = self.client.get(reverse("main:show_main"))
+        self.assertContains(response, "Universitas Indonesia")
+        self.assertContains(response, "2025 - Present")
+        self.assertContains(response, "SMA Taruna Nusantara")
+        self.assertContains(response, "GPA : 93.5")
