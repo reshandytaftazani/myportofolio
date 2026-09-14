@@ -8,17 +8,31 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
+    <meta name="color-scheme" content="light dark">
 </head>
 <body>
     <header class="site-header">
         <div class="container">
             <a href="{% url 'main:show_main' %}" class="brand">{{ name }}</a>
-            <nav>
-                <a href="{% url 'main:show_main' %}">Profile</a>
-                <a href="{% url 'main:show_experience' %}">Experience</a>
-                <a href="#skills">Skills</a>
-                <a href="#tech-stack">Tools</a>
-                <a href="#education">Education</a>
+
+            <button class="burger-menu" id="burger-btn" aria-label="Toggle navigation">
+                <span class="bar bar-1"></span>
+                <span class="bar bar-2"></span>
+                <span class="bar bar-3"></span>
+            </button>
+
+            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode">
+                🌙
+            </button>
+
+            <div class="nav-overlay" id="nav-overlay"></div>
+
+            <nav id="nav-links">
+                <a href="{% url 'main:show_main' %}" style="--i: 1;">Profile</a>
+                <a href="{% url 'main:show_experience' %}" style="--i: 2;">Experience</a>
+                <a href="{% url 'main:show_skills' %}" style="--i: 3;">Skills</a>
+                <a href="#tech-stack" style="--i: 4;">Tools</a>
+                <a href="#education" style="--i: 5;">Education</a>
             </nav>
         </div>
     </header>
@@ -52,33 +66,6 @@
                         <a href="mailto:reshandytaftazaniaulya@gmail.com" class="social-link">Email</a>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <!-- Section Skills -->
-        <section id="skills" class="skills-section">
-            <div class="container">
-                <div class="section-header">
-                    <p class="section-subtitle">S k i l l s</p>
-                    <h2 class="section-title">My Skills</h2>
-                </div>
-                <div class="skills-grid">
-                    <!-- Skill 1 -->
-                    <div class="skill-card">
-                        <h3>Technical Research & Analysis</h3>
-                        <p>Mampu melakukan riset mendalam untuk menemukan solusi teknologi yang paling efisien, menganalisis dokumentasi secara teliti, dan menerapkannya dalam proyek.</p>
-                    </div>
-                    <!-- Skill 2 -->
-                    <div class="skill-card">
-                        <h3>Problem Solving & Debugging</h3>
-                        <p>Terbiasa mengidentifikasi akar masalah pada kode secara sistematis, termasuk melakukan penelusuran dan perbaikan (troubleshooting).</p>
-                    </div>
-                    <!-- Skill 3 -->
-                    <div class="skill-card">
-                        <h3>Programming & Software Development</h3>
-                        <p>Memiliki landasan yang kuat dalam logika pemrograman, serta mampu membangun dan mengembangkan perangkat lunak yang fungsional, rapi, dan mudah dikembangkan lebih lanjut.</p>
-                    </div>
-                 </div>
             </div>
         </section>
 
@@ -122,6 +109,11 @@
                         <span>Pandas</span>
                     </div>
 
+                    <div class="tech-item">
+                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/latex/latex-original.svg" alt="LaTeX" class="tech-icon">
+                        <span>LaTeX</span>
+                    </div>
+
                 </div>
             </div>
         </section>
@@ -136,41 +128,18 @@
                 
                 <div class="timeline">
                     
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="timeline-date">2025 - Present</span>
-                            <h3 class="timeline-school">Universitas Indonesia</h3>
-                            <p class="timeline-detail">Bachelor's Degree - Computer Science</p>
+                    {% for edu in education_list %}
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <span class="timeline-date">{{ edu.period }}</span>
+                                <h3 class="timeline-school">{{ edu.school_name }}</h3>
+                                <p class="timeline-detail">{{ edu.detail }}</p>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="timeline-date">2022 - 2025</span>
-                            <h3 class="timeline-school">SMA Taruna Nusantara</h3>
-                            <p class="timeline-detail">GPA : 93.5</p>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="timeline-date">2019 - 2022</span>
-                            <h3 class="timeline-school">SMP Negeri 1 Lamongan</h3>
-                            <p class="timeline-detail">GPA : 93.5</p>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="timeline-date">2013 - 2019</span>
-                            <h3 class="timeline-school">MI Nurul Huda Majenang</h3>
-                            <p class="timeline-detail">GPA : 93</p>
-                        </div>
-                    </div>
+                    {% empty %}
+                        <p class="empty-state">Data pendidikan belum ditambahkan.</p>
+                    {% endfor %}
 
                 </div>
             </div>
@@ -182,5 +151,59 @@
             <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
         </div>
     </footer>
+
+    <!-- Burger Menu -->
+    <script>
+        const burgerBtn = document.getElementById('burger-btn');
+        const navLinks = document.getElementById('nav-links');
+        const navOverlay = document.getElementById('nav-overlay');
+        const menuItems = navLinks.querySelectorAll('a');
+
+        function toggleMenu() {
+            navLinks.classList.toggle('nav-active');
+            burgerBtn.classList.toggle('toggle');
+            navOverlay.classList.toggle('active');
+        }
+
+        burgerBtn.addEventListener('click', () => {
+            navLinks.classList.toggle('nav-active');
+            burgerBtn.classList.toggle('toggle');
+            
+            if (navOverlay) {
+                navOverlay.classList.toggle('active');
+            }
+        });
+
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                if (navLinks.classList.contains('nav-active')) {
+                    toggleMenu();
+                }
+            });
+        });
+
+        // Dark Mode
+        const themeToggleBtn = document.getElementById('theme-toggle');
+    
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeToggleBtn.textContent = '☀️';
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            let theme = document.documentElement.getAttribute('data-theme');
+            
+            if (theme === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                themeToggleBtn.textContent = '🌙';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                themeToggleBtn.textContent = '☀️';
+            }
+        });
+    </script>
 </body>
 </html>

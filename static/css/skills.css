@@ -1,0 +1,264 @@
+/* tambahan untuk skills */
+.skill-card .experience-category {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    background-color: #333; 
+    color: #fff;
+    border-radius: 20px;
+    margin-bottom: 12px;
+}
+
+.skills-grid .empty-state {
+    grid-column: 1 / -1; 
+    text-align: center;
+    color: #666;
+    padding: 2rem;
+    font-style: italic;
+}
+
+
+.skills-section {
+    padding: 6rem 0;
+    background-color: #fcfbfa; 
+    border-top: 1px solid var(--line);
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+}
+
+.section-subtitle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.3em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+}
+
+.section-subtitle::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 1px;
+    background-color: var(--text-muted);
+    opacity: 0.4;
+}
+
+.section-title {
+    font-family: "Space Grotesk", -apple-system, sans-serif;
+    font-size: 2.25rem;
+    color: var(--ink);
+}
+
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.skill-card {
+    background-color: #ffffff;
+    padding: 3rem 2rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.04);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.skill-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+}
+
+.icon-box {
+    width: 64px;
+    height: 64px;
+    background-color: #f3f0ff;
+    color: #6366f1;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem auto;
+}
+
+.icon-box svg {
+    width: 28px;
+    height: 28px;
+}
+
+.skill-card h3 {
+    font-size: 1.15rem;
+    color: var(--ink);
+    margin-bottom: 1rem;
+}
+
+.skill-card p {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+}
+
+/* ======Tambahan======= */
+/* Struktur Dasar Jendela IDE */
+.ide-window {
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: 1px solid #333;
+}
+
+.ide-header {
+    background-color: #2d2d2d;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+}
+.ide-buttons { display: flex; gap: 6px; }
+.ide-buttons span { width: 12px; height: 12px; border-radius: 50%; }
+.btn-close { background-color: #ff5f56; }
+.btn-minimize { background-color: #ffbd2e; }
+.btn-maximize { background-color: #27c93f; }
+
+.ide-title {
+    flex-grow: 1;
+    text-align: center;
+    color: #cccccc;
+    font-size: 0.75rem;
+    margin-left: -40px;
+    font-family: sans-serif;
+}
+
+.vscode-mode pre {
+    margin: 0;
+    padding: 15px;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Consolas', monospace;
+    font-size: 0.85rem;
+    overflow-x: auto;
+}
+
+.overleaf-mode { display: flex; flex-direction: column; }
+.overleaf-editor pre {
+    margin: 0;
+    padding: 15px;
+    background-color: #272822;
+    color: #f8f8f2;
+    font-family: 'Consolas', monospace;
+    font-size: 0.85rem;
+    overflow-x: auto;
+}
+.overleaf-pdf {
+    background-color: #525659;
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+}
+.pdf-paper {
+    background-color: #ffffff;
+    color: #000000;
+    padding: 10px 20px;
+    border-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    width: 100%;
+    overflow-x: auto;
+}
+
+/* Tambahan */
+.skills-tabs-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    border: 1px solid #eaeaea;
+    overflow: hidden;
+}
+
+.tabs-header {
+    display: flex;
+    background: #f7f7f7;
+    border-bottom: 1px solid #eaeaea;
+    overflow-x: auto;
+}
+
+.tab-btn {
+    background: inherit;
+    border: none;
+    border-right: 1px solid #eaeaea;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 24px;
+    font-size: 0.95rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500;
+    color: #666;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    background-color: #efefef;
+}
+
+.tab-btn.active {
+    background-color: #ffffff;
+    color: #111;
+    font-weight: 700;
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -1px;
+}
+
+.tab-panel {
+    display: none;
+    padding: 30px;
+    animation: fadeEffect 0.4s;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+@keyframes fadeEffect {
+    from {opacity: 0; transform: translateY(5px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+/* --- DARK MODE UNTUK TABS --- */
+[data-theme="dark"] .skills-tabs-container {
+    background: #1e1e1e;
+    border-color: #333333;
+}
+[data-theme="dark"] .tabs-header {
+    background: #121212;
+    border-color: #333333;
+}
+[data-theme="dark"] .tab-btn {
+    border-color: #333333;
+    color: #a3a3a3;
+}
+[data-theme="dark"] .tab-btn:hover {
+    background-color: #2a2a2a;
+}
+[data-theme="dark"] .tab-btn.active {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border-bottom-color: #1e1e1e;
+}
+[data-theme="dark"] .tab-panel {
+    color: #faf6f0;
+}
+
+[data-theme="dark"] .ide-window {
+    border-color: #444444;
+}
