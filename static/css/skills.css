@@ -1,237 +1,3 @@
-html {
-    scroll-behavior: smooth;
-}
-
-/* Reset Dasar & Custom Properties */
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-:root {
-    --ink: #1c1917;
-    --paper: #faf6f0;
-    --accent: #d95d39;
-    --accent-dark: #a8442a;
-    --line: #e3d9c9;
-    --text-muted: #6b6459;
-    --radius: 4px;
-}
-
-body {
-    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--ink);
-    background-color: var(--paper);
-    line-height: 1.6;
-}
-
-h1, .brand {
-    font-family: "Space Grotesk", -apple-system, sans-serif;
-}
-
-.container {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-}
-
-/* Header dengan Flexbox */
-
-.site-header {
-    border-bottom: 1px solid var(--line);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background-color: var(--paper);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-}
-
-.site-header .container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.25rem 1.5rem;
-}
-
-.brand {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--ink);
-    text-decoration: none;
-}
-
-.site-header nav {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.site-header nav a {
-    color: var(--ink);
-    text-decoration: none;
-    font-size: 0.95rem;
-}
-
-/* Section Hero dengan CSS Grid */
-
-.hero {
-    padding: 4.5rem 0 5rem;
-}
-
-.hero-grid {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    grid-template-areas:
-        "identity photo"
-        "details  photo";
-    gap: 1.5rem 3rem;
-}
-
-.hero-identity {
-    grid-area: identity;
-}
-
-.hero-details {
-    grid-area: details;
-}
-
-.hero-kicker {
-    font-size: 0.85rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent-dark);
-    font-weight: 700;
-    margin-bottom: 0.75rem;
-}
-
-.hero-identity h1 {
-    font-size: clamp(3rem, 7vw, 5rem);
-    line-height: 1.1;
-    padding-bottom: 0.1em; 
-    color: var(--ink);
-    
-    display: inline-block;
-    overflow: hidden; 
-    white-space: nowrap;
-    border-right: 4px solid var(--accent);
-    
-    animation: 
-        typing 2s steps(20, end) forwards, 
-        blink 0.8s step-end infinite;
-}
-
-@keyframes typing {
-    from { max-width: 0; }
-    to { max-width: 100%; }
-}
-
-@keyframes blink {
-    from, to { border-color: transparent; }
-    50% { border-color: var(--accent); }
-}
-
-.bio {
-    color: var(--text-muted);
-    max-width: 480px;
-    margin-bottom: 1.5rem;
-}
-
-.meta-list {
-    display: flex;
-    gap: 2rem;
-    margin-bottom: 1.5rem;
-}
-
-.meta-row dt {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    margin-bottom: 0.15rem;
-}
-
-.meta-row dd {
-    font-weight: 600;
-}
-
-.social-links {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.social-link {
-    display: inline-block;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-decoration: none;
-    color: var(--paper);
-    background-color: var(--ink);
-    border-radius: var(--radius);
-    padding: 0.5rem 1.1rem;
-    transition: background-color 0.2s ease;
-}
-
-.social-link:hover {
-    background-color: var(--accent);
-}
-
-.hero-photo {
-    grid-area: photo;
-    align-self: center;
-    position: relative;
-}
-
-.photo-block {
-    position: absolute;
-    top: 1.25rem;
-    left: 1.25rem;
-    width: 100%;
-    height: 100%;
-    background-color: var(--accent);
-    border-radius: var(--radius);
-    z-index: 0;
-}
-
-.avatar {
-    position: relative;
-    z-index: 1;
-    display: block;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    object-fit: cover;
-    border-radius: var(--radius);
-    border: 3px solid var(--ink);
-}
-
-/* Footer & Responsive */
-
-.site-footer {
-    padding: 1.5rem;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    border-top: 1px solid var(--line);
-}
-
-@media (max-width: 600px) {
-    .hero-grid {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-            "identity"
-            "photo"
-            "details";
-    }
-
-    .hero-photo {
-        max-width: 220px;
-    }
-
-    .social-links {
-        justify-content: flex-start;
-    }
-}
-
 /* tambahan untuk skills */
 .skill-card .experience-category {
     display: inline-block;
@@ -466,4 +232,33 @@ h1, .brand {
 @keyframes fadeEffect {
     from {opacity: 0; transform: translateY(5px);}
     to {opacity: 1; transform: translateY(0);}
+}
+
+/* --- DARK MODE UNTUK TABS --- */
+[data-theme="dark"] .skills-tabs-container {
+    background: #1e1e1e;
+    border-color: #333333;
+}
+[data-theme="dark"] .tabs-header {
+    background: #121212;
+    border-color: #333333;
+}
+[data-theme="dark"] .tab-btn {
+    border-color: #333333;
+    color: #a3a3a3;
+}
+[data-theme="dark"] .tab-btn:hover {
+    background-color: #2a2a2a;
+}
+[data-theme="dark"] .tab-btn.active {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border-bottom-color: #1e1e1e;
+}
+[data-theme="dark"] .tab-panel {
+    color: #faf6f0;
+}
+
+[data-theme="dark"] .ide-window {
+    border-color: #444444;
 }
