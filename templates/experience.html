@@ -14,12 +14,20 @@
     <header class="site-header">
         <div class="container">
             <a href="{% url 'main:show_main' %}" class="brand">{{ name }}</a>
-            <nav>
-                <a href="{% url 'main:show_main' %}">Profile</a>
-                <a href="{% url 'main:show_experience' %}">Experience</a>
-                <a href="{% url 'main:show_skills' %}">Skills</a>
-                <a href="#tech-stack">Tools</a>
-                <a href="#education">Education</a>
+            <button class="burger-menu" id="burger-btn" aria-label="Toggle navigation">
+                <span class="bar bar-1"></span>
+                <span class="bar bar-2"></span>
+                <span class="bar bar-3"></span>
+            </button>
+
+            <div class="nav-overlay" id="nav-overlay"></div>
+
+            <nav id="nav-links">
+                <a href="{% url 'main:show_main' %}" style="--i: 1;">Profile</a>
+                <a href="{% url 'main:show_experience' %}" style="--i: 2;">Experience</a>
+                <a href="{% url 'main:show_skills' %}" style="--i: 3;">Skills</a>
+                <a href="#tech-stack" style="--i: 4;">Tools</a>
+                <a href="#education" style="--i: 5;">Education</a>
             </nav>
         </div>
     </header>
@@ -67,5 +75,36 @@
             <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
         </div>
     </footer>
+
+    <!-- Burger Menu -->
+    <script>
+        const burgerBtn = document.getElementById('burger-btn');
+        const navLinks = document.getElementById('nav-links');
+        const navOverlay = document.getElementById('nav-overlay');
+        const menuItems = navLinks.querySelectorAll('a');
+
+        function toggleMenu() {
+            navLinks.classList.toggle('nav-active');
+            burgerBtn.classList.toggle('toggle');
+            navOverlay.classList.toggle('active');
+        }
+
+        burgerBtn.addEventListener('click', () => {
+            navLinks.classList.toggle('nav-active');
+            burgerBtn.classList.toggle('toggle');
+            
+            if (navOverlay) {
+                navOverlay.classList.toggle('active');
+            }
+        });
+
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                if (navLinks.classList.contains('nav-active')) {
+                    toggleMenu();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
