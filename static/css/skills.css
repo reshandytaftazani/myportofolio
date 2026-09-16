@@ -43,7 +43,8 @@
     margin-bottom: 0.75rem;
 }
 
-.section-subtitle::before {
+.section-subtitle::before,
+.section-subtitle::after {
     content: "";
     display: block;
     width: 40px;
@@ -54,8 +55,14 @@
 
 .section-title {
     font-family: "Space Grotesk", -apple-system, sans-serif;
-    font-size: 2.25rem;
-    color: var(--ink);
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    background-image: linear-gradient(135deg, #be123c, #d95d39, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
 }
 
 .skills-grid {
@@ -190,6 +197,14 @@
     background: #f7f7f7;
     border-bottom: 1px solid #eaeaea;
     overflow-x: auto;
+    cursor: grab;
+    scrollbar-width: none;
+}
+.tabs-header::-webkit-scrollbar {
+    display: none;
+}
+.tabs-header:active {
+    cursor: grabbing;
 }
 
 .tab-btn {
@@ -205,6 +220,8 @@
     color: #666;
     transition: 0.2s;
     white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .tab-btn:hover {
