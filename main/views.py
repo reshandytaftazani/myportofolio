@@ -49,6 +49,22 @@ def create_experience(request):
     }
     return render(request, "experience_form.html", context)
 
+def edit_experience(request, id):
+    experience = get_object_or_404(Experience, pk=id)
+    form = ExperienceForm(request.POST or None, instance=experience)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Pengalaman berhasil diperbarui!")
+        return redirect("main:show_experience")
+
+    context = {
+        "name": "Reshandy",
+        "form": form,
+        "is_edit": True,
+    }
+    return render(request, "experience_form.html", context)
+
 def create_skill(request):
     form = SkillForm(request.POST or None)
 

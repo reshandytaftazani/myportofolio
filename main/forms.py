@@ -1,4 +1,4 @@
-from django.forms import ModelForm, TextInput, Textarea, URLInput, Select, DateTimeInput, NumberInput
+from django.forms import ModelForm, TextInput, Textarea, URLInput, Select, DateTimeInput, NumberInput, DateInput
 
 from main.models import Experience, Skill, Education, Project
 
@@ -7,17 +7,21 @@ class ExperienceForm(ModelForm):
         model = Experience
         fields = [
             "title",
+            "company",
             "description",
             "category",
             "thumbnail",
+            "started_at",
             "ended_at",
         ]
 
         labels = {
             "title": "Nama Pengalaman",
+            "company": "Nama Perusahaan/Organisasi",
             "description": "Deskripsi Pengalaman",
             "category": "Kategori",
             "thumbnail": "URL Thumbnail",
+            "started_at": "Mulai Pada",
             "ended_at": "Selesai Pada",
         }
 
@@ -25,6 +29,12 @@ class ExperienceForm(ModelForm):
             "title": TextInput(
                 attrs={
                     "placeholder": "Software Engineer Intern",
+                    "maxlength": 255,
+                }
+            ),
+            "company": TextInput(
+                attrs={
+                    "placeholder": "Google",
                     "maxlength": 255,
                 }
             ),
@@ -40,9 +50,14 @@ class ExperienceForm(ModelForm):
                     "placeholder": "https://drive.google.com/thumbnail?id=...&sz=w1000",
                 }
             ),
-            "ended_at": DateTimeInput(
+            "started_at": DateInput(
                 attrs={
-                    "type": "datetime-local",
+                    "type": "date",
+                }
+            ),
+            "ended_at": DateInput(
+                attrs={
+                    "type": "date",
                 }
             ),
         }
