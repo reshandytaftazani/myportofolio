@@ -668,17 +668,78 @@ body, .skill-card, .timeline-content, .experience-card {
     transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
 }
 
-.theme-toggle {
-    background: transparent;
-    border: none;
-    font-size: 1.25rem;
-    cursor: pointer;
+.theme-switch {
+    display: inline-block;
+    height: 28px;
+    position: relative;
+    width: 60px;
     margin-left: 1rem;
-    color: var(--ink);
-    transition: transform 0.3s ease;
 }
-.theme-toggle:hover {
-    transform: scale(1.1);
+
+.theme-switch input {
+    display: none;
+}
+
+.slider {
+    background-color: var(--line);
+    bottom: 0;
+    cursor: pointer;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: 0.4s;
+    border: 1px solid var(--text-muted);
+}
+
+.slider.round {
+    border-radius: 28px;
+}
+
+.slider-circle {
+    background-color: var(--paper);
+    bottom: 2px;
+    height: 22px;
+    left: 2px;
+    position: absolute;
+    transition: 0.4s;
+    width: 22px;
+    border-radius: 50%;
+    z-index: 2;
+    border: 1px solid var(--ink);
+}
+
+.theme-switch input:checked + .slider {
+    background-color: var(--ink);
+    border-color: var(--paper);
+}
+
+.theme-switch input:checked + .slider .slider-circle {
+    transform: translateX(32px);
+    background-color: var(--paper);
+    border-color: var(--paper);
+}
+
+.sun-icon, .moon-icon {
+    font-size: 14px;
+    z-index: 3;
+    position: absolute;
+    top: 2px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    line-height: 1;
+}
+
+.sun-icon {
+    left: 2px;
+}
+
+.moon-icon {
+    right: 2px;
 }
 
 [data-theme="dark"] .tech-icon[alt*="LaTeX" i],
