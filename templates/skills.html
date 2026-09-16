@@ -11,7 +11,7 @@
 {% endblock meta %}
 
 {% block content %}
-<section id="skills" class="skills-section">
+<section id="skills" class="skills-section animate-fade-in">
     <div class="container">
         <div class="section-header">
             <p class="section-subtitle">S k i l l s</p>
@@ -76,7 +76,12 @@
                         </div>
                     </div>
                 {% empty %}
-                    <p class="empty-state" style="padding: 2rem; text-align:center;">Belum ada skill yang ditambahkan.</p>
+                    <div class="empty-state-box">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1rem auto; display: block; color: var(--text-muted);">
+                            <path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                        <p style="margin:0;">Belum ada skill yang ditambahkan.</p>
+                    </div>
                 {% endfor %}
             </div>
         </div>
