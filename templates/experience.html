@@ -1,136 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Experience - {{ name }}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css">
+{% extends "base.html" %}
+
+{% block title %}Experience - {{ name }}{% endblock title %}
+
+{% block meta %}
     <link rel="stylesheet" href="/static/css/experience.css">
-    <meta name="color-scheme" content="light dark">
-</head>
-<body>
-    <header class="site-header">
-        <div class="container">
-            <a href="{% url 'main:show_main' %}" class="brand">{{ name }}</a>
-            <button class="burger-menu" id="burger-btn" aria-label="Toggle navigation">
-                <span class="bar bar-1"></span>
-                <span class="bar bar-2"></span>
-                <span class="bar bar-3"></span>
-            </button>
+{% endblock meta %}
 
-            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode">🌙</button>
+{% block content %}
+<section class="experience-section" id="experience">
+    <div class="container">
+        <p class="section-kicker">Perjalanan saya sejauh ini</p>
+        <h1>Experience</h1>
 
-            <div class="nav-overlay" id="nav-overlay"></div>
-
-            <nav id="nav-links">
-                <a href="{% url 'main:show_main' %}" style="--i: 1;">Profile</a>
-                <a href="{% url 'main:show_experience' %}" style="--i: 2;">Experience</a>
-                <a href="{% url 'main:show_skills' %}" style="--i: 3;">Skills</a>
-                <a href="{% url 'main:show_main' %}#tech-stack" style="--i: 4;">Tools</a>
-                <a href="{% url 'main:show_main' %}#education" style="--i: 5;">Education</a>
-            </nav>
-        </div>
-    </header>
-
-    <main>
-        <section class="experience-section" id="experience">
-            <div class="container">
-                <p class="section-kicker">Perjalanan saya sejauh ini</p>
-                <h1>Experience</h1>
-
-                <div class="timeline-container">
-                    {% for experience in experience_list %}
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
+        <div class="timeline-container">
+            {% for experience in experience_list %}
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    
+                    <article class="timeline-card">
+                        <div class="card-header">
+                            <span class="badge category-badge">
+                                {{ experience.get_category_display|upper }}
+                            </span>
                             
-                            <article class="timeline-card">
-                                <div class="card-header">
-                                    <span class="badge category-badge">
-                                        {{ experience.get_category_display|upper }}
-                                    </span>
-                                    
-                                    {% if experience.is_ongoing %}
-                                        <span class="badge status-ongoing">Sedang berlangsung</span>
-                                    {% else %}
-                                        <span class="badge status-completed">Selesai</span>
-                                    {% endif %}
-                                </div>
-                                
-                                <h2 class="experience-title">{{ experience.title }}</h2>
-                                <p class="experience-desc">{{ experience.description }}</p>
-                            </article>
+                            {% if experience.is_ongoing %}
+                                <span class="badge status-ongoing">Sedang berlangsung</span>
+                            {% else %}
+                                <span class="badge status-completed">Selesai</span>
+                            {% endif %}
                         </div>
-                    {% empty %}
-                        <p class="empty-state">
-                            Belum ada pengalaman yang ditambahkan.
-                        </p>
-                    {% endfor %}
+                        
+                        <h2 class="experience-title">{{ experience.title }}</h2>
+                        <p class="experience-desc">{{ experience.description }}</p>
+                    </article>
                 </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
+            {% empty %}
+                <p class="empty-state">
+                    Belum ada pengalaman yang ditambahkan.
+                </p>
+            {% endfor %}
         </div>
-    </footer>
-
-    <!-- Burger Menu -->
-    <script>
-        const burgerBtn = document.getElementById('burger-btn');
-        const navLinks = document.getElementById('nav-links');
-        const navOverlay = document.getElementById('nav-overlay');
-        const menuItems = navLinks.querySelectorAll('a');
-
-        function toggleMenu() {
-            navLinks.classList.toggle('nav-active');
-            burgerBtn.classList.toggle('toggle');
-            navOverlay.classList.toggle('active');
-        }
-
-        burgerBtn.addEventListener('click', () => {
-            navLinks.classList.toggle('nav-active');
-            burgerBtn.classList.toggle('toggle');
-            
-            if (navOverlay) {
-                navOverlay.classList.toggle('active');
-            }
-        });
-
-        menuItems.forEach(item => {
-            item.addEventListener('click', () => {
-                if (navLinks.classList.contains('nav-active')) {
-                    toggleMenu();
-                }
-            });
-        });
-
-        // Dark Mode
-        const themeToggleBtn = document.getElementById('theme-toggle');
-    
-        const currentTheme = localStorage.getItem('theme');
-        if (currentTheme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            themeToggleBtn.textContent = '☀️';
-        }
-
-        themeToggleBtn.addEventListener('click', () => {
-            let theme = document.documentElement.getAttribute('data-theme');
-            
-            if (theme === 'dark') {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
-                themeToggleBtn.textContent = '🌙';
-            } else {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-                themeToggleBtn.textContent = '☀️';
-            }
-        });
-    </script>
-</body>
-</html>
+    </div>
+</section>
+{% endblock content %}
