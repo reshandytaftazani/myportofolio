@@ -10,7 +10,7 @@ def show_main(request):
     educations = Education.objects.all()
 
     context = {
-        "name": "Reshandy",
+        "name": "Reshandy Taftazani Aulya",
         "npm": "2506547651",
         "study_program": "S1 Ilmu Komputer",
         "bio": (

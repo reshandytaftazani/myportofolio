@@ -5,7 +5,10 @@
         <div class="container hero-grid">
             <div class="hero-identity">
                 <p class="hero-kicker">Computer Science &middot; Universitas Indonesia</p>
-                <h1>{{ name }}</h1>
+                <h1 id="typewriter-title" data-text="{{ name }}"><span class="typewriter-text"></span><span class="typewriter-cursor"></span></h1>
+                <noscript>
+                    <style>#typewriter-title .typewriter-cursor { display: none; } #typewriter-title .typewriter-text::before { content: "{{ name }}"; }</style>
+                </noscript>
             </div>
             <div class="hero-photo">
                 <div class="photo-block"></div>
@@ -107,4 +110,30 @@
             </div>
         </div>
     </section>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const titleEl = document.getElementById("typewriter-title");
+            if (titleEl) {
+                const textToType = titleEl.getAttribute("data-text") || "";
+                const textSpan = titleEl.querySelector(".typewriter-text");
+                const cursorSpan = titleEl.querySelector(".typewriter-cursor");
+                
+                let charIndex = 0;
+                function typeChar() {
+                    if (charIndex < textToType.length) {
+                        textSpan.textContent += textToType.charAt(charIndex);
+                        charIndex++;
+                        setTimeout(typeChar, 75);
+                    } else {
+                        setTimeout(() => {
+                            if (cursorSpan) cursorSpan.classList.add("cursor-done");
+                        }, 2500);
+                    }
+                }
+                
+                setTimeout(typeChar, 300);
+            }
+        });
+    </script>
 {% endblock content %}
