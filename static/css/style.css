@@ -805,6 +805,7 @@ body, .skill-card, .timeline-content, .experience-card {
 
 .button-secondary {
     background: var(--ink);
+    color: var(--paper);
 }
 
 /* ==== PROJECTS ==== */
