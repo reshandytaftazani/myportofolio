@@ -6,9 +6,8 @@
     <main>
         <section class="experience-section">
             <div class="container">
-                <h1>Add New Experience</h1>
+                <h1>{% if is_edit %}Edit Experience{% else %}Add New Experience{% endif %}</h1>
                 <form method="post"
-                      action="{% url 'main:create_experience' %}"
                       class="project-form">
                     {% csrf_token %}
                     {% for field in form %}
@@ -20,7 +19,7 @@
                             {% endfor %}
                         </div>
                     {% endfor %}
-                    <button type="submit" class="button">Tambah Pengalaman</button>
+                    <button type="submit" class="button">{% if is_edit %}Simpan Perubahan{% else %}Tambah Pengalaman{% endif %}</button>
                     <a href="{% url 'main:show_experience' %}" class="button button-secondary">Batal</a>
                 </form>
             </div>

@@ -50,6 +50,10 @@
                         </div>
                         
                         <p class="experience-desc">{{ experience.description }}</p>
+                        
+                        <div class="card-actions" style="margin-top: 15px;">
+                            <a href="{% url 'main:edit_experience' experience.id %}" class="button" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; background-color: var(--text-muted);">Edit Pengalaman</a>
+                        </div>
                     </article>
                 </div>
             {% empty %}
