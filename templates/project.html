@@ -26,9 +26,17 @@
                            aria-label="Cari berdasarkan nama proyek">
                     <button type="submit" class="button">Cari</button>
                 </form>
+                <div class="project-filters" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; overflow-x: auto; padding-bottom: 0.5rem;">
+                    <button class="button project-filter-btn active" data-filter="all" style="white-space: nowrap;">All</button>
+                    <button class="button project-filter-btn" data-filter="Web Dev" style="white-space: nowrap; background: var(--surface); color: var(--text);">Web Dev</button>
+                    <button class="button project-filter-btn" data-filter="Machine Learning" style="white-space: nowrap; background: var(--surface); color: var(--text);">Machine Learning</button>
+                    <button class="button project-filter-btn" data-filter="Mobile App" style="white-space: nowrap; background: var(--surface); color: var(--text);">Mobile App</button>
+                    <button class="button project-filter-btn" data-filter="Other" style="white-space: nowrap; background: var(--surface); color: var(--text);">Other</button>
+                </div>
+                
                 <div class="experience-grid project-grid">
                     {% for project in project_list %}
-                        <article class="experience-card">
+                        <article class="experience-card project-item" data-category="{{ project.category }}">
                             {% if project.project_image_url %}
                                 <img src="{{ project.project_image_url }}"
                                      alt="Gambar {{ project.title }}"
@@ -40,7 +48,7 @@
                             <div class="project-card-actions">
                                 <div class="project-actions">
                                     {% if project.project_url %}
-                                        <a href="{{ project.project_url }}" class="button">Lihat Project</a>
+                                        <a href="{{ project.project_url }}" target="_blank" rel="noopener noreferrer" class="button">Lihat Project ↗</a>
                                     {% endif %}
                                     {% include "components/project_delete_modal.html" with project=project %}
                                 </div>
@@ -57,4 +65,35 @@
             </div>
         </section>
     </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const filterBtns = document.querySelectorAll(".project-filter-btn");
+            const projectItems = document.querySelectorAll(".project-item");
+
+            filterBtns.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    // Update active styling
+                    filterBtns.forEach(b => {
+                        b.classList.remove("active");
+                        b.style.background = "var(--surface)";
+                        b.style.color = "var(--text)";
+                    });
+                    this.classList.add("active");
+                    this.style.background = "";
+                    this.style.color = "";
+
+                    const filterValue = this.getAttribute("data-filter");
+
+                    projectItems.forEach(item => {
+                        if (filterValue === "all" || item.getAttribute("data-category") === filterValue) {
+                            item.style.display = "block"; 
+                        } else {
+                            item.style.display = "none";
+                        }
+                    });
+                });
+            });
+        });
+    </script>
 {% endblock content %}
