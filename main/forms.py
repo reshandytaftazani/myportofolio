@@ -183,7 +183,12 @@ class ProjectForm(ModelForm):
                     "rows": 3,
                 }
             ),
-            "category": Select(),
+            "category": TextInput(
+                attrs={
+                    "placeholder": "Contoh: Web Dev, Data Science, dll.",
+                    "maxlength": 50,
+                }
+            ),
             "tech_stack": TextInput(
                 attrs={
                     "placeholder": "Django, Python, HTML, CSS",

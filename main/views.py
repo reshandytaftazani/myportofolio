@@ -110,11 +110,15 @@ def show_projects(request):
         projects = [project.object for project in projects]
         
     title_query = request.GET.get("title", "").strip()
+    
+    # Ambil semua kategori unik dari proyek yang ada
+    categories = set(p.category for p in projects if p.category)
 
     context = {
         "name": "Reshandy",
         "project_list": projects,
         "title_query": title_query,
+        "categories": categories,
     }
     return render(request, "project.html", context)
 
