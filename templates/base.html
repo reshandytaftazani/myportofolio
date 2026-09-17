@@ -90,6 +90,44 @@
             });
         }
 
+        // Active Navigation & Scrollspy
+        function updateNav() {
+            const currentPath = window.location.pathname;
+            const scrollY = window.scrollY;
+            
+            let activeId = null;
+            const sections = document.querySelectorAll("section[id]");
+
+            sections.forEach(sec => {
+                const top = sec.offsetTop - 150;
+                const bottom = top + sec.offsetHeight;
+                if (scrollY >= top && scrollY < bottom) {
+                    activeId = sec.id;
+                }
+            });
+
+            menuItems.forEach(link => {
+                link.classList.remove('active');
+                const url = new URL(link.href, window.location.origin);
+                
+                if (url.pathname === currentPath) {
+                    if (url.hash) {
+                        if (activeId === url.hash.substring(1)) {
+                            link.classList.add('active');
+                        }
+                    } else {
+                        if (!activeId) {
+                            link.classList.add('active');
+                        }
+                    }
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', updateNav);
+        window.addEventListener('load', updateNav);
+        updateNav();
+
         // Dark Mode
         const themeToggleCheckbox = document.getElementById('theme-toggle-checkbox');
     
