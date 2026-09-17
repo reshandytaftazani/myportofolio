@@ -27,16 +27,15 @@
                     <button type="submit" class="button">Cari</button>
                 </form>
                 <div class="project-filters" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; overflow-x: auto; padding-bottom: 0.5rem;">
-                    <button class="button project-filter-btn active" data-filter="all" style="white-space: nowrap;">All</button>
-                    <button class="button project-filter-btn" data-filter="Web Dev" style="white-space: nowrap; background: var(--surface); color: var(--text);">Web Dev</button>
-                    <button class="button project-filter-btn" data-filter="Machine Learning" style="white-space: nowrap; background: var(--surface); color: var(--text);">Machine Learning</button>
-                    <button class="button project-filter-btn" data-filter="Mobile App" style="white-space: nowrap; background: var(--surface); color: var(--text);">Mobile App</button>
-                    <button class="button project-filter-btn" data-filter="Other" style="white-space: nowrap; background: var(--surface); color: var(--text);">Other</button>
+                    <button class="button project-filter-btn active" data-filter="all" style="white-space: nowrap; transition: all 0.3s ease;">All</button>
+                    {% for cat in categories %}
+                        <button class="button project-filter-btn" data-filter="{{ cat }}" style="white-space: nowrap; background: var(--surface); color: var(--text); transition: all 0.3s ease;">{{ cat }}</button>
+                    {% endfor %}
                 </div>
                 
                 <div class="experience-grid project-grid">
                     {% for project in project_list %}
-                        <article class="experience-card project-item" data-category="{{ project.category }}">
+                        <article class="experience-card project-item" data-category="{{ project.category }}" style="transition: opacity 0.4s ease, transform 0.4s ease;">
                             {% if project.project_image_url %}
                                 <img src="{{ project.project_image_url }}"
                                      alt="Gambar {{ project.title }}"
@@ -86,11 +85,22 @@
                     const filterValue = this.getAttribute("data-filter");
 
                     projectItems.forEach(item => {
-                        if (filterValue === "all" || item.getAttribute("data-category") === filterValue) {
-                            item.style.display = "block"; 
-                        } else {
-                            item.style.display = "none";
-                        }
+                        // First fade out
+                        item.style.opacity = "0";
+                        item.style.transform = "scale(0.95)";
+                        
+                        setTimeout(() => {
+                            if (filterValue === "all" || item.getAttribute("data-category") === filterValue) {
+                                item.style.display = "block";
+                                // Add a tiny delay before fading in to let display:block apply
+                                setTimeout(() => {
+                                    item.style.opacity = "1";
+                                    item.style.transform = "scale(1)";
+                                }, 50);
+                            } else {
+                                item.style.display = "none";
+                            }
+                        }, 300); // Wait for fade out animation
                     });
                 });
             });

@@ -51,16 +51,10 @@ class Education(models.Model):
         return self.school_name
 
 class Project(models.Model):
-    PROJECT_CATEGORIES = [
-        ('Web Dev', 'Web Development'),
-        ('Machine Learning', 'Machine Learning'),
-        ('Mobile App', 'Mobile App'),
-        ('Other', 'Other'),
-    ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=255)
     description = models.TextField()
-    category = models.CharField(max_length=50, choices=PROJECT_CATEGORIES, default='Other')
+    category = models.CharField(max_length=50, default='Other')
     tech_stack = models.CharField(max_length=255)
     project_url = models.URLField(blank=True)
     project_image_url = models.URLField(blank=True, max_length=500)
