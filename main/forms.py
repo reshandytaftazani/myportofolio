@@ -155,6 +155,7 @@ class ProjectForm(ModelForm):
         fields = [
             "title",
             "description",
+            "category",
             "tech_stack",
             "project_url",
             "project_image_url",
@@ -163,6 +164,7 @@ class ProjectForm(ModelForm):
         labels = {
             "title": "Nama Proyek",
             "description": "Deskripsi Proyek",
+            "category": "Kategori",
             "tech_stack": "Teknologi yang Digunakan",
             "project_url": "URL Proyek",
             "project_image_url": "URL Gambar Proyek",
@@ -181,6 +183,7 @@ class ProjectForm(ModelForm):
                     "rows": 3,
                 }
             ),
+            "category": Select(),
             "tech_stack": TextInput(
                 attrs={
                     "placeholder": "Django, Python, HTML, CSS",
