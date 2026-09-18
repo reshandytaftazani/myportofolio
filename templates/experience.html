@@ -14,6 +14,7 @@
             <h1 class="section-title">Experience</h1>
         </div>
 
+        {% if experience_list %}
         <div class="timeline-container">
             {% for experience in experience_list %}
                 <div class="timeline-item">
@@ -56,7 +57,9 @@
                         </div>
                     </article>
                 </div>
-            {% empty %}
+            {% endfor %}
+        </div>
+        {% else %}
                 <div class="empty-state-card">
                     <div class="empty-icon-wrapper">
                         <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -73,8 +76,7 @@
                         Tambah Pengalaman Pertama
                     </a>
                 </div>
-            {% endfor %}
-        </div>
+        {% endif %}
     </div>
 </section>
 {% endblock content %}
