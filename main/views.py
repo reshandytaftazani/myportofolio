@@ -1,3 +1,4 @@
+import os
 from django.contrib import messages
 from django.core import serializers
 from django.http import HttpResponse
@@ -53,10 +54,16 @@ def edit_experience(request, id):
     experience = get_object_or_404(Experience, pk=id)
     form = ExperienceForm(request.POST or None, instance=experience)
 
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Pengalaman berhasil diperbarui!")
-        return redirect("main:show_experience")
+    if request.method == "POST":
+        secret = os.environ.get('PORTFOLIO_PASSWORD', 'rahasia123')
+        if request.POST.get('password') != secret:
+            messages.error(request, "Gagal memperbarui pengalaman: Password salah!")
+            return redirect("main:show_experience")
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Pengalaman berhasil diperbarui!")
+            return redirect("main:show_experience")
 
     context = {
         "name": "Reshandy",
@@ -92,8 +99,6 @@ def create_education(request):
         "form": form,
     }
     return render(request, "education_form.html", context)
-
-import os
 
 def show_projects(request):
     # Tambahkan header rahasia agar get_projects_json tidak menolak request internal ini
