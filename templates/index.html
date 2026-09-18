@@ -1,209 +1,139 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ name }} - Portfolio</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css">
-    <meta name="color-scheme" content="light dark">
-</head>
-<body>
-    <header class="site-header">
-        <div class="container">
-            <a href="{% url 'main:show_main' %}" class="brand">{{ name }}</a>
+{% extends 'base.html' %}
 
-            <button class="burger-menu" id="burger-btn" aria-label="Toggle navigation">
-                <span class="bar bar-1"></span>
-                <span class="bar bar-2"></span>
-                <span class="bar bar-3"></span>
-            </button>
-
-            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode">
-                🌙
-            </button>
-
-            <div class="nav-overlay" id="nav-overlay"></div>
-
-            <nav id="nav-links">
-                <a href="{% url 'main:show_main' %}" style="--i: 1;">Profile</a>
-                <a href="{% url 'main:show_experience' %}" style="--i: 2;">Experience</a>
-                <a href="{% url 'main:show_skills' %}" style="--i: 3;">Skills</a>
-                <a href="{% url 'main:show_main' %}#tech-stack" style="--i: 4;">Tools</a>
-                <a href="{% url 'main:show_main' %}#education" style="--i: 5;">Education</a>
-            </nav>
+{% block content %}
+    <section class="hero animate-fade-in" id="profile">
+        <div class="container hero-grid">
+            <div class="hero-identity">
+                <p class="hero-kicker">Computer Science &middot; Universitas Indonesia</p>
+                <h1 id="typewriter-title" data-text="{{ name }}"><span class="typewriter-text"></span><span class="typewriter-cursor"></span></h1>
+                <noscript>
+                    <style>#typewriter-title .typewriter-cursor { display: none; } #typewriter-title .typewriter-text::before { content: "{{ name }}"; }</style>
+                </noscript>
+            </div>
+            <div class="hero-photo">
+                <div class="photo-block"></div>
+                <img class="avatar" src="/static/img/reshandy.jpeg" alt="Photo of {{ name }}">
+            </div>
+            <div class="hero-details">
+                <p class="bio">{{ bio }}</p>
+                <dl class="meta-list">
+                    <div class="meta-row">
+                        <dt>NPM</dt>
+                        <dd>{{ npm }}</dd>
+                    </div>
+                    <div class="meta-row">
+                        <dt>Program</dt>
+                        <dd>{{ study_program }}</dd>
+                    </div>
+                </dl>
+                <div class="social-links">
+                    <a href="https://github.com/reshandytaftazani" target="_blank" rel="noopener noreferrer" class="social-link">GitHub ↗</a>
+                    <a href="https://www.linkedin.com/in/reshandy-taftazani-aulya/" target="_blank" rel="noopener noreferrer" class="social-link">LinkedIn ↗</a>
+                    <a href="mailto:reshandytaftazaniaulya@gmail.com" class="social-link">Email</a>
+                </div>
+            </div>
         </div>
-    </header>
+    </section>
 
-    <main>
-        <section class="hero" id="profile">
-            <div class="container hero-grid">
-                <div class="hero-identity">
-                    <p class="hero-kicker">Computer Science &middot; Universitas Indonesia</p>
-                    <h1>{{ name }}</h1>
-                </div>
-                <div class="hero-photo">
-                    <div class="photo-block"></div>
-                    <img class="avatar" src="/static/img/reshandy.jpeg" alt="Photo of {{ name }}">
-                </div>
-                <div class="hero-details">
-                    <p class="bio">{{ bio }}</p>
-                    <dl class="meta-list">
-                        <div class="meta-row">
-                            <dt>NPM</dt>
-                            <dd>{{ npm }}</dd>
-                        </div>
-                        <div class="meta-row">
-                            <dt>Program</dt>
-                            <dd>{{ study_program }}</dd>
-                        </div>
-                    </dl>
-                    <div class="social-links">
-                        <a href="https://github.com/reshandytaftazani" class="social-link">GitHub</a>
-                        <a href="https://www.linkedin.com/in/reshandy-taftazani-aulya/" class="social-link">LinkedIn</a>
-                        <a href="mailto:reshandytaftazaniaulya@gmail.com" class="social-link">Email</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECTION BARU: Tech Stack -->
-        <section id="tech-stack" class="tech-section">
-            <div class="container">
-                <div class="section-header">
-                    <p class="section-subtitle">T o o l s</p>
-                    <h2 class="section-title">Languages I Use</h2>
-                </div>
-                
-                <div class="tech-grid">
-                    
-                    <div class="tech-item">
-                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/cplusplus/cplusplus-original.svg" alt="C++" class="tech-icon">
-                        <span>C++</span>
-                    </div>
-
-                    <div class="tech-item">
-                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" class="tech-icon">
-                        <span>Python</span>
-                    </div>
-
-                    <div class="tech-item">
-                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/java/java-original.svg" alt="Java" class="tech-icon">
-                        <span>Java</span>
-                    </div>
-
-                    <div class="tech-item">
-                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/html5/html5-original.svg" alt="HTML5" class="tech-icon">
-                        <span>HTML5</span>
-                    </div>
-
-                    <div class="tech-item">
-                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/css3/css3-original.svg" alt="CSS3" class="tech-icon">
-                        <span>CSS3</span>
-                    </div>
-
-                    <div class="tech-item">
-                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/pandas/pandas-original.svg" alt="Pandas" class="tech-icon">
-                        <span>Pandas</span>
-                    </div>
-
-                    <div class="tech-item">
-                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/latex/latex-original.svg" alt="LaTeX" class="tech-icon">
-                        <span>LaTeX</span>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <!-- SECTION BARU: Education -->
-        <section id="education" class="education-section">
-            <div class="container">
-                <div class="section-header">
-                    <p class="section-subtitle">A c a d e m i c</p>
-                    <h2 class="section-title">Education History</h2>
-                </div>
-                
-                <div class="timeline">
-                    
-                    {% for edu in education_list %}
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-content">
-                                <span class="timeline-date">{{ edu.period }}</span>
-                                <h3 class="timeline-school">{{ edu.school_name }}</h3>
-                                <p class="timeline-detail">{{ edu.detail }}</p>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <p class="empty-state">Data pendidikan belum ditambahkan.</p>
-                    {% endfor %}
-
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="site-footer">
+    <!-- SECTION BARU: Tech Stack -->
+    <section id="tech-stack" class="tech-section">
         <div class="container">
-            <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
-        </div>
-    </footer>
+            <div class="section-header">
+                <p class="section-subtitle">T o o l s</p>
+                <h2 class="section-title">Languages I Use</h2>
+            </div>
+            
+            <div class="tech-grid">
+                
+                <div class="tech-item">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/cplusplus/cplusplus-original.svg" alt="C++" class="tech-icon">
+                    <span>C++</span>
+                </div>
 
-    <!-- Burger Menu -->
+                <div class="tech-item">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" class="tech-icon">
+                    <span>Python</span>
+                </div>
+
+                <div class="tech-item">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/java/java-original.svg" alt="Java" class="tech-icon">
+                    <span>Java</span>
+                </div>
+
+                <div class="tech-item">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/html5/html5-original.svg" alt="HTML5" class="tech-icon">
+                    <span>HTML5</span>
+                </div>
+
+                <div class="tech-item">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/css3/css3-original.svg" alt="CSS3" class="tech-icon">
+                    <span>CSS3</span>
+                </div>
+
+                <div class="tech-item">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/pandas/pandas-original.svg" alt="Pandas" class="tech-icon">
+                    <span>Pandas</span>
+                </div>
+
+                <div class="tech-item">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/latex/latex-original.svg" alt="LaTeX" class="tech-icon">
+                    <span>LaTeX</span>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION BARU: Education -->
+    <section id="education" class="education-section">
+        <div class="container">
+            <div class="section-header">
+                <p class="section-subtitle">A c a d e m i c</p>
+                <h2 class="section-title">Education History</h2>
+            </div>
+            
+            <div class="timeline">
+                
+                {% for edu in education_list %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-date">{{ edu.period }}</span>
+                            <h3 class="timeline-school">{{ edu.school_name }}</h3>
+                            <p class="timeline-detail">{{ edu.detail }}</p>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="empty-state">Data pendidikan belum ditambahkan.</p>
+                {% endfor %}
+
+            </div>
+        </div>
+    </section>
+
     <script>
-        const burgerBtn = document.getElementById('burger-btn');
-        const navLinks = document.getElementById('nav-links');
-        const navOverlay = document.getElementById('nav-overlay');
-        const menuItems = navLinks.querySelectorAll('a');
-
-        function toggleMenu() {
-            navLinks.classList.toggle('nav-active');
-            burgerBtn.classList.toggle('toggle');
-            navOverlay.classList.toggle('active');
-        }
-
-        burgerBtn.addEventListener('click', () => {
-            navLinks.classList.toggle('nav-active');
-            burgerBtn.classList.toggle('toggle');
-            
-            if (navOverlay) {
-                navOverlay.classList.toggle('active');
-            }
-        });
-
-        menuItems.forEach(item => {
-            item.addEventListener('click', () => {
-                if (navLinks.classList.contains('nav-active')) {
-                    toggleMenu();
+        document.addEventListener("DOMContentLoaded", function () {
+            const titleEl = document.getElementById("typewriter-title");
+            if (titleEl) {
+                const textToType = titleEl.getAttribute("data-text") || "";
+                const textSpan = titleEl.querySelector(".typewriter-text");
+                const cursorSpan = titleEl.querySelector(".typewriter-cursor");
+                
+                let charIndex = 0;
+                function typeChar() {
+                    if (charIndex < textToType.length) {
+                        textSpan.textContent += textToType.charAt(charIndex);
+                        charIndex++;
+                        setTimeout(typeChar, 75);
+                    } else {
+                        setTimeout(() => {
+                            if (cursorSpan) cursorSpan.classList.add("cursor-done");
+                        }, 2500);
+                    }
                 }
-            });
-        });
-
-        // Dark Mode
-        const themeToggleBtn = document.getElementById('theme-toggle');
-    
-        const currentTheme = localStorage.getItem('theme');
-        if (currentTheme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            themeToggleBtn.textContent = '☀️';
-        }
-
-        themeToggleBtn.addEventListener('click', () => {
-            let theme = document.documentElement.getAttribute('data-theme');
-            
-            if (theme === 'dark') {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
-                themeToggleBtn.textContent = '🌙';
-            } else {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-                themeToggleBtn.textContent = '☀️';
+                
+                setTimeout(typeChar, 300);
             }
         });
     </script>
-</body>
-</html>
+{% endblock content %}

@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/static/css/style.css?v=2">
+        <meta name="color-scheme" content="light dark">
+        <title>{% block title %}{{ name }} - Portfolio{% endblock title %}</title>
+        {% block meta %} {% endblock meta %}
+    </head>
+
+    <body>
+    <header class="site-header">
+        <div class="container">
+            <a href="{% url 'main:show_main' %}" class="brand">Reshandy</a>
+
+            <button class="burger-menu" id="burger-btn" aria-label="Toggle navigation">
+                <span class="bar bar-1"></span>
+                <span class="bar bar-2"></span>
+                <span class="bar bar-3"></span>
+            </button>
+
+            <label class="theme-switch" for="theme-toggle-checkbox" aria-label="Toggle Dark Mode">
+                <input type="checkbox" id="theme-toggle-checkbox" />
+                <div class="slider round">
+                    <span class="sun-icon">☀️</span>
+                    <span class="moon-icon">🌙</span>
+                    <div class="slider-circle"></div>
+                </div>
+            </label>
+
+            <div class="nav-overlay" id="nav-overlay"></div>
+
+            <nav id="nav-links">
+                <a href="{% url 'main:show_main' %}" style="--i: 1;">Profile</a>
+                <a href="{% url 'main:show_experience' %}" style="--i: 2;">Experience</a>
+                <a href="{% url 'main:show_skills' %}" style="--i: 3;">Skills</a>
+                <a href="{% url 'main:show_projects' %}" style="--i: 4;">Projects</a>
+                <a href="{% url 'main:show_main' %}#tech-stack" style="--i: 5;">Tools</a>
+                <a href="{% url 'main:show_main' %}#education" style="--i: 6;">Education</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        {% block content %} {% endblock content %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
+        </div>
+    </footer>
+
+    <!-- Burger Menu and Dark Mode JS -->
+    <script>
+        const burgerBtn = document.getElementById('burger-btn');
+        const navLinks = document.getElementById('nav-links');
+        const navOverlay = document.getElementById('nav-overlay');
+        const menuItems = navLinks.querySelectorAll('a');
+
+        function toggleMenu() {
+            if(navLinks) navLinks.classList.toggle('nav-active');
+            if(burgerBtn) burgerBtn.classList.toggle('toggle');
+            if(navOverlay) navOverlay.classList.toggle('active');
+        }
+
+        if(burgerBtn) {
+            burgerBtn.addEventListener('click', () => {
+                navLinks.classList.toggle('nav-active');
+                burgerBtn.classList.toggle('toggle');
+                
+                if (navOverlay) {
+                    navOverlay.classList.toggle('active');
+                }
+            });
+        }
+
+        if(menuItems) {
+            menuItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    if (navLinks.classList.contains('nav-active')) {
+                        toggleMenu();
+                    }
+                });
+            });
+        }
+
+        // Active Navigation & Scrollspy
+        function updateNav() {
+            const currentPath = window.location.pathname;
+            const scrollY = window.scrollY;
+            
+            let activeId = null;
+            const sections = document.querySelectorAll("section[id]");
+
+            sections.forEach(sec => {
+                const top = sec.offsetTop - 150;
+                const bottom = top + sec.offsetHeight;
+                if (scrollY >= top && scrollY < bottom) {
+                    activeId = sec.id;
+                }
+            });
+
+            menuItems.forEach(link => {
+                link.classList.remove('active');
+                const url = new URL(link.href, window.location.origin);
+                
+                if (url.pathname === currentPath) {
+                    if (url.hash) {
+                        if (activeId === url.hash.substring(1)) {
+                            link.classList.add('active');
+                        }
+                    } else {
+                        if (!activeId) {
+                            link.classList.add('active');
+                        }
+                    }
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', updateNav);
+        window.addEventListener('load', updateNav);
+        updateNav();
+
+        // Dark Mode
+        const themeToggleCheckbox = document.getElementById('theme-toggle-checkbox');
+    
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            if(themeToggleCheckbox) themeToggleCheckbox.checked = true;
+        }
+
+        if(themeToggleCheckbox) {
+            themeToggleCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        }
+    </script>
+    </body>
+</html>
