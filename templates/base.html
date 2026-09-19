@@ -16,7 +16,11 @@
     <body>
     <header class="site-header">
         <div class="container">
+            {% if request.resolver_match.url_name == 'dashboard' %}
+            <a href="{% url 'main:dashboard' %}" class="brand">Reshandy</a>
+            {% else %}
             <a href="{% url 'main:show_main' %}" class="brand">Reshandy</a>
+            {% endif %}
 
             <button class="burger-menu" id="burger-btn" aria-label="Toggle navigation">
                 <span class="bar bar-1"></span>
