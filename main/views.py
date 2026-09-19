@@ -1,7 +1,7 @@
 import os
 from django.contrib import messages
 from django.core import serializers
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -129,6 +129,8 @@ def create_education(request):
     }
     return render(request, "education_form.html", context)
 
+from main.templatetags.markdown_extras import markdown_format
+
 def show_projects(request):
     title_query = request.GET.get("title", "").strip()
     tag_query = request.GET.get("tag", "").strip()
@@ -140,6 +142,24 @@ def show_projects(request):
     if tag_query:
         projects = projects.filter(tags__slug=tag_query)
     
+    # Handle AJAX response for Skeleton Loader demo
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax') == '1':
+        project_data = []
+        for p in projects:
+            tags = [{"name": t.name, "color": t.color, "slug": t.slug} for t in p.tags.all()]
+            project_data.append({
+                "id": p.id,
+                "title": p.title,
+                "description": markdown_format(p.description),
+                "category": p.category,
+                "project_url": p.project_url,
+                "project_image_url": p.project_image_url,
+                "tags": tags,
+            })
+        import time
+        time.sleep(1) # delay untuk mendemonstrasikan skeleton
+        return JsonResponse({"projects": project_data})
+
     categories = set(p.category for p in projects if p.category)
 
     context = {

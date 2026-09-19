@@ -55,7 +55,8 @@
                 <div class="tech-item" 
                      data-lang="{{ tech.name }}" 
                      data-filename="{{ tech.filename }}" 
-                     data-snippet="{{ tech.code_snippet }}">
+                     data-snippet="{{ tech.code_snippet }}"
+                     data-aos="fade-up">
                     <img src="{{ tech.icon_url }}" alt="{{ tech.name }}" class="tech-icon">
                     <span>{{ tech.name }}</span>
                 </div>
@@ -85,7 +86,7 @@
             <div class="timeline">
                 
                 {% for edu in education_list %}
-                    <div class="timeline-item">
+                    <div class="timeline-item" data-aos="fade-up">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <span class="timeline-date">{{ edu.period }}</span>
@@ -118,7 +119,7 @@
                 <h2 class="section-title">Contact Me</h2>
             </div>
             
-            <div style="max-width: 600px; margin: 0 auto; background: var(--surface); padding: 2rem; border-radius: 12px; border: 1px solid var(--line);">
+            <div style="max-width: 600px; margin: 0 auto; background: var(--surface); padding: 2rem; border-radius: 12px; border: 1px solid var(--line);" data-aos="fade-up">
                 <form method="post" action="{% url 'main:show_main' %}#contact">
                     {% csrf_token %}
                     {% for field in contact_form %}

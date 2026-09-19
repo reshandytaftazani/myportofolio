@@ -11,23 +11,19 @@
                 <div class="project-header">
                     <h1>Projects</h1>
                 </div>
-                <form method="get"
-                      action="{% url 'main:show_projects' %}"
-                      class="project-search">
+                <form id="project-search-form"
+                      class="project-search"
+                      onsubmit="handleSearch(event)">
                     <input type="search"
                            name="title"
+                           id="search-input"
                            value="{{ title_query }}"
                            placeholder="Cari berdasarkan nama proyek"
                            class="project-search__input"
                            aria-label="Cari berdasarkan nama proyek">
                     <button type="submit" class="button">Cari</button>
                 </form>
-                {% if request.GET.tag %}
-                <div style="margin-bottom: 1.5rem;">
-                    <span style="font-size: 0.9rem; color: var(--text-muted);">Menampilkan proyek dengan tag: <strong>{{ request.GET.tag }}</strong></span>
-                    <a href="{% url 'main:show_projects' %}" style="font-size: 0.9rem; color: var(--accent-color); margin-left: 0.5rem; text-decoration: underline;">Hapus Filter</a>
-                </div>
-                {% endif %}
+                
                 <div class="project-filters" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; overflow-x: auto; padding-bottom: 0.5rem;">
                     <button class="button project-filter-btn active" data-filter="all" style="white-space: nowrap; transition: all 0.3s ease;">All</button>
                     {% for cat in categories %}
@@ -35,9 +31,10 @@
                     {% endfor %}
                 </div>
                 
-                <div class="experience-grid project-grid">
+                <div class="experience-grid project-grid" id="project-grid-container">
+                    <!-- Data will be populated here via template on first load, or JS on AJAX -->
                     {% for project in project_list %}
-                        <article class="experience-card project-item" data-category="{{ project.category }}" style="transition: opacity 0.4s ease, transform 0.4s ease;">
+                        <article class="experience-card project-item" data-category="{{ project.category }}" style="transition: opacity 0.4s ease, transform 0.4s ease;" data-aos="fade-up">
                             {% if project.project_image_url %}
                                 <img src="{{ project.project_image_url }}"
                                      alt="Gambar {{ project.title }}"
@@ -59,11 +56,11 @@
                             </div>
                         </article>
                     {% empty %}
-                        {% if title_query %}
-                            <p class="empty-state">Tidak ada proyek dengan nama tersebut.</p>
-                        {% else %}
-                            <p class="empty-state">Belum ada proyek yang ditambahkan.</p>
-                        {% endif %}
+                        <div class="empty-state-card" id="empty-state">
+                            <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"></path><line x1="2" y1="20" x2="2.01" y2="20"></line></svg>
+                            <h3 class="empty-state-title">Belum Ada Proyek</h3>
+                            <p class="empty-state-text">Silakan tambahkan proyek baru dari dashboard.</p>
+                        </div>
                     {% endfor %}
                 </div>
             </div>
@@ -71,14 +68,110 @@
     </main>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        function createSkeleton() {
+            return `
+                <article class="experience-card" style="border: 1px solid var(--line);">
+                    <div class="skeleton skeleton-img"></div>
+                    <div class="skeleton skeleton-title"></div>
+                    <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+                        <div class="skeleton" style="width: 50px; height: 1.5rem; border-radius: 999px;"></div>
+                        <div class="skeleton" style="width: 70px; height: 1.5rem; border-radius: 999px;"></div>
+                    </div>
+                    <div class="skeleton skeleton-text"></div>
+                    <div class="skeleton skeleton-text"></div>
+                    <div class="skeleton skeleton-text"></div>
+                    <div class="skeleton" style="width: 100px; height: 2.2rem; margin-top: 1rem; border-radius: 4px;"></div>
+                </article>
+            `;
+        }
+
+        async function fetchProjects(query = "") {
+            const container = document.getElementById("project-grid-container");
+            
+            // Show skeleton loader (3 cards)
+            container.innerHTML = createSkeleton() + createSkeleton() + createSkeleton();
+            
+            try {
+                const response = await fetch(`?ajax=1&title=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                container.innerHTML = "";
+                
+                if (data.projects.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state-card" data-aos="fade-up">
+                            <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                            <h3 class="empty-state-title">Tidak Ditemukan</h3>
+                            <p class="empty-state-text">Tidak ada proyek dengan kata kunci tersebut.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                data.projects.forEach(project => {
+                    const tagsHtml = project.tags.map(tag => 
+                        `<a href="?tag=${tag.slug}" class="tag-badge" style="background-color: ${tag.color}20; color: ${tag.color}; border: 1px solid ${tag.color}; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.8rem; text-decoration: none;">${tag.name}</a>`
+                    ).join('');
+                    
+                    const imgHtml = project.project_image_url ? 
+                        `<img src="${project.project_image_url}" alt="Gambar ${project.title}" class="project-image">` : '';
+                        
+                    const actionHtml = project.project_url ? 
+                        `<a href="${project.project_url}" target="_blank" rel="noopener noreferrer" class="button">Lihat Project ↗</a>` : '';
+                        
+                    container.innerHTML += `
+                        <article class="experience-card project-item" data-category="${project.category}" style="transition: opacity 0.4s ease, transform 0.4s ease;" data-aos="fade-up">
+                            ${imgHtml}
+                            <h2>${project.title}</h2>
+                            <div class="project-tags" style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                ${tagsHtml}
+                            </div>
+                            <div class="experience-description">${project.description}</div>
+                            <div class="project-card-actions">
+                                <div class="project-actions">
+                                    ${actionHtml}
+                                </div>
+                            </div>
+                        </article>
+                    `;
+                });
+                
+                // Re-initialize filter logic after fetching new items
+                initFilters();
+                
+            } catch (error) {
+                console.error("Error fetching projects:", error);
+                container.innerHTML = "<p>Terjadi kesalahan saat memuat data.</p>";
+            }
+        }
+
+        function handleSearch(event) {
+            event.preventDefault();
+            const query = document.getElementById("search-input").value;
+            fetchProjects(query);
+            
+            // Reset active category filter to 'all'
+            document.querySelectorAll(".project-filter-btn").forEach(b => {
+                b.classList.remove("active");
+                b.style.background = "var(--surface)";
+                b.style.color = "var(--text)";
+            });
+            document.querySelector('.project-filter-btn[data-filter="all"]').classList.add("active");
+            document.querySelector('.project-filter-btn[data-filter="all"]').style.background = "";
+            document.querySelector('.project-filter-btn[data-filter="all"]').style.color = "";
+        }
+
+        function initFilters() {
             const filterBtns = document.querySelectorAll(".project-filter-btn");
             const projectItems = document.querySelectorAll(".project-item");
 
             filterBtns.forEach(btn => {
-                btn.addEventListener("click", function () {
-                    // Update active styling
-                    filterBtns.forEach(b => {
+                // Remove old event listeners by cloning
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+                
+                newBtn.addEventListener("click", function () {
+                    document.querySelectorAll(".project-filter-btn").forEach(b => {
                         b.classList.remove("active");
                         b.style.background = "var(--surface)";
                         b.style.color = "var(--text)";
@@ -88,16 +181,16 @@
                     this.style.color = "";
 
                     const filterValue = this.getAttribute("data-filter");
+                    let visibleCount = 0;
 
                     projectItems.forEach(item => {
-                        // First fade out
                         item.style.opacity = "0";
                         item.style.transform = "scale(0.95)";
                         
                         setTimeout(() => {
                             if (filterValue === "all" || item.getAttribute("data-category") === filterValue) {
                                 item.style.display = "block";
-                                // Add a tiny delay before fading in to let display:block apply
+                                visibleCount++;
                                 setTimeout(() => {
                                     item.style.opacity = "1";
                                     item.style.transform = "scale(1)";
@@ -105,10 +198,16 @@
                             } else {
                                 item.style.display = "none";
                             }
-                        }, 300); // Wait for fade out animation
+                        }, 300);
                     });
+                    
+                    // Show empty state if no items match filter (optional, leaving to default for now as items are just hidden)
                 });
             });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            initFilters();
         });
     </script>
 {% endblock content %}
