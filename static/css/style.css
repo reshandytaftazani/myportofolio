@@ -538,18 +538,7 @@ h1, .brand {
     border-top: 1px solid var(--line);
 }
 
-.section-kicker {
-    color: var(--accent-dark);
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
 
-.experience-section h1 {
-    margin: 0.4rem 0 1.5rem;
-    font-size: 2rem;
-}
 
 .experience-grid {
     display: grid;
@@ -1168,19 +1157,24 @@ body, .skill-card, .timeline-content, .experience-card {
 
 /* ==== EMPTY STATE ==== */
 .empty-state-card {
+    max-width: 520px;
+    margin: 40px auto;
+    padding: 48px 32px;
+    text-align: center;
+    background: #fafafa;
+    border: 1px dashed var(--line);
+    border-radius: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 3.5rem 2rem;
-    border: 1.5px dashed var(--line);
-    border-radius: var(--radius);
-    background-color: transparent;
-    text-align: center;
-    margin: 2rem auto;
-    width: 100%;
-    max-width: 500px;
+    gap: 16px;
     transition: transform 0.2s ease, border-color 0.2s ease;
+    width: 100%;
+}
+
+[data-theme="dark"] .empty-state-card {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 .empty-state-card:hover {
@@ -1188,29 +1182,37 @@ body, .skill-card, .timeline-content, .experience-card {
     transform: translateY(-2px);
 }
 
-.empty-state-icon {
-    color: var(--text-muted);
-    margin-bottom: 1rem;
-    opacity: 0.6;
-    transition: color 0.3s ease, opacity 0.3s ease;
+.empty-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: rgba(217, 93, 57, 0.1); 
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    box-shadow: 0 0 24px rgba(217, 93, 57, 0.15);
 }
 
-.empty-state-card:hover .empty-state-icon {
-    color: var(--accent);
-    opacity: 1;
+.empty-state-icon {
+    width: 32px;
+    height: 32px;
 }
 
 .empty-state-title {
     font-family: "Space Grotesk", -apple-system, sans-serif;
-    font-size: 1.15rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--ink);
-    margin-bottom: 0.35rem;
+    margin: 0;
 }
 
 .empty-state-text {
     font-size: 0.95rem;
     color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
 }
 /* ==== SKELETON LOADING ==== */
 @keyframes skeleton-loading {
