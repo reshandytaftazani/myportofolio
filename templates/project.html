@@ -21,6 +21,12 @@
                            aria-label="Cari berdasarkan nama proyek">
                     <button type="submit" class="button">Cari</button>
                 </form>
+                {% if request.GET.tag %}
+                <div style="margin-bottom: 1.5rem;">
+                    <span style="font-size: 0.9rem; color: var(--text-muted);">Menampilkan proyek dengan tag: <strong>{{ request.GET.tag }}</strong></span>
+                    <a href="{% url 'main:show_projects' %}" style="font-size: 0.9rem; color: var(--accent-color); margin-left: 0.5rem; text-decoration: underline;">Hapus Filter</a>
+                </div>
+                {% endif %}
                 <div class="project-filters" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; overflow-x: auto; padding-bottom: 0.5rem;">
                     <button class="button project-filter-btn active" data-filter="all" style="white-space: nowrap; transition: all 0.3s ease;">All</button>
                     {% for cat in categories %}
@@ -37,7 +43,11 @@
                                      class="project-image">
                             {% endif %}
                             <h2>{{ project.title }}</h2>
-                            <span class="experience-category">{{ project.tech_stack }}</span>
+                            <div class="project-tags" style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                {% for tag in project.tags.all %}
+                                    <a href="?tag={{ tag.slug }}" class="tag-badge" style="background-color: {{ tag.color }}20; color: {{ tag.color }}; border: 1px solid {{ tag.color }}; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.8rem; text-decoration: none;">{{ tag.name }}</a>
+                                {% endfor %}
+                            </div>
                             <p class="experience-description">{{ project.description }}</p>
                             <div class="project-card-actions">
                                 <div class="project-actions">

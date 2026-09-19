@@ -50,12 +50,20 @@ class Education(models.Model):
     def __str__(self):
         return self.school_name
 
+class Tag(models.Model):
+    name = models.CharField(max_length=50)
+    slug = models.SlugField(unique=True)
+    color = models.CharField(max_length=20, default="#3b82f6")
+
+    def __str__(self):
+        return self.name
+
 class Project(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=255)
     description = models.TextField()
     category = models.CharField(max_length=50, default='Other')
-    tech_stack = models.CharField(max_length=255)
+    tags = models.ManyToManyField(Tag, blank=True)
     project_url = models.URLField(blank=True)
     project_image_url = models.URLField(blank=True, max_length=500)
 

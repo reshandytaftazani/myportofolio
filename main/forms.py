@@ -156,7 +156,7 @@ class ProjectForm(ModelForm):
             "title",
             "description",
             "category",
-            "tech_stack",
+            "tags",
             "project_url",
             "project_image_url",
         ]
@@ -165,7 +165,7 @@ class ProjectForm(ModelForm):
             "title": "Nama Proyek",
             "description": "Deskripsi Proyek",
             "category": "Kategori",
-            "tech_stack": "Teknologi yang Digunakan",
+            "tags": "Tags",
             "project_url": "URL Proyek",
             "project_image_url": "URL Gambar Proyek",
         }
@@ -187,11 +187,6 @@ class ProjectForm(ModelForm):
                 attrs={
                     "placeholder": "Contoh: Web Dev, Data Science, dll.",
                     "maxlength": 50,
-                }
-            ),
-            "tech_stack": TextInput(
-                attrs={
-                    "placeholder": "Django, Python, HTML, CSS",
                 }
             ),
             "project_url": URLInput(

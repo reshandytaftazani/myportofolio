@@ -104,18 +104,15 @@ def create_education(request):
     return render(request, "education_form.html", context)
 
 def show_projects(request):
-    json_response = get_projects_json(request)
-
-    if json_response.status_code == 403:
-        projects = []
-    else:
-        projects = serializers.deserialize(
-            "json",
-            json_response.content.decode("utf-8"),
-        )
-        projects = [project.object for project in projects]
-        
     title_query = request.GET.get("title", "").strip()
+    tag_query = request.GET.get("tag", "").strip()
+    projects = Project.objects.prefetch_related('tags').all()
+    
+    if title_query:
+        projects = projects.filter(title__icontains=title_query)
+        
+    if tag_query:
+        projects = projects.filter(tags__slug=tag_query)
     
     categories = set(p.category for p in projects if p.category)
 
