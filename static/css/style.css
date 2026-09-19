@@ -1050,3 +1050,118 @@ body, .skill-card, .timeline-content, .experience-card {
         text-align: center;
     }
 }
+
+/* Inline Code Examples */
+.tech-item {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tech-icon-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.tech-code-snippet {
+    display: none;
+    margin-left: 1.5rem;
+    min-width: 350px;
+    max-width: 550px;
+    text-align: left;
+}
+
+.mac-window {
+    background: #1e1e1e;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    overflow: hidden;
+    border: 1px solid #333;
+}
+
+.mac-header {
+    background: #2d2d2d;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    position: relative;
+    border-bottom: 1px solid #1e1e1e;
+}
+
+.mac-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.mac-dots span {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.mac-dots span:nth-child(1) { background: #ff5f56; }
+.mac-dots span:nth-child(2) { background: #ffbd2e; }
+.mac-dots span:nth-child(3) { background: #27c93f; }
+
+.mac-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #999;
+    font-size: 0.75rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.mac-body {
+    padding: 1.25rem;
+    margin: 0;
+    background: #1e1e1e;
+    color: #e6e6e6;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    overflow-x: auto;
+}
+
+.tech-item.expanded {
+    flex-direction: row;
+    background-color: var(--paper);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    transform: scale(1.02);
+    align-items: center;
+}
+
+[data-theme="dark"] .tech-item.expanded {
+    background-color: #1e1e1e;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    border: 1px solid var(--line);
+}
+
+.tech-item.expanded .tech-code-snippet {
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 768px) {
+    .tech-item.expanded {
+        flex-direction: column;
+    }
+    .tech-code-snippet {
+        margin-left: 0;
+        margin-top: 1rem;
+        min-width: 100%;
+        max-width: 100%;
+    }
+}
