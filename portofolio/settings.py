@@ -147,3 +147,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://reshandy-taftazani-myportofolio.pws.cs.ui.ac.id',
 ]
 
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'

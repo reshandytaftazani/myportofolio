@@ -32,11 +32,6 @@
         
         <form method="post" action="{% url 'main:delete_project' project.id %}">
             {% csrf_token %}
-            <div class="form-group" style="margin: 1.5rem 0;">
-                <label for="delete-password-{{ project.id }}" style="display: block; margin-bottom: 0.5rem; font-weight: 700;">Kode Rahasia</label>
-                <input type="password" name="password" id="delete-password-{{ project.id }}" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--line); border-radius: var(--radius); font-family: inherit;">
-            </div>
-            
             <div class="project-delete-modal__actions">
                 <button type="button"
                         class="button button-secondary"

@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Login - Portfolio{% endblock title %}
+
+{% block content %}
+<section id="login-section" class="py-5">
+    <div class="container" style="max-width: 400px; margin: 5rem auto;">
+        <h2 class="text-center mb-4">Admin Login</h2>
+
+        {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}" style="padding: 10px; border-radius: 5px; margin-bottom: 10px; background-color: var(--secondary-bg); border: 1px solid var(--accent-color);">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="POST" action="" class="form-container" style="background: var(--secondary-bg); padding: 2rem; border-radius: 12px; box-shadow: var(--card-shadow);">
+            {% csrf_token %}
+            
+            <div class="form-group mb-3" style="margin-bottom: 1rem;">
+                <label for="id_username" style="display: block; margin-bottom: 0.5rem;">Username</label>
+                <input type="text" name="username" class="form-control" id="id_username" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--text-muted); background: var(--bg-color); color: var(--text-color);">
+            </div>
+            
+            <div class="form-group mb-4" style="margin-bottom: 1.5rem;">
+                <label for="id_password" style="display: block; margin-bottom: 0.5rem;">Password</label>
+                <input type="password" name="password" class="form-control" id="id_password" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--text-muted); background: var(--bg-color); color: var(--text-color);">
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100" style="width: 100%; padding: 0.8rem; background: var(--accent-color); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.3s;">
+                Login
+            </button>
+        </form>
+    </div>
+</section>
+{% endblock content %}
