@@ -1,6 +1,6 @@
 from django.forms import ModelForm, TextInput, Textarea, URLInput, Select, DateTimeInput, NumberInput, DateInput
 
-from main.models import Experience, Skill, Education, Project, TechStack
+from main.models import Experience, Skill, Education, Project, TechStack, ContactMessage
 
 class ExperienceForm(ModelForm):
     class Meta:
@@ -224,4 +224,19 @@ class TechStackForm(ModelForm):
             "filename": TextInput(attrs={"placeholder": "main.py", "maxlength": 50}),
             "code_snippet": Textarea(attrs={"placeholder": "print('Hello')", "rows": 5}),
             "order": NumberInput(attrs={"placeholder": "1"}),
+        }
+
+class ContactMessageForm(ModelForm):
+    class Meta:
+        model = ContactMessage
+        fields = ["name", "email", "message"]
+        labels = {
+            "name": "Nama Lengkap",
+            "email": "Alamat Email",
+            "message": "Pesan Anda",
+        }
+        widgets = {
+            "name": TextInput(attrs={"placeholder": "John Doe", "class": "form-control"}),
+            "email": TextInput(attrs={"placeholder": "john@example.com", "type": "email", "class": "form-control"}),
+            "message": Textarea(attrs={"placeholder": "Tuliskan pesan Anda di sini...", "rows": 4, "class": "form-control"}),
         }

@@ -7,12 +7,37 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 
-from main.models import Experience, Skill, Education, Project, TechStack
-from main.forms import ExperienceForm, SkillForm, EducationForm, ProjectForm, TechStackForm
+from django.core.mail import send_mail
+from django.conf import settings
+from main.models import Experience, Skill, Education, Project, TechStack, ContactMessage
+from main.forms import ExperienceForm, SkillForm, EducationForm, ProjectForm, TechStackForm, ContactMessageForm
 
 def show_main(request):
     educations = Education.objects.all()
     tech_stacks = TechStack.objects.all()
+    
+    if request.method == "POST":
+        form = ContactMessageForm(request.POST)
+        if form.is_valid():
+            contact = form.save()
+            # Send Email
+            subject = f"New Contact Message from {contact.name}"
+            message = f"Name: {contact.name}\nEmail: {contact.email}\n\nMessage:\n{contact.message}"
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'webmaster@localhost',
+                    ['admin@myportofolio.com'], # You can change this to actual admin email
+                    fail_silently=True,
+                )
+            except Exception as e:
+                print(e)
+            
+            messages.success(request, "Pesan Anda berhasil dikirim!")
+            return redirect('main:show_main')
+    else:
+        form = ContactMessageForm()
 
     context = {
         "name": "Reshandy Taftazani Aulya",
@@ -23,6 +48,7 @@ def show_main(request):
         ),
         'education_list': educations,
         'tech_stacks': tech_stacks,
+        'contact_form': form,
     }
     return render(request, "index.html", context)
 
