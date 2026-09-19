@@ -7,11 +7,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 
-from main.models import Experience, Skill, Education, Project
-from main.forms import ExperienceForm, SkillForm, EducationForm, ProjectForm
+from main.models import Experience, Skill, Education, Project, TechStack
+from main.forms import ExperienceForm, SkillForm, EducationForm, ProjectForm, TechStackForm
 
 def show_main(request):
     educations = Education.objects.all()
+    tech_stacks = TechStack.objects.all()
 
     context = {
         "name": "Reshandy Taftazani Aulya",
@@ -21,6 +22,7 @@ def show_main(request):
             "CS student at Universitas Indonesia."
         ),
         'education_list': educations,
+        'tech_stacks': tech_stacks,
     }
     return render(request, "index.html", context)
 
@@ -192,6 +194,7 @@ def show_dashboard(request):
         "skills": Skill.objects.all(),
         "educations": Education.objects.all(),
         "projects": Project.objects.all(),
+        "tech_stacks": TechStack.objects.all(),
     }
     return render(request, "dashboard.html", context)
 
@@ -267,3 +270,39 @@ def edit_education(request, id):
         "is_edit": True,
     }
     return render(request, "education_form.html", context)
+
+@login_required(login_url='/login/')
+def create_tech_stack(request):
+    form = TechStackForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Tech Stack baru berhasil ditambahkan!")
+        return redirect("main:dashboard")
+    context = {
+        "name": "Reshandy",
+        "form": form,
+    }
+    return render(request, "tech_stack_form.html", context)
+
+@login_required(login_url='/login/')
+def edit_tech_stack(request, id):
+    tech = get_object_or_404(TechStack, pk=id)
+    form = TechStackForm(request.POST or None, instance=tech)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Tech Stack berhasil diperbarui!")
+        return redirect("main:dashboard")
+    context = {
+        "name": "Reshandy",
+        "form": form,
+        "is_edit": True,
+    }
+    return render(request, "tech_stack_form.html", context)
+
+@login_required(login_url='/login/')
+def delete_tech_stack(request, id):
+    tech = get_object_or_404(TechStack, pk=id)
+    if request.method == "POST":
+        tech.delete()
+        messages.success(request, "Tech Stack berhasil dihapus!")
+    return redirect("main:dashboard")

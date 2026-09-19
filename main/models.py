@@ -60,4 +60,17 @@ class Project(models.Model):
     project_image_url = models.URLField(blank=True, max_length=500)
 
     def __str__(self):
-        return self.title
+        return self.title
+
+class TechStack(models.Model):
+    name = models.CharField(max_length=50, help_text="Nama bahasa (contoh: Python)")
+    icon_url = models.URLField(help_text="URL ikon devicon (SVG/PNG)")
+    filename = models.CharField(max_length=50, help_text="Nama file untuk Mac UI (contoh: script.py)")
+    code_snippet = models.TextField(help_text="Contoh kode program")
+    order = models.IntegerField(default=0, help_text="Urutan tampilan di halaman")
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return self.name

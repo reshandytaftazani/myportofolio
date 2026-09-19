@@ -1,6 +1,6 @@
 from django.forms import ModelForm, TextInput, Textarea, URLInput, Select, DateTimeInput, NumberInput, DateInput
 
-from main.models import Experience, Skill, Education, Project
+from main.models import Experience, Skill, Education, Project, TechStack
 
 class ExperienceForm(ModelForm):
     class Meta:
@@ -204,4 +204,29 @@ class ProjectForm(ModelForm):
                     "placeholder": "https://drive.google.com/thumbnail?id=...&sz=w1000",
                 }
             ),
+        }
+
+class TechStackForm(ModelForm):
+    class Meta:
+        model = TechStack
+        fields = [
+            "name",
+            "icon_url",
+            "filename",
+            "code_snippet",
+            "order",
+        ]
+        labels = {
+            "name": "Nama Bahasa",
+            "icon_url": "URL Icon Devicon",
+            "filename": "Nama File (UI Mac)",
+            "code_snippet": "Code Snippet",
+            "order": "Urutan Tampil",
+        }
+        widgets = {
+            "name": TextInput(attrs={"placeholder": "Python", "maxlength": 50}),
+            "icon_url": URLInput(attrs={"placeholder": "https://cdn.jsdelivr.net/..."}),
+            "filename": TextInput(attrs={"placeholder": "main.py", "maxlength": 50}),
+            "code_snippet": Textarea(attrs={"placeholder": "print('Hello')", "rows": 5}),
+            "order": NumberInput(attrs={"placeholder": "1"}),
         }

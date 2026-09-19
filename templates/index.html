@@ -44,43 +44,17 @@
             </div>
             
             <div class="tech-grid">
-                
-                <div class="tech-item">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/cplusplus/cplusplus-original.svg" alt="C++" class="tech-icon">
-                    <span>C++</span>
+                {% for tech in tech_stacks %}
+                <div class="tech-item" 
+                     data-lang="{{ tech.name }}" 
+                     data-filename="{{ tech.filename }}" 
+                     data-snippet="{{ tech.code_snippet }}">
+                    <img src="{{ tech.icon_url }}" alt="{{ tech.name }}" class="tech-icon">
+                    <span>{{ tech.name }}</span>
                 </div>
-
-                <div class="tech-item">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" class="tech-icon">
-                    <span>Python</span>
-                </div>
-
-                <div class="tech-item">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/java/java-original.svg" alt="Java" class="tech-icon">
-                    <span>Java</span>
-                </div>
-
-                <div class="tech-item">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/html5/html5-original.svg" alt="HTML5" class="tech-icon">
-                    <span>HTML5</span>
-                </div>
-
-                <div class="tech-item">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/css3/css3-original.svg" alt="CSS3" class="tech-icon">
-                    <span>CSS3</span>
-                </div>
-
-                <div class="tech-item">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/pandas/pandas-original.svg" alt="Pandas" class="tech-icon">
-                    <span>Pandas</span>
-                </div>
-
-                <div class="tech-item">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/latex/latex-original.svg" alt="LaTeX" class="tech-icon">
-                    <span>LaTeX</span>
-                </div>
-
-            </div>
+                {% empty %}
+                    <p class="empty-state" style="margin:auto; text-align:center;">Data Tech Stack belum ditambahkan.</p>
+                {% endfor %}            </div>
         </div>
     </section>
 
@@ -136,16 +110,6 @@
             }
 
             // Code Examples Inline Logic
-            const codeExamples = {
-                "C++": '#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}',
-                "Python": 'def greet(name):\n    print(f"Hello, {name}!")\n\ngreet("World")',
-                "Java": 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}',
-                "HTML5": '<!DOCTYPE html>\n<html>\n<head>\n    <title>Hello</title>\n</head>\n<body>\n    <h1>Hello, World!</h1>\n</body>\n</html>',
-                "CSS3": 'body {\n    background-color: #f0f0f0;\n    font-family: Arial, sans-serif;\n}\n\nh1 {\n    color: #333;\n}',
-                "Pandas": 'import pandas as pd\n\ndata = {"Name": ["Alice", "Bob"], "Age": [25, 30]}\ndf = pd.DataFrame(data)\nprint(df.head())',
-                "LaTeX": '\\documentclass{article}\n\\begin{document}\nHello, World!\n\\end{document}'
-            };
-
             const techItems = document.querySelectorAll('.tech-item');
             
             techItems.forEach(item => {
@@ -175,21 +139,13 @@
                 pre.className = 'mac-body';
                 const code = document.createElement('code');
                 
-                const filenames = {
-                    "C++": "main.cpp",
-                    "Python": "script.py",
-                    "Java": "Main.java",
-                    "HTML5": "index.html",
-                    "CSS3": "style.css",
-                    "Pandas": "analysis.py",
-                    "LaTeX": "main.tex — Overleaf"
-                };
-                
                 const langSpan = wrapper.querySelector('span');
                 if (langSpan) {
-                    const lang = langSpan.innerText.trim();
-                    title.innerHTML = `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style="opacity:0.7"><path d="M4 1.5H9.5L13.5 5.5V14.5C13.5 15.0523 13.0523 15.5 12.5 15.5H4C3.44772 15.5 3 15.0523 3 14.5V2.5C3 1.94772 3.44772 1.5 4 1.5ZM9 2.5V6H12.5L9 2.5Z"/></svg> ${filenames[lang] || 'code.txt'}`;
-                    code.innerText = codeExamples[lang] || '// No example available';
+                    const fileName = item.getAttribute('data-filename');
+                    const snippetCode = item.getAttribute('data-snippet');
+                    
+                    title.innerHTML = `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style="opacity:0.7"><path d="M4 1.5H9.5L13.5 5.5V14.5C13.5 15.0523 13.0523 15.5 12.5 15.5H4C3.44772 15.5 3 15.0523 3 14.5V2.5C3 1.94772 3.44772 1.5 4 1.5ZM9 2.5V6H12.5L9 2.5Z"/></svg> ${fileName || 'code.txt'}`;
+                    code.innerText = snippetCode || '// No example available';
                 }
                 
                 header.appendChild(dots);
