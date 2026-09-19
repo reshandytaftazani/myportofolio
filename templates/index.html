@@ -134,6 +134,86 @@
                 
                 setTimeout(typeChar, 300);
             }
+
+            // Code Examples Inline Logic
+            const codeExamples = {
+                "C++": '#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}',
+                "Python": 'def greet(name):\n    print(f"Hello, {name}!")\n\ngreet("World")',
+                "Java": 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}',
+                "HTML5": '<!DOCTYPE html>\n<html>\n<head>\n    <title>Hello</title>\n</head>\n<body>\n    <h1>Hello, World!</h1>\n</body>\n</html>',
+                "CSS3": 'body {\n    background-color: #f0f0f0;\n    font-family: Arial, sans-serif;\n}\n\nh1 {\n    color: #333;\n}',
+                "Pandas": 'import pandas as pd\n\ndata = {"Name": ["Alice", "Bob"], "Age": [25, 30]}\ndf = pd.DataFrame(data)\nprint(df.head())',
+                "LaTeX": '\\documentclass{article}\n\\begin{document}\nHello, World!\n\\end{document}'
+            };
+
+            const techItems = document.querySelectorAll('.tech-item');
+            
+            techItems.forEach(item => {
+                // Wrap existing content
+                const wrapper = document.createElement('div');
+                wrapper.className = 'tech-icon-wrapper';
+                while (item.firstChild) {
+                    wrapper.appendChild(item.firstChild);
+                }
+                item.appendChild(wrapper);
+
+                // Create code snippet element (Mac UI)
+                const snippetContainer = document.createElement('div');
+                snippetContainer.className = 'tech-code-snippet mac-window';
+                
+                const header = document.createElement('div');
+                header.className = 'mac-header';
+                
+                const dots = document.createElement('div');
+                dots.className = 'mac-dots';
+                dots.innerHTML = '<span></span><span></span><span></span>';
+                
+                const title = document.createElement('div');
+                title.className = 'mac-title';
+                
+                const pre = document.createElement('pre');
+                pre.className = 'mac-body';
+                const code = document.createElement('code');
+                
+                const filenames = {
+                    "C++": "main.cpp",
+                    "Python": "script.py",
+                    "Java": "Main.java",
+                    "HTML5": "index.html",
+                    "CSS3": "style.css",
+                    "Pandas": "analysis.py",
+                    "LaTeX": "main.tex — Overleaf"
+                };
+                
+                const langSpan = wrapper.querySelector('span');
+                if (langSpan) {
+                    const lang = langSpan.innerText.trim();
+                    title.innerHTML = `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style="opacity:0.7"><path d="M4 1.5H9.5L13.5 5.5V14.5C13.5 15.0523 13.0523 15.5 12.5 15.5H4C3.44772 15.5 3 15.0523 3 14.5V2.5C3 1.94772 3.44772 1.5 4 1.5ZM9 2.5V6H12.5L9 2.5Z"/></svg> ${filenames[lang] || 'code.txt'}`;
+                    code.innerText = codeExamples[lang] || '// No example available';
+                }
+                
+                header.appendChild(dots);
+                header.appendChild(title);
+                pre.appendChild(code);
+                snippetContainer.appendChild(header);
+                snippetContainer.appendChild(pre);
+                item.appendChild(snippetContainer);
+
+                // Toggle logic
+                item.addEventListener('click', () => {
+                    const isExpanded = item.classList.contains('expanded');
+                    
+                    // Close all
+                    techItems.forEach(otherItem => {
+                        otherItem.classList.remove('expanded');
+                    });
+                    
+                    // Open if it wasn't open
+                    if (!isExpanded) {
+                        item.classList.add('expanded');
+                    }
+                });
+            });
         });
     </script>
 {% endblock content %}
