@@ -19,14 +19,8 @@
                             {% endfor %}
                         </div>
                     {% endfor %}
-                    {% if is_edit %}
-                    <div class="form-group">
-                        <label for="password">Kode Rahasia (Password)</label>
-                        <input type="password" name="password" id="password" required>
-                    </div>
-                    {% endif %}
                     <button type="submit" class="button">{% if is_edit %}Simpan Perubahan{% else %}Tambah Pengalaman{% endif %}</button>
-                    <a href="{% url 'main:show_experience' %}" class="button button-secondary">Batal</a>
+                    <a href="{% url 'main:dashboard' %}" class="button button-secondary">Batal</a>
                 </form>
             </div>
         </section>

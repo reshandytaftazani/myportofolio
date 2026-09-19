@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block meta %}
+    <title>Dashboard - {{ name }}</title>
+{% endblock meta %}
+
+{% block content %}
+<section class="py-5" style="padding-top: 6rem;">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Management Dashboard</h1>
+        </div>
+        
+        <!-- EXPERIENCE SECTION -->
+        <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2>Experience</h2>
+                <a href="{% url 'main:create_experience' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
+            </div>
+            {% if experiences %}
+            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--line); text-align: left;">
+                        <th style="padding: 10px;">Title</th>
+                        <th style="padding: 10px;">Company</th>
+                        <th style="padding: 10px; width: 200px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exp in experiences %}
+                    <tr style="border-bottom: 1px solid var(--line);">
+                        <td style="padding: 10px;">{{ exp.title }}</td>
+                        <td style="padding: 10px;">{{ exp.company }}</td>
+                        <td style="padding: 10px; display: flex; gap: 10px;">
+                            <a href="{% url 'main:edit_experience' exp.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
+                            <form method="post" action="{% url 'main:delete_experience' exp.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>Belum ada data Experience.</p>
+            {% endif %}
+        </div>
+
+        <!-- PROJECTS SECTION -->
+        <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2>Projects</h2>
+                <a href="{% url 'main:create_project' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
+            </div>
+            {% if projects %}
+            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--line); text-align: left;">
+                        <th style="padding: 10px;">Title</th>
+                        <th style="padding: 10px;">Category</th>
+                        <th style="padding: 10px; width: 200px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for proj in projects %}
+                    <tr style="border-bottom: 1px solid var(--line);">
+                        <td style="padding: 10px;">{{ proj.title }}</td>
+                        <td style="padding: 10px;">{{ proj.category }}</td>
+                        <td style="padding: 10px; display: flex; gap: 10px;">
+                            <a href="{% url 'main:edit_project' proj.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
+                            <form method="post" action="{% url 'main:delete_project' proj.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>Belum ada data Projects.</p>
+            {% endif %}
+        </div>
+
+        <!-- SKILLS SECTION -->
+        <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2>Skills</h2>
+                <a href="{% url 'main:create_skill' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
+            </div>
+            {% if skills %}
+            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--line); text-align: left;">
+                        <th style="padding: 10px;">Title</th>
+                        <th style="padding: 10px;">Level</th>
+                        <th style="padding: 10px; width: 100px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for skill in skills %}
+                    <tr style="border-bottom: 1px solid var(--line);">
+                        <td style="padding: 10px;">{{ skill.title }}</td>
+                        <td style="padding: 10px;">{{ skill.level }}</td>
+                        <td style="padding: 10px; display: flex; gap: 10px;">
+                            <a href="{% url 'main:edit_skill' skill.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
+                            <form method="post" action="{% url 'main:delete_skill' skill.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>Belum ada data Skills.</p>
+            {% endif %}
+        </div>
+
+        <!-- EDUCATION SECTION -->
+        <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2>Education</h2>
+                <a href="{% url 'main:create_education' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
+            </div>
+            {% if educations %}
+            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--line); text-align: left;">
+                        <th style="padding: 10px;">School Name</th>
+                        <th style="padding: 10px;">Period</th>
+                        <th style="padding: 10px; width: 100px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for edu in educations %}
+                    <tr style="border-bottom: 1px solid var(--line);">
+                        <td style="padding: 10px;">{{ edu.school_name }}</td>
+                        <td style="padding: 10px;">{{ edu.period }}</td>
+                        <td style="padding: 10px; display: flex; gap: 10px;">
+                            <a href="{% url 'main:edit_education' edu.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
+                            <form method="post" action="{% url 'main:delete_education' edu.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>Belum ada data Education.</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock content %}
