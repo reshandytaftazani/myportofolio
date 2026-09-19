@@ -349,3 +349,19 @@ def delete_tech_stack(request, id):
         tech.delete()
         messages.success(request, "Tech Stack berhasil dihapus!")
     return redirect("main:dashboard")
+
+def get_experience_json(request):
+    data = Experience.objects.all()
+    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+
+def get_skills_json(request):
+    data = Skill.objects.all()
+    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+
+def get_education_json(request):
+    data = Education.objects.all()
+    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+
+def get_tech_stack_json(request):
+    data = TechStack.objects.all()
+    return HttpResponse(serializers.serialize("json", data), content_type="application/json")

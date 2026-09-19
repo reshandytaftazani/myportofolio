@@ -23,6 +23,10 @@ from main.views import (
     create_tech_stack,
     edit_tech_stack,
     delete_tech_stack,
+    get_experience_json,
+    get_skills_json,
+    get_education_json,
+    get_tech_stack_json,
 )
 
 app_name = 'main'
@@ -44,6 +48,10 @@ urlpatterns = [
     path('projects/add/', create_project, name='create_project'),
     path('projects/edit/<uuid:id>/', edit_project, name='edit_project'),
     path('api/projects/', get_projects_json, name='get_projects_json'),
+    path('api/experience/', get_experience_json, name='get_experience_json'),
+    path('api/skills/', get_skills_json, name='get_skills_json'),
+    path('api/education/', get_education_json, name='get_education_json'),
+    path('api/techstack/', get_tech_stack_json, name='get_tech_stack_json'),
     path("projects/<uuid:project_id>/delete/", delete_project, name="delete_project"),
     path('techstack/add/', create_tech_stack, name='create_tech_stack'),
     path('techstack/edit/<int:id>/', edit_tech_stack, name='edit_tech_stack'),
