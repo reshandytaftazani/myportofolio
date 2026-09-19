@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load markdown_extras %}
 
 {% block title %}Experience - {{ name }}{% endblock title %}
 
@@ -50,7 +51,7 @@
                             {% endif %}
                         </div>
                         
-                        <p class="experience-desc">{{ experience.description }}</p>
+                        <div class="experience-desc">{{ experience.description|markdown|safe }}</div>
                     </article>
                 </div>
             {% endfor %}

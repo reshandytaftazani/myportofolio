@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load markdown_extras %}
 
 {% block title %}{{ name }} - Skills{% endblock title %}
 
@@ -33,7 +34,7 @@
                         <div class="skill-details">
                             <span class="experience-category">{{ skill.level }}</span>
                             <h3>{{ skill.title }}</h3>
-                            <p>{{ skill.description }}</p>
+                            <div>{{ skill.description|markdown|safe }}</div>
 
                             {% if skill.code_snippet %}
                             <div class="ide-window">
