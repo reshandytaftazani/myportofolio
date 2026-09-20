@@ -23,7 +23,7 @@ html {
 }
 
 body {
-    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Inter', -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color: var(--ink);
     background-color: var(--paper);
     line-height: 1.6;
@@ -43,7 +43,7 @@ h1, .brand {
 }
 
 .container {
-    max-width: 960px;
+    max-width: 1140px;
     margin: 0 auto;
     padding: 0 1.5rem;
 }
@@ -175,19 +175,22 @@ h1, .brand {
 
 .social-links {
     display: flex;
-    gap: 0.5rem;
+    gap: 10px;
+    align-items: center;
     flex-wrap: wrap;
 }
 
 .social-link {
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 0.85rem;
     font-weight: 600;
     text-decoration: none;
     color: var(--paper);
     background-color: var(--ink);
-    border-radius: var(--radius);
-    padding: 0.5rem 1.1rem;
+    border-radius: 8px;
+    padding: 0.6rem;
     transition: background-color 0.2s ease;
 }
 
@@ -307,12 +310,14 @@ h1, .brand {
     border-radius: 12px;
     text-align: center;
     box-shadow: 0 4px 25px rgba(0, 0, 0, 0.04);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid transparent;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .skill-card:hover {
     transform: translateY(-6px);
     box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+    border-color: var(--accent);
 }
 
 .icon-box {
@@ -453,12 +458,13 @@ h1, .brand {
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
     border: 1px solid var(--line);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .timeline-content:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    border-color: var(--accent);
 }
 
 .timeline-date {
@@ -551,12 +557,13 @@ h1, .brand {
     background-color: #fff;
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .experience-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    border-color: var(--accent);
 }
 
 .experience-category {
