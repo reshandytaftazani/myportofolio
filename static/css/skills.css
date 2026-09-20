@@ -88,6 +88,9 @@
     margin-top: 15px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     border: 1px solid #333;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .ide-header {
@@ -119,6 +122,9 @@
     font-family: 'Consolas', monospace;
     font-size: 0.85rem;
     overflow-x: auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .overleaf-mode { display: flex; flex-direction: column; }
@@ -130,6 +136,9 @@
     font-family: 'Consolas', monospace;
     font-size: 0.85rem;
     overflow-x: auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 .overleaf-pdf {
     background-color: #525659;
@@ -206,6 +215,12 @@
     display: none;
     padding: 30px;
     animation: fadeEffect 0.4s;
+}
+
+@media (max-width: 768px) {
+    .tab-panel {
+        padding: 15px;
+    }
 }
 
 .tab-panel.active {
