@@ -23,35 +23,37 @@
             <a href="{% url 'main:show_main' %}" class="brand">Reshandy</a>
             {% endif %}
 
-            <button class="burger-menu" id="burger-btn" aria-label="Toggle navigation">
-                <span class="bar bar-1"></span>
-                <span class="bar bar-2"></span>
-                <span class="bar bar-3"></span>
-            </button>
+            <div class="header-right">
+                <nav id="nav-links">
+                    <a href="{% url 'main:show_main' %}" style="--i: 1;">Profile</a>
+                    <a href="{% url 'main:show_main' %}#about" style="--i: 2;">About</a>
+                    <a href="{% url 'main:show_experience' %}" style="--i: 3;">Experience</a>
+                    <a href="{% url 'main:show_skills' %}" style="--i: 4;">Skills</a>
+                    <a href="{% url 'main:show_projects' %}" style="--i: 5;">Projects</a>
+                    <a href="{% url 'main:show_main' %}#tech-stack" style="--i: 6;">Tools</a>
+                    <a href="{% url 'main:show_main' %}#education" style="--i: 7;">Education</a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'main:logout' %}" style="--i: 8; color: var(--accent-color);">Logout</a>
+                    {% endif %}
+                </nav>
 
-            <label class="theme-switch" for="theme-toggle-checkbox" aria-label="Toggle Dark Mode">
-                <input type="checkbox" id="theme-toggle-checkbox" />
-                <div class="slider round">
-                    <span class="sun-icon">☀️</span>
-                    <span class="moon-icon">🌙</span>
-                    <div class="slider-circle"></div>
-                </div>
-            </label>
+                <label class="theme-switch" for="theme-toggle-checkbox" aria-label="Toggle Dark Mode">
+                    <input type="checkbox" id="theme-toggle-checkbox" />
+                    <div class="slider round">
+                        <span class="sun-icon">☀️</span>
+                        <span class="moon-icon">🌙</span>
+                        <div class="slider-circle"></div>
+                    </div>
+                </label>
 
-            <div class="nav-overlay" id="nav-overlay"></div>
-
-            <nav id="nav-links">
-                <a href="{% url 'main:show_main' %}" style="--i: 1;">Profile</a>
-                <a href="{% url 'main:show_experience' %}" style="--i: 2;">Experience</a>
-                <a href="{% url 'main:show_skills' %}" style="--i: 3;">Skills</a>
-                <a href="{% url 'main:show_projects' %}" style="--i: 4;">Projects</a>
-                <a href="{% url 'main:show_main' %}#tech-stack" style="--i: 5;">Tools</a>
-                <a href="{% url 'main:show_main' %}#education" style="--i: 6;">Education</a>
-                {% if user.is_authenticated %}
-                <a href="{% url 'main:logout' %}" style="--i: 7; color: var(--accent-color);">Logout</a>
-                {% endif %}
-            </nav>
+                <button class="burger-menu" id="burger-btn" aria-label="Toggle navigation">
+                    <span class="bar bar-1"></span>
+                    <span class="bar bar-2"></span>
+                    <span class="bar bar-3"></span>
+                </button>
+            </div>
         </div>
+        <div class="nav-overlay" id="nav-overlay"></div>
     </header>
 
     <main>
