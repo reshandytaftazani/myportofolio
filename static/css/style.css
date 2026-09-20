@@ -27,6 +27,11 @@ img {
     color-scheme: light;
 }
 
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+}
+
 body {
     font-family: 'Inter', -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color: var(--ink);
@@ -179,6 +184,7 @@ h1, .brand {
     display: flex;
     gap: 2rem;
     margin-bottom: 1.5rem;
+    flex-wrap: wrap;
 }
 
 .meta-row dt {
@@ -265,7 +271,7 @@ h1, .brand {
     }
 
     .hero-identity h1 {
-        font-size: 2.3rem;
+        font-size: 1.8rem;
     }
 
     .hero-photo {
@@ -1295,3 +1301,18 @@ body, .skill-card, .timeline-content, .experience-card {
     margin-bottom: 1rem;
 }
 
+
+/* --- MOBILE RESPONSIVE TYPOGRAPHY IMPROVEMENTS --- */
+@media (max-width: 768px) {
+    .section-title {
+        font-size: 1.45rem;
+    }
+    
+    p, .bio, .timeline-detail, .experience-description, .skill-card p, .hero-kicker {
+        font-size: 0.8rem;
+    }
+    
+    .timeline-school, .experience-card h2, .skill-card h3 {
+        font-size: 1.05rem;
+    }
+}

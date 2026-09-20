@@ -269,4 +269,44 @@
     background: #333;
     border-color: #444;
 }
-
+
+/* --- DETAILS & SUMMARY COMPACT STYLES --- */
+.experience-details {
+    margin-top: 10px;
+}
+.experience-summary {
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent, #d35400);
+    outline: none;
+    user-select: none;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+.experience-summary:hover {
+    text-decoration: underline;
+}
+.experience-desc {
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .experience-title {
+        font-size: 1rem;
+    }
+    .experience-date {
+        font-size: 0.75rem;
+    }
+    .timeline-card {
+        padding: 12px 16px;
+    }
+    .card-header {
+        margin-bottom: 10px;
+    }
+    .experience-logo, .experience-logo-placeholder {
+        width: 32px;
+        height: 32px;
+    }
+}
