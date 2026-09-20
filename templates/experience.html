@@ -11,7 +11,7 @@
 <section class="experience-section animate-fade-in" id="experience">
     <div class="container">
         <div class="section-header">
-            <p class="section-subtitle">Perjalanan</p>
+            <p class="section-subtitle">Journey</p>
             <h2 class="section-title">Experience</h2>
         </div>
 
@@ -45,13 +45,16 @@
                             </span>
                             
                             {% if experience.is_ongoing %}
-                                <span class="badge status-ongoing">Sedang berlangsung</span>
+                                <span class="badge status-ongoing">Ongoing</span>
                             {% else %}
-                                <span class="badge status-completed">Selesai</span>
+                                <span class="badge status-completed">Completed</span>
                             {% endif %}
                         </div>
                         
-                        <div class="experience-desc">{{ experience.description|markdown|safe }}</div>
+                        <details class="experience-details">
+                            <summary class="experience-summary">View Details</summary>
+                            <div class="experience-desc">{{ experience.description|markdown|safe }}</div>
+                        </details>
                     </article>
                 </div>
             {% endfor %}
@@ -65,8 +68,8 @@
                         </svg>
                     </div>
                     
-                    <h3 class="empty-state-title">Tidak ada data</h3>
-                    <p class="empty-state-text">Data pengalaman belum ditambahkan.</p>
+                    <h3 class="empty-state-title">No data available</h3>
+                    <p class="empty-state-text">No experience records have been added yet.</p>
                 </div>
         {% endif %}
     </div>
