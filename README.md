@@ -53,3 +53,32 @@ Dalam pengerjaan tugas dan eksplorasi proyek ini, saya menggunakan **Antigravity
   2. **Manajemen Git:** Menyelesaikan konflik saat `git push` dengan menggunakan `git pull --rebase` untuk menyinkronkan *repository* lokal dengan GitHub, serta melakukan *force push* ke PWS.
   3. **Pemahaman Infrastruktur Deployment:** Menjelaskan cara kerja server yang bersifat *ephemeral* (sementara) pada PWS yang menyebabkan data `db.sqlite3` mereset setelah *redeployment*.
   4. **Bug Dalam Implementasi Kode:** Terdapat bug dimana header tidak berubah warna ketika menjalankan mode dark sehingga meminta bantuan AI untuk menganalisis letak error dari kode tersebut.
+
+### Tugas 3
+
+1. **Mengapa menggunakan ModelForm dan {% csrf_token %}:**
+   - **ModelForm:** Kita menggunakan ModelForm pada Django alih-alih form HTML manual karena ModelForm secara otomatis menghasilkan form (termasuk validasi dan tipe input HTML) berdasarkan atribut field yang telah kita definisikan di dalam Model. Hal ini mencegah pengulangan penulisan kode (*Don't Repeat Yourself*), membuat penanganan dan validasi data lebih praktis, serta mempermudah penyimpanan data (pembuatan objek) ke *database* dengan aman hanya dengan memanggil metode `.save()`.
+   - **{% csrf_token %}:** Kita diwajibkan menambahkan token ini sebagai bentuk keamanan untuk melindungi dari serangan CSRF (*Cross-Site Request Forgery*). Token yang di-*generate* secara unik oleh server pada form ini berfungsi untuk memastikan bahwa saat ada *request* POST masuk ke server, form tersebut benar-benar di-*submit* dari dalam halaman web kita, dan bukan dipalsukan oleh aplikasi pihak ketiga atau *script* peretas yang mencoba mengeksekusi sesuatu tanpa izin user.
+
+2. **Mengapa JSON lebih disukai dibandingkan XML:**
+   - JSON (*JavaScript Object Notation*) lebih ringan dan format strukturnya (*key-value pair*) jauh lebih ringkas dibandingkan XML yang mengharuskan penulisan tag pembuka dan penutup (seperti HTML).
+   - JSON secara *native* lebih mudah dibaca, di-*parse*, dan digunakan terutama oleh JavaScript, yang merupakan bahasa pemrograman paling banyak dipakai pada pengembangan *frontend* (React, Vue) dan *backend* modern (Node.js).
+   - Karena file JSON lebih kecil dari XML (berkat efisiensi strukturnya), JSON membutuhkan bandwidth yang lebih sedikit dan mempercepat perpindahan transfer data via internet (proses respon API).
+
+3. **Alur fungsi view mengembalikan data JSON dan pentingnya proses serialization:**
+   - **Alur yang terjadi:** Ketika pengguna atau klien mengakses URL tertentu, Django akan meneruskan *request* ke fungsi *view*. *View* akan mengambil objek data (mengirim *query* ke database) dari Model (misalnya `Portofolio.objects.all()`). Data hasil *query* tersebut kemudian akan dimasukkan ke fungsi serializer untuk dikonversikan ke dalam format data bawaan seperti XML atau JSON. Kemudian, view akan mereturn hasil output serialisasi tadi dibungkus oleh `HttpResponse` (dengan mendeklarasikan `content_type="application/json"`) agar diubah menjadi respon HTTP yang bisa dibaca klien.
+   - **Mengapa perlu serialization:** Data hasil pengambilan dari *database* via Django Model (*QuerySet*) adalah tipe objek kompleks milik bahasa Python. Klien (seperti *browser* atau aplikasi eksternal) tidak akan mengerti objek kompleks Python tersebut. Proses *serialization* berfungsi sebagai penterjemah atau jembatan untuk mengonversi data berupa objek Python kompleks tersebut ke dalam tipe data *native* Python sederhana (seperti *dictionary*, *list*, integer, *string*) yang mana selanjutnya dapat dengan mudah direpresentasikan (di-render) menjadi string format JSON biasa.
+
+### AI Disclosure
+
+Dalam pengerjaan tugas dan eksplorasi proyek ini, saya menggunakan **Antigravity (Gemini AI Coding Assistant)** yang terintegrasi di dalam *code editor* dengan rincian sebagai berikut:
+
+- **Alat yang Digunakan:** Antigravity (powered by Google Gemini), Claude.ai, gemini.google.
+- **Strategi Prompting:** 
+  1. Memberikan *copy-paste* pesan *error* langsung dari terminal atau browser (contoh: *error* CSRF dan *error* Git *reject*) agar AI dapat menganalisis penyebab teknis secara spesifik.
+  2. Memberikan instruksi pertanyaan deskriptif (misal: "apakah nanti setelah saya commit lagi dan redeploy akan reset lagi datanya") untuk memahami alur kerja di sistem *production* PWS.
+- **Bagian Spesifik yang Dibantu oleh AI:**
+  1. **Debugging Django:** Menemukan dan memperbaiki error 403 CSRF dengan menambahkan URL PWS ke dalam `CSRF_TRUSTED_ORIGINS` di `settings.py`.
+  2. **Manajemen Git:** Menyelesaikan konflik saat `git push` dengan menggunakan `git pull --rebase` untuk menyinkronkan *repository* lokal dengan GitHub, serta melakukan *force push* ke PWS.
+  3. **Pemahaman Infrastruktur Deployment:** Menjelaskan cara kerja server yang bersifat *ephemeral* (sementara) pada PWS yang menyebabkan data `db.sqlite3` mereset setelah *redeployment*.
+  4. **Bug Dalam Implementasi Kode:** Terdapat bug dimana header tidak berubah warna ketika menjalankan mode dark sehingga meminta bantuan AI untuk menganalisis letak error dari kode tersebut.
