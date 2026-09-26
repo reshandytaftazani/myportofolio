@@ -1,3 +1,5 @@
+from django.core.exceptions import PermissionDenied
+import datetime
 import os
 from django.contrib import messages
 from django.core import serializers
@@ -5,7 +7,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
 from django.core.mail import send_mail
 from django.conf import settings
@@ -13,6 +15,7 @@ from main.models import Experience, Skill, Education, Project, TechStack, Contac
 from main.forms import ExperienceForm, SkillForm, EducationForm, ProjectForm, TechStackForm, ContactMessageForm
 
 def show_main(request):
+    last_login = request.COOKIES.get('last_login', 'Belum ada sesi login / Cookie tidak ditemukan')
     educations = Education.objects.all()
     tech_stacks = TechStack.objects.all()
     
@@ -43,6 +46,7 @@ def show_main(request):
         "name": "Reshandy Taftazani Aulya",
         "npm": "2506547651",
         "study_program": "S1 Ilmu Komputer",
+        "last_login": last_login,
         "bio": (
             "CS student at Universitas Indonesia."
         ),
@@ -69,6 +73,8 @@ def show_skills(request):
 
 @login_required(login_url='/login/')
 def create_experience(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     form = ExperienceForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -84,6 +90,8 @@ def create_experience(request):
 
 @login_required(login_url='/login/')
 def edit_experience(request, id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     experience = get_object_or_404(Experience, pk=id)
     form = ExperienceForm(request.POST or None, instance=experience)
 
@@ -101,6 +109,8 @@ def edit_experience(request, id):
 
 @login_required(login_url='/login/')
 def create_skill(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     form = SkillForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -116,6 +126,8 @@ def create_skill(request):
 
 @login_required(login_url='/login/')
 def create_education(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     form = EducationForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -172,6 +184,8 @@ def show_projects(request):
 
 @login_required(login_url='/login/')
 def create_project(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     form = ProjectForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -192,11 +206,13 @@ def get_projects_json(request):
     if title_query:
         projects = projects.filter(title__icontains=title_query)
 
-    projects_json = serializers.serialize("json", projects)
+    projects_json = serializers.serialize("json", projects, use_natural_foreign_keys=True)
     return HttpResponse(projects_json, content_type="application/json")
 
 @login_required(login_url='/login/')
 def delete_project(request, project_id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     project = get_object_or_404(Project, pk=project_id)
 
     if request.method == "POST":
@@ -206,31 +222,45 @@ def delete_project(request, project_id):
 
     return redirect("main:dashboard")
 
-def login_user(request):
-    if request.user.is_authenticated:
-        return redirect('main:dashboard')
+def register(request):
+    form = UserCreationForm(request.POST or None)
 
-    if request.method == 'POST':
-        form = AuthenticationForm(data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            messages.success(request, f"Welcome back, {user.username}!")
-            return redirect('main:dashboard')
-        else:
-            messages.error(request, "Invalid username or password.")
-    else:
-        form = AuthenticationForm()
-        
-    return render(request, 'login.html', {'form': form, 'name': 'Reshandy'})
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Akun berhasil dibuat. Silakan login.")
+        return redirect("main:login")
+
+    context = {
+        "name": "Reshandy Taftazani Aulya",
+        "form": form,
+    }
+    return render(request, "register.html", context)
+
+def login_user(request):
+    form = AuthenticationForm(request, data=request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        login(request, form.get_user())
+        response = redirect("main:show_main")
+        response.set_cookie('last_login', datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        return response
+
+    context = {
+        "name": "Reshandy Taftazani Aulya",
+        "form": form,
+    }
+    return render(request, "login.html", context)
 
 def logout_user(request):
     logout(request)
-    messages.success(request, "You have been logged out.")
-    return redirect('main:show_main')
+    response = redirect('main:show_main')
+    response.delete_cookie('last_login')
+    return response
 
 @login_required(login_url='/login/')
 def show_dashboard(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     context = {
         "name": "Reshandy",
         "experiences": Experience.objects.all(),
@@ -243,6 +273,8 @@ def show_dashboard(request):
 
 @login_required(login_url='/login/')
 def delete_experience(request, id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     experience = get_object_or_404(Experience, pk=id)
     if request.method == "POST":
         experience.delete()
@@ -251,6 +283,8 @@ def delete_experience(request, id):
 
 @login_required(login_url='/login/')
 def delete_skill(request, id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     skill = get_object_or_404(Skill, pk=id)
     if request.method == "POST":
         skill.delete()
@@ -259,12 +293,16 @@ def delete_skill(request, id):
 
 @login_required(login_url='/login/')
 def delete_education(request, id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     education = get_object_or_404(Education, pk=id)
     if request.method == "POST":
         education.delete()
         messages.success(request, "Education berhasil dihapus!")
 @login_required(login_url='/login/')
 def edit_project(request, id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     project = get_object_or_404(Project, pk=id)
     form = ProjectForm(request.POST or None, instance=project)
     
@@ -282,6 +320,8 @@ def edit_project(request, id):
 
 @login_required(login_url='/login/')
 def edit_skill(request, id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     skill = get_object_or_404(Skill, pk=id)
     form = SkillForm(request.POST or None, instance=skill)
     
@@ -299,6 +339,8 @@ def edit_skill(request, id):
 
 @login_required(login_url='/login/')
 def edit_education(request, id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     education = get_object_or_404(Education, pk=id)
     form = EducationForm(request.POST or None, instance=education)
     
@@ -316,6 +358,8 @@ def edit_education(request, id):
 
 @login_required(login_url='/login/')
 def create_tech_stack(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     form = TechStackForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -329,6 +373,8 @@ def create_tech_stack(request):
 
 @login_required(login_url='/login/')
 def edit_tech_stack(request, id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     tech = get_object_or_404(TechStack, pk=id)
     form = TechStackForm(request.POST or None, instance=tech)
     if request.method == "POST" and form.is_valid():
@@ -344,6 +390,8 @@ def edit_tech_stack(request, id):
 
 @login_required(login_url='/login/')
 def delete_tech_stack(request, id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     tech = get_object_or_404(TechStack, pk=id)
     if request.method == "POST":
         tech.delete()
@@ -352,16 +400,68 @@ def delete_tech_stack(request, id):
 
 def get_experience_json(request):
     data = Experience.objects.all()
-    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+    return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
 
 def get_skills_json(request):
     data = Skill.objects.all()
-    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+    return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
 
 def get_education_json(request):
     data = Education.objects.all()
-    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+    return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
 
 def get_tech_stack_json(request):
     data = TechStack.objects.all()
-    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+    return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
+@login_required(login_url="/login/")
+def toggle_star_project(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+    if request.method == "POST":
+        if request.user in project.starred_by.all():
+            project.starred_by.remove(request.user)
+        else:
+            project.starred_by.add(request.user)
+    return redirect("main:show_projects")
+
+@login_required(login_url="/login/")
+def toggle_star_experience(request, id):
+    exp = get_object_or_404(Experience, pk=id)
+    if request.method == "POST":
+        if request.user in exp.starred_by.all():
+            exp.starred_by.remove(request.user)
+        else:
+            exp.starred_by.add(request.user)
+    return redirect("main:show_experience")
+
+@login_required(login_url="/login/")
+def toggle_star_skill(request, id):
+    skill = get_object_or_404(Skill, pk=id)
+    if request.method == "POST":
+        if request.user in skill.starred_by.all():
+            skill.starred_by.remove(request.user)
+        else:
+            skill.starred_by.add(request.user)
+    return redirect("main:show_skills")
+
+@login_required(login_url="/login/")
+def toggle_star_education(request, id):
+    edu = get_object_or_404(Education, pk=id)
+    if request.method == "POST":
+        if request.user in edu.starred_by.all():
+            edu.starred_by.remove(request.user)
+        else:
+            edu.starred_by.add(request.user)
+    return redirect("main:show_main")
+
+@login_required(login_url="/login/")
+def toggle_star_tech_stack(request, id):
+    ts = get_object_or_404(TechStack, pk=id)
+    if request.method == "POST":
+        if request.user in ts.starred_by.all():
+            ts.starred_by.remove(request.user)
+        else:
+            ts.starred_by.add(request.user)
+    return redirect("main:show_main")
+
+
+

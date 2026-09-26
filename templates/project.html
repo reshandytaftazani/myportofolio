@@ -49,6 +49,7 @@
                             <div class="experience-description">{{ project.description|markdown|safe }}</div>
                             <div class="project-card-actions">
                                 <div class="project-actions">
+                                    {% include "components/project_star.html" with project=project %}
                                     {% if project.project_url %}
                                         <a href="{{ project.project_url }}" target="_blank" rel="noopener noreferrer" class="button">Lihat Project ↗</a>
                                     {% endif %}
@@ -215,3 +216,4 @@
         });
     </script>
 {% endblock content %}
+

@@ -33,6 +33,7 @@
                     <div id="skill-{{ forloop.counter }}" class="tab-panel {% if forloop.first %}active{% endif %}">
                         <div class="skill-details">
                             <span class="experience-category">{{ skill.level }}</span>
+                            {% include "components/skill_star.html" with skill=skill %}
                             <h3>{{ skill.title }}</h3>
                             <div>{{ skill.description|markdown|safe }}</div>
 

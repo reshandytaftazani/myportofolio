@@ -1,32 +1,32 @@
 {% extends "base.html" %}
 {% block meta %}
-    <title>Login - {{ name }}</title>
+    <title>Register - {{ name }}</title>
 {% endblock meta %}
 {% block content %}
     <main>
         <section class="experience-section">
             <div class="container">
-                <h1>Login</h1>
-                {% for message in messages %}
-                    <p class="form-message">{{ message }}</p>
-                {% endfor %}
-                <form method="post" action="{% url 'main:login' %}" class="project-form">
+                <h1>Buat Akun</h1>
+                <form method="post" action="{% url 'main:register' %}" class="project-form">
                     {% csrf_token %}
+                    {% for error in form.non_field_errors %}
+                        <p class="form-error">{{ error }}</p>
+                    {% endfor %}
                     {% for field in form %}
                         <div class="form-group">
                             <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                             {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-help">{{ field.help_text }}</div>
+                            {% endif %}
                             {% for error in field.errors %}
                                 <p class="form-error">{{ error }}</p>
                             {% endfor %}
                         </div>
                     {% endfor %}
-                    {% for error in form.non_field_errors %}
-                        <p class="form-error">{{ error }}</p>
-                    {% endfor %}
-                    <button type="submit" class="button">Login</button>
+                    <button type="submit" class="button">Daftar</button>
                 </form>
-                <p>Belum punya akun? <a href="{% url 'main:register' %}">Daftar di sini</a>.</p>
+                <p>Sudah punya akun? <a href="{% url 'main:login' %}">Login di sini</a>.</p>
             </div>
         </section>
     </main>
