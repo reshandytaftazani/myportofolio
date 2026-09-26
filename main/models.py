@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.contrib.auth.models import User
 
 class Experience(models.Model):
     EXPERIENCE_CHOICES = [
@@ -21,9 +22,10 @@ class Experience(models.Model):
     thumbnail = models.URLField(blank=True, null=True)
     started_at = models.DateField(null=True, blank=True)
     ended_at = models.DateField(blank=True, null=True)
+    starred_by = models.ManyToManyField(User, related_name='starred_experiences', blank=True)
     def __str__(self):
         return self.title
-    
+
     @property
     def is_ongoing(self):
         return self.ended_at is None
@@ -34,6 +36,7 @@ class Skill(models.Model):
     description = models.TextField()
     level = models.CharField(max_length=50) 
     code_snippet = models.TextField(blank=True, null=True)
+    starred_by = models.ManyToManyField(User, related_name='starred_skills', blank=True)
     
     def __str__(self):
         return self.title
@@ -43,6 +46,7 @@ class Education(models.Model):
     period = models.CharField(max_length=50) 
     detail = models.CharField(max_length=255)
     start_year = models.IntegerField()
+    starred_by = models.ManyToManyField(User, related_name='starred_educations', blank=True)
 
     class Meta:
         ordering = ['-start_year']
@@ -66,6 +70,7 @@ class Project(models.Model):
     tags = models.ManyToManyField(Tag, blank=True)
     project_url = models.URLField(blank=True)
     project_image_url = models.URLField(blank=True, max_length=500)
+    starred_by = models.ManyToManyField(User, related_name='starred_projects', blank=True)
 
     def __str__(self):
         return self.title
@@ -76,6 +81,7 @@ class TechStack(models.Model):
     filename = models.CharField(max_length=50, help_text="Nama file untuk Mac UI (contoh: script.py)")
     code_snippet = models.TextField(help_text="Contoh kode program")
     order = models.IntegerField(default=0, help_text="Urutan tampilan di halaman")
+    starred_by = models.ManyToManyField(User, related_name='starred_techstacks', blank=True)
 
     class Meta:
         ordering = ['order']

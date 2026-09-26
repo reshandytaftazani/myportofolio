@@ -21,9 +21,14 @@
                         <dt>NPM</dt>
                         <dd>{{ npm }}</dd>
                     </div>
+                    
                     <div class="meta-row">
                         <dt>Program</dt>
                         <dd>{{ study_program }}</dd>
+                    </div>
+                    <div class="meta-row">
+                        <dt>Sesi Terakhir Login</dt>
+                        <dd>{{ last_login }}</dd>
                     </div>
                 </dl>
                 <div class="social-links">
@@ -78,6 +83,7 @@
                      data-aos="fade-up">
                     <img src="{{ tech.icon_url }}" alt="{{ tech.name }}" class="tech-icon">
                     <span>{{ tech.name }}</span>
+                    {% include "components/techstack_star.html" with tech=tech %}
                 </div>
                 {% empty %}
                     <div class="empty-state-card" style="grid-column: 1 / -1;">
@@ -109,6 +115,7 @@
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <span class="timeline-date">{{ edu.period }}</span>
+                            {% include "components/education_star.html" with edu=edu %}
                             <h3 class="timeline-school">{{ edu.school_name }}</h3>
                             <p class="timeline-detail">{{ edu.detail }}</p>
                         </div>
@@ -244,3 +251,6 @@
         });
     </script>
 {% endblock content %}
+
+
+
