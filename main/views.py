@@ -42,6 +42,7 @@ def show_main(request):
     else:
         form = ContactMessageForm()
 
+    is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
     context = {
         "name": "Reshandy Taftazani Aulya",
         "npm": "2506547651",
@@ -53,21 +54,26 @@ def show_main(request):
         'education_list': educations,
         'tech_stacks': tech_stacks,
         'contact_form': form,
+        'is_editor': is_editor,
     }
     return render(request, "index.html", context)
 
 
 def show_experience(request):
+    is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
     context = {
         "name": "Reshandy",
         "experience_list": Experience.objects.all(),
+        "is_editor": is_editor,
     }
     return render(request, "experience.html", context)
 
 def show_skills(request):
+    is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
     context = {
         "name": "Reshandy",
         "skills": Skill.objects.all(),
+        "is_editor": is_editor,
     }
     return render(request, "skills.html", context)
 
@@ -90,7 +96,7 @@ def create_experience(request):
 
 @login_required(login_url='/login/')
 def edit_experience(request, id):
-    if not request.user.is_superuser:
+    if not (request.user.is_superuser or request.user.groups.filter(name='Editor').exists()):
         raise PermissionDenied
     experience = get_object_or_404(Experience, pk=id)
     form = ExperienceForm(request.POST or None, instance=experience)
@@ -173,12 +179,14 @@ def show_projects(request):
         return JsonResponse({"projects": project_data})
 
     categories = set(p.category for p in projects if p.category)
+    is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
 
     context = {
         "name": "Reshandy",
         "project_list": projects,
         "title_query": title_query,
         "categories": categories,
+        "is_editor": is_editor,
     }
     return render(request, "project.html", context)
 
@@ -259,8 +267,11 @@ def logout_user(request):
 
 @login_required(login_url='/login/')
 def show_dashboard(request):
-    if not request.user.is_superuser:
+    if not (request.user.is_superuser or request.user.groups.filter(name='Editor').exists()):
         raise PermissionDenied
+    
+    is_editor = request.user.groups.filter(name='Editor').exists()
+    
     context = {
         "name": "Reshandy",
         "experiences": Experience.objects.all(),
@@ -268,6 +279,7 @@ def show_dashboard(request):
         "educations": Education.objects.all(),
         "projects": Project.objects.all(),
         "tech_stacks": TechStack.objects.all(),
+        "is_editor": is_editor,
     }
     return render(request, "dashboard.html", context)
 
@@ -301,7 +313,7 @@ def delete_education(request, id):
         messages.success(request, "Education berhasil dihapus!")
 @login_required(login_url='/login/')
 def edit_project(request, id):
-    if not request.user.is_superuser:
+    if not (request.user.is_superuser or request.user.groups.filter(name='Editor').exists()):
         raise PermissionDenied
     project = get_object_or_404(Project, pk=id)
     form = ProjectForm(request.POST or None, instance=project)
@@ -320,7 +332,7 @@ def edit_project(request, id):
 
 @login_required(login_url='/login/')
 def edit_skill(request, id):
-    if not request.user.is_superuser:
+    if not (request.user.is_superuser or request.user.groups.filter(name='Editor').exists()):
         raise PermissionDenied
     skill = get_object_or_404(Skill, pk=id)
     form = SkillForm(request.POST or None, instance=skill)
@@ -339,7 +351,7 @@ def edit_skill(request, id):
 
 @login_required(login_url='/login/')
 def edit_education(request, id):
-    if not request.user.is_superuser:
+    if not (request.user.is_superuser or request.user.groups.filter(name='Editor').exists()):
         raise PermissionDenied
     education = get_object_or_404(Education, pk=id)
     form = EducationForm(request.POST or None, instance=education)
@@ -373,7 +385,7 @@ def create_tech_stack(request):
 
 @login_required(login_url='/login/')
 def edit_tech_stack(request, id):
-    if not request.user.is_superuser:
+    if not (request.user.is_superuser or request.user.groups.filter(name='Editor').exists()):
         raise PermissionDenied
     tech = get_object_or_404(TechStack, pk=id)
     form = TechStackForm(request.POST or None, instance=tech)

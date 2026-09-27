@@ -14,7 +14,9 @@
         <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h2>Experience</h2>
+                {% if user.is_superuser %}
                 <a href="{% url 'main:create_experience' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
+                {% endif %}
             </div>
             {% if experiences %}
             <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
@@ -32,10 +34,12 @@
                         <td style="padding: 10px;">{{ exp.company }}</td>
                         <td style="padding: 10px; display: flex; gap: 10px;">
                             <a href="{% url 'main:edit_experience' exp.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
+                            {% if user.is_superuser %}
                             <form method="post" action="{% url 'main:delete_experience' exp.id %}" style="display:inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
                             </form>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -50,7 +54,9 @@
         <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h2>Projects</h2>
+                {% if user.is_superuser %}
                 <a href="{% url 'main:create_project' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
+                {% endif %}
             </div>
             {% if projects %}
             <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
@@ -68,10 +74,12 @@
                         <td style="padding: 10px;">{{ proj.category }}</td>
                         <td style="padding: 10px; display: flex; gap: 10px;">
                             <a href="{% url 'main:edit_project' proj.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
-                            <form method="post" action="{% url 'main:delete_project' proj.id %}">
+                            {% if user.is_superuser %}
+                            <form method="post" action="{% url 'main:delete_project' proj.id %}" style="display:inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
                             </form>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -86,7 +94,9 @@
         <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h2>Skills</h2>
+                {% if user.is_superuser %}
                 <a href="{% url 'main:create_skill' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
+                {% endif %}
             </div>
             {% if skills %}
             <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
@@ -104,10 +114,12 @@
                         <td style="padding: 10px;">{{ skill.level }}</td>
                         <td style="padding: 10px; display: flex; gap: 10px;">
                             <a href="{% url 'main:edit_skill' skill.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
+                            {% if user.is_superuser %}
                             <form method="post" action="{% url 'main:delete_skill' skill.id %}" style="display:inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
                             </form>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -122,7 +134,9 @@
         <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h2>Education</h2>
+                {% if user.is_superuser %}
                 <a href="{% url 'main:create_education' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
+                {% endif %}
             </div>
             {% if educations %}
             <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
@@ -140,10 +154,12 @@
                         <td style="padding: 10px;">{{ edu.period }}</td>
                         <td style="padding: 10px; display: flex; gap: 10px;">
                             <a href="{% url 'main:edit_education' edu.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
+                            {% if user.is_superuser %}
                             <form method="post" action="{% url 'main:delete_education' edu.id %}" style="display:inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
                             </form>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -157,7 +173,9 @@
         <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h2>Tech Stack (Languages)</h2>
+                {% if user.is_superuser %}
                 <a href="{% url 'main:create_tech_stack' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
+                {% endif %}
             </div>
             {% if tech_stacks %}
             <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
@@ -177,10 +195,12 @@
                         <td style="padding: 10px;">{{ tech.order }}</td>
                         <td style="padding: 10px; display: flex; gap: 10px;">
                             <a href="{% url 'main:edit_tech_stack' tech.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
+                            {% if user.is_superuser %}
                             <form method="post" action="{% url 'main:delete_tech_stack' tech.id %}" style="display:inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
                             </form>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

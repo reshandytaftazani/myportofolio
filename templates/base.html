@@ -37,6 +37,9 @@
                     <a href="{% url 'main:show_main' %}#tech-stack" style="--i: 6;">Tools</a>
                     <a href="{% url 'main:show_main' %}#education" style="--i: 7;">Education</a>
                     {% if user.is_authenticated %}
+                        {% if user.is_superuser or is_editor %}
+                            <a href="{% url 'main:dashboard' %}">Dashboard</a>
+                        {% endif %}
                         <span class="nav-user">{{ user.username }}</span>
                         <a href="{% url 'main:logout' %}">Logout</a>
                     {% else %}
