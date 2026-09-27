@@ -174,8 +174,6 @@ def show_projects(request):
                 "project_image_url": p.project_image_url,
                 "tags": tags,
             })
-        import time
-        time.sleep(1) # delay untuk mendemonstrasikan skeleton
         return JsonResponse({"projects": project_data})
 
     categories = set(p.category for p in projects if p.category)
@@ -311,6 +309,8 @@ def delete_education(request, id):
     if request.method == "POST":
         education.delete()
         messages.success(request, "Education berhasil dihapus!")
+    return redirect("main:dashboard")
+
 @login_required(login_url='/login/')
 def edit_project(request, id):
     if not (request.user.is_superuser or request.user.groups.filter(name='Editor').exists()):
