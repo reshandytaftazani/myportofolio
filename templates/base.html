@@ -4,9 +4,9 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="description" content="Portfolio of {{ name }} - Computer Science student at Universitas Indonesia." />
-        <meta property="og:title" content="{{ name }} - Portfolio" />
-        <meta property="og:description" content="Portfolio of {{ name }} - Computer Science student." />
+        <meta name="description" content="Portfolio of {{ owner_name }} - Computer Science student at Universitas Indonesia." />
+        <meta property="og:title" content="{{ owner_name }} - Portfolio" />
+        <meta property="og:description" content="Portfolio of {{ owner_name }} - Computer Science student." />
         <meta property="og:type" content="website" />
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +14,7 @@
         <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
         <link rel="stylesheet" href="/static/css/style.css?v=2">
         <meta name="color-scheme" content="light dark">
-        <title>{% block title %}{{ name }} - Portfolio{% endblock title %}</title>
+        <title>{% block title %}{{ owner_name }} - Portfolio{% endblock title %}</title>
         {% block meta %} {% endblock meta %}
     </head>
 
@@ -92,7 +92,7 @@
 
     <footer class="site-footer">
         <div class="container">
-            <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
+            <p>&copy; 2026 {{ owner_name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
         </div>
     </footer>
 

@@ -5,14 +5,14 @@
         <div class="container hero-grid">
             <div class="hero-identity">
                 <p class="hero-kicker">Computer Science &middot; Universitas Indonesia</p>
-                <h1 id="typewriter-title" data-text="{{ name }}"><span class="typewriter-text"></span><span class="typewriter-cursor"></span></h1>
+                <h1 id="typewriter-title" data-text="{{ owner_name }}"><span class="typewriter-text"></span><span class="typewriter-cursor"></span></h1>
                 <noscript>
-                    <style>#typewriter-title .typewriter-cursor { display: none; } #typewriter-title .typewriter-text::before { content: "{{ name }}"; }</style>
+                    <style>#typewriter-title .typewriter-cursor { display: none; } #typewriter-title .typewriter-text::before { content: "{{ owner_name }}"; }</style>
                 </noscript>
             </div>
             <div class="hero-photo">
                 <div class="photo-block"></div>
-                <img class="avatar" src="/static/img/reshandy.jpeg" alt="Photo of {{ name }}">
+                <img class="avatar" src="/static/img/reshandy.jpeg" alt="Photo of {{ owner_name }}">
             </div>
             <div class="hero-details">
                 <p class="bio">{{ bio }}</p>
@@ -54,7 +54,7 @@
             </div>
             <div class="about-content" data-aos="fade-up" style="max-width: 800px; margin: 0 auto; text-align: center; line-height: 1.8; font-size: 1.1rem; color: var(--text-secondary);">
                 <p>
-                    Hello! I'm <strong>{{ name }}</strong>, a <strong>{{ study_program }}</strong> student with a solid foundation in competitive mathematics as a National Gold Medalist. I bring strong analytical and problem-solving skills to the world of technology, driven by a deep curiosity for how things work.
+                    Hello! I'm <strong>{{ owner_name }}</strong>, a <strong>{{ study_program }}</strong> student with a solid foundation in competitive mathematics as a National Gold Medalist. I bring strong analytical and problem-solving skills to the world of technology, driven by a deep curiosity for how things work.
                 </p>
                 <p style="margin-top: 1.5rem;">
                     My main focus lies in <strong>Artificial Intelligence</strong> and <strong>Machine Learning</strong>. From participating in Google Cloud programs to developing predictive models for environmental data, I am highly passionate about leveraging my quantitative background to build innovative and scalable software solutions.

@@ -44,9 +44,6 @@ def show_main(request):
 
     is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
     context = {
-        "name": "Reshandy Taftazani Aulya",
-        "npm": "2506547651",
-        "study_program": "S1 Ilmu Komputer",
         "last_login": last_login,
         "bio": (
             "CS student at Universitas Indonesia."
@@ -62,7 +59,6 @@ def show_main(request):
 def show_experience(request):
     is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
     context = {
-        "name": "Reshandy",
         "experience_list": Experience.objects.all(),
         "is_editor": is_editor,
     }
@@ -71,7 +67,6 @@ def show_experience(request):
 def show_skills(request):
     is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
     context = {
-        "name": "Reshandy",
         "skills": Skill.objects.all(),
         "is_editor": is_editor,
     }
@@ -89,7 +84,6 @@ def create_experience(request):
         return redirect("main:dashboard")
 
     context = {
-        "name": "Reshandy",
         "form": form,
     }
     return render(request, "experience_form.html", context)
@@ -107,7 +101,6 @@ def edit_experience(request, id):
         return redirect("main:dashboard")
 
     context = {
-        "name": "Reshandy",
         "form": form,
         "is_edit": True,
     }
@@ -125,7 +118,6 @@ def create_skill(request):
         return redirect("main:dashboard")
 
     context = {
-        "name": "Reshandy",
         "form": form,
     }
     return render(request, "skill_form.html", context)
@@ -142,7 +134,6 @@ def create_education(request):
         return redirect("main:dashboard")
 
     context = {
-        "name": "Reshandy",
         "form": form,
     }
     return render(request, "education_form.html", context)
@@ -180,7 +171,6 @@ def show_projects(request):
     is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
 
     context = {
-        "name": "Reshandy",
         "project_list": projects,
         "title_query": title_query,
         "categories": categories,
@@ -200,11 +190,11 @@ def create_project(request):
         return redirect("main:dashboard")
 
     context = {
-        "name": "Reshandy",
         "form": form,
     }
     return render(request, "projects_form.html", context)
 
+@login_required(login_url="/login/")
 def get_projects_json(request):
     title_query = request.GET.get("title", "").strip()
     projects = Project.objects.all()
@@ -228,7 +218,10 @@ def delete_project(request, project_id):
 
     return redirect("main:dashboard")
 
+@login_required(login_url='/login/')
 def register(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     form = UserCreationForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -237,7 +230,6 @@ def register(request):
         return redirect("main:login")
 
     context = {
-        "name": "Reshandy Taftazani Aulya",
         "form": form,
     }
     return render(request, "register.html", context)
@@ -252,7 +244,6 @@ def login_user(request):
         return response
 
     context = {
-        "name": "Reshandy Taftazani Aulya",
         "form": form,
     }
     return render(request, "login.html", context)
@@ -271,7 +262,6 @@ def show_dashboard(request):
     is_editor = request.user.groups.filter(name='Editor').exists()
     
     context = {
-        "name": "Reshandy",
         "experiences": Experience.objects.all(),
         "skills": Skill.objects.all(),
         "educations": Education.objects.all(),
@@ -324,7 +314,6 @@ def edit_project(request, id):
         return redirect("main:dashboard")
         
     context = {
-        "name": "Reshandy",
         "form": form,
         "is_edit": True,
     }
@@ -343,7 +332,6 @@ def edit_skill(request, id):
         return redirect("main:dashboard")
         
     context = {
-        "name": "Reshandy",
         "form": form,
         "is_edit": True,
     }
@@ -362,7 +350,6 @@ def edit_education(request, id):
         return redirect("main:dashboard")
         
     context = {
-        "name": "Reshandy",
         "form": form,
         "is_edit": True,
     }
@@ -378,7 +365,6 @@ def create_tech_stack(request):
         messages.success(request, "Tech Stack baru berhasil ditambahkan!")
         return redirect("main:dashboard")
     context = {
-        "name": "Reshandy",
         "form": form,
     }
     return render(request, "tech_stack_form.html", context)
@@ -394,7 +380,6 @@ def edit_tech_stack(request, id):
         messages.success(request, "Tech Stack berhasil diperbarui!")
         return redirect("main:dashboard")
     context = {
-        "name": "Reshandy",
         "form": form,
         "is_edit": True,
     }
@@ -410,18 +395,22 @@ def delete_tech_stack(request, id):
         messages.success(request, "Tech Stack berhasil dihapus!")
     return redirect("main:dashboard")
 
+@login_required(login_url="/login/")
 def get_experience_json(request):
     data = Experience.objects.all()
     return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
 
+@login_required(login_url="/login/")
 def get_skills_json(request):
     data = Skill.objects.all()
     return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
 
+@login_required(login_url="/login/")
 def get_education_json(request):
     data = Education.objects.all()
     return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
 
+@login_required(login_url="/login/")
 def get_tech_stack_json(request):
     data = TechStack.objects.all()
     return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
