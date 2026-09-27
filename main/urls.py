@@ -1,6 +1,6 @@
 from django.urls import path
 from main.views import (
-    toggle_star_project, toggle_star_experience, toggle_star_skill, toggle_star_education, toggle_star_tech_stack,
+    toggle_star_project,
     show_main, 
     show_experience, 
     show_skills, 
@@ -35,10 +35,10 @@ app_name = 'main'
 
 urlpatterns = [
     path("projects/<uuid:project_id>/star/", toggle_star_project, name="toggle_star_project"),
-    path("experience/<uuid:id>/star/", toggle_star_experience, name="toggle_star_experience"),
-    path("skills/<uuid:id>/star/", toggle_star_skill, name="toggle_star_skill"),
-    path("education/<int:id>/star/", toggle_star_education, name="toggle_star_education"),
-    path("techstack/<int:id>/star/", toggle_star_tech_stack, name="toggle_star_tech_stack"),
+
+
+
+
     path('', show_main, name='show_main'),
     path('experience/', show_experience, name='show_experience'),
     path('skills/', show_skills, name='show_skills'),

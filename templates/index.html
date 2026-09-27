@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
     <section class="hero animate-fade-in" id="profile">
@@ -27,8 +28,8 @@
                         <dd>{{ study_program }}</dd>
                     </div>
                     <div class="meta-row">
-                        <dt>Sesi Terakhir Login</dt>
-                        <dd>{{ last_login }}</dd>
+                        <dt>Location</dt>
+                        <dd>Depok, Indonesia</dd>
                     </div>
                 </dl>
                 <div class="social-links">
@@ -41,7 +42,7 @@
                     <a href="mailto:reshandytaftazaniaulya@gmail.com" class="social-link" aria-label="Email">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                     </a>
-                    <a href="/static/Reshandy_s_CV-1.pdf" class="button" target="_blank">Unduh CV</a>
+                    <a href="{% static 'Reshandy_s_CV-1.pdf' %}" class="button" target="_blank" rel="noopener">Unduh CV</a>
                 </div>
             </div>
         </div>
@@ -83,7 +84,7 @@
                      data-aos="fade-up">
                     <img src="{{ tech.icon_url }}" alt="{{ tech.name }}" class="tech-icon">
                     <span>{{ tech.name }}</span>
-                    {% include "components/techstack_star.html" with tech=tech %}
+
                 </div>
                 {% empty %}
                     <div class="empty-state-card" style="grid-column: 1 / -1;">
@@ -115,7 +116,7 @@
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <span class="timeline-date">{{ edu.period }}</span>
-                            {% include "components/education_star.html" with edu=edu %}
+
                             <h3 class="timeline-school">{{ edu.school_name }}</h3>
                             <p class="timeline-detail">{{ edu.detail }}</p>
                         </div>

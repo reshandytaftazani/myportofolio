@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% load markdown_extras %}
 
 {% block title %}Experience - {{ owner_name }}{% endblock title %}
@@ -18,8 +18,8 @@
         {% if experience_list %}
         <div class="timeline-container">
             {% for experience in experience_list %}
-                <div class="timeline-item" data-aos="fade-up">
-                    <div class="timeline-dot"></div>
+                <div class="exp-timeline-item" data-aos="fade-up">
+                    <div class="exp-timeline-dot"></div>
                     
                     <article class="timeline-card">
                         <div class="card-header">
@@ -32,7 +32,7 @@
                             <div class="header-info">
                                 <h2 class="experience-title">{{ experience.title }}</h2>
                                 <p class="experience-date">
-                                    {% if experience.company %}{{ experience.company }} • {% endif %}
+                                    {% if experience.company %}{{ experience.company }} â€¢ {% endif %}
                                     {% if experience.started_at %}{{ experience.started_at|date:"M Y" }}{% else %}Unknown{% endif %} - 
                                     {% if experience.is_ongoing %}Present{% else %}{{ experience.ended_at|date:"M Y" }}{% endif %}
                                 </p>
@@ -40,7 +40,7 @@
                         </div>
                         
                         <div class="card-tags">
-                            {% include "components/experience_star.html" with exp=experience %}
+
                             <span class="badge category-badge">
                                 {{ experience.get_category_display|upper }}
                             </span>

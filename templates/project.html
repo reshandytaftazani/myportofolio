@@ -6,7 +6,6 @@
 {% block twitter_title %}Projects | {{ owner_name }} - Portfolio{% endblock %}
 {% block twitter_description %}Lihat proyek-proyek yang telah dikerjakan oleh {{ owner_name }}.{% endblock %}
 {% block content %}
-    <main>
         <section class="experience-section animate-fade-in" id="projects">
             <div class="container">
                 <div class="section-header">
@@ -29,7 +28,7 @@
                 <div class="project-filters" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; overflow-x: auto; padding-bottom: 0.5rem;">
                     <button class="button project-filter-btn active" data-filter="all" style="white-space: nowrap; transition: all 0.3s ease;">All</button>
                     {% for cat in categories %}
-                        <button class="button project-filter-btn" data-filter="{{ cat }}" style="white-space: nowrap; background: var(--surface); color: var(--text); transition: all 0.3s ease;">{{ cat }}</button>
+                        <button class="button project-filter-btn project-filter-btn--inactive" data-filter="{{ cat }}" style="white-space: nowrap; transition: all 0.3s ease;">{{ cat }}</button>
                     {% endfor %}
                 </div>
                 
@@ -70,7 +69,6 @@
                 </div>
             </div>
         </section>
-    </main>
 
     <script>
         function createSkeleton() {
@@ -160,12 +158,10 @@
             // Reset active category filter to 'all'
             document.querySelectorAll(".project-filter-btn").forEach(b => {
                 b.classList.remove("active");
-                b.style.background = "var(--surface)";
-                b.style.color = "var(--text)";
+                b.classList.add("project-filter-btn--inactive");
             });
+            document.querySelector('.project-filter-btn[data-filter="all"]').classList.remove("project-filter-btn--inactive");
             document.querySelector('.project-filter-btn[data-filter="all"]').classList.add("active");
-            document.querySelector('.project-filter-btn[data-filter="all"]').style.background = "";
-            document.querySelector('.project-filter-btn[data-filter="all"]').style.color = "";
         }
 
         function initFilters() {
@@ -180,12 +176,10 @@
                 newBtn.addEventListener("click", function () {
                     document.querySelectorAll(".project-filter-btn").forEach(b => {
                         b.classList.remove("active");
-                        b.style.background = "var(--surface)";
-                        b.style.color = "var(--text)";
+                        b.classList.add("project-filter-btn--inactive");
                     });
+                    this.classList.remove("project-filter-btn--inactive");
                     this.classList.add("active");
-                    this.style.background = "";
-                    this.style.color = "";
 
                     const filterValue = this.getAttribute("data-filter");
                     let visibleCount = 0;

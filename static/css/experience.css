@@ -1,4 +1,4 @@
-.timeline-container {
+﻿.timeline-container {
     position: relative;
     max-width: 900px;
     margin: 40px auto;
@@ -15,13 +15,13 @@
     background: #e0e0e0;
 }
 
-.timeline-item {
+.exp-timeline-item {
     position: relative;
     margin-bottom: 40px;
     width: 100%;
 }
 
-.timeline-dot {
+.exp-timeline-dot {
     position: absolute;
     left: -22px; /* default for mobile */
     top: 20px;
@@ -35,7 +35,7 @@
     transition: transform 0.3s ease;
 }
 
-.timeline-item:hover .timeline-dot {
+.exp-timeline-item:hover .exp-timeline-dot {
     transform: scale(1.3);
 }
 
@@ -150,7 +150,7 @@
         transform: translateX(-50%);
     }
 
-    .timeline-item {
+    .exp-timeline-item {
         display: flex;
         justify-content: flex-end;
         padding-right: calc(50% + 40px);
@@ -159,7 +159,7 @@
         box-sizing: border-box;
     }
 
-    .timeline-item:nth-child(even) {
+    .exp-timeline-item:nth-child(even) {
         justify-content: flex-start;
         padding-right: 0;
         padding-left: calc(50% + 40px);
@@ -184,7 +184,7 @@
         font-size: 1.3rem;
     }
 
-    .timeline-dot {
+    .exp-timeline-dot {
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
@@ -192,20 +192,20 @@
         height: 16px;
     }
 
-    .timeline-item:hover .timeline-dot {
+    .exp-timeline-item:hover .exp-timeline-dot {
         transform: translate(-50%, -50%) scale(1.3);
     }
 
     /* Style for odd items (left side) */
-    .timeline-item:nth-child(odd) .timeline-card {
+    .exp-timeline-item:nth-child(odd) .timeline-card {
         text-align: right;
     }
     
-    .timeline-item:nth-child(odd) .card-header {
+    .exp-timeline-item:nth-child(odd) .card-header {
         flex-direction: row-reverse;
     }
     
-    .timeline-item:nth-child(odd) .card-tags {
+    .exp-timeline-item:nth-child(odd) .card-tags {
         justify-content: flex-end;
     }
 }
@@ -216,7 +216,7 @@
     background: #333333;
 }
 
-[data-theme="dark"] .timeline-dot {
+[data-theme="dark"] .exp-timeline-dot {
     border-color: #121212; 
 }
 

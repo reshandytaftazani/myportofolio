@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}500 — Server Error{% endblock %}
+{% block content %}
+<section style="padding: 8rem 0; text-align: center;">
+    <div class="container">
+        <h1 style="font-size: 6rem; color: var(--accent); margin-bottom: 0;">500</h1>
+        <h2 style="margin-bottom: 1rem;">Terjadi Kesalahan Server</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">
+            Ada yang tidak beres di server. Silakan coba lagi nanti.
+        </p>
+        <a href="{% url 'main:show_main' %}" class="button">← Kembali ke Beranda</a>
+    </div>
+</section>
+{% endblock %}

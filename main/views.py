@@ -1,4 +1,4 @@
-from django.core.exceptions import PermissionDenied
+﻿from django.core.exceptions import PermissionDenied
 import datetime
 import os
 from django.contrib import messages
@@ -15,13 +15,12 @@ from main.models import Experience, Skill, Education, Project, TechStack, Contac
 from main.forms import ExperienceForm, SkillForm, EducationForm, ProjectForm, TechStackForm, ContactMessageForm
 
 def show_main(request):
-    last_login = request.COOKIES.get('last_login', 'Belum ada sesi login / Cookie tidak ditemukan')
     educations = Education.objects.all()
     tech_stacks = TechStack.objects.all()
     featured_projects = Project.objects.filter(is_featured=True).prefetch_related('tags')[:3]
 
     if request.method == "POST":
-        # Honeypot check — jika field "website" terisi, kemungkinan bot
+        # Honeypot check â€” jika field "website" terisi, kemungkinan bot
         if request.POST.get('website'):
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'status': 'success', 'message': 'Pesan Anda berhasil dikirim!'})
@@ -61,7 +60,6 @@ def show_main(request):
 
     is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
     context = {
-        "last_login": last_login,
         "bio": (
             "CS student at Universitas Indonesia."
         ),
@@ -442,45 +440,13 @@ def toggle_star_project(request, project_id):
             project.starred_by.add(request.user)
     return redirect("main:show_projects")
 
-@login_required(login_url="/login/")
-def toggle_star_experience(request, id):
-    exp = get_object_or_404(Experience, pk=id)
-    if request.method == "POST":
-        if request.user in exp.starred_by.all():
-            exp.starred_by.remove(request.user)
-        else:
-            exp.starred_by.add(request.user)
-    return redirect("main:show_experience")
 
-@login_required(login_url="/login/")
-def toggle_star_skill(request, id):
-    skill = get_object_or_404(Skill, pk=id)
-    if request.method == "POST":
-        if request.user in skill.starred_by.all():
-            skill.starred_by.remove(request.user)
-        else:
-            skill.starred_by.add(request.user)
-    return redirect("main:show_skills")
 
-@login_required(login_url="/login/")
-def toggle_star_education(request, id):
-    edu = get_object_or_404(Education, pk=id)
-    if request.method == "POST":
-        if request.user in edu.starred_by.all():
-            edu.starred_by.remove(request.user)
-        else:
-            edu.starred_by.add(request.user)
-    return redirect("main:show_main")
 
-@login_required(login_url="/login/")
-def toggle_star_tech_stack(request, id):
-    ts = get_object_or_404(TechStack, pk=id)
-    if request.method == "POST":
-        if request.user in ts.starred_by.all():
-            ts.starred_by.remove(request.user)
-        else:
-            ts.starred_by.add(request.user)
-    return redirect("main:show_main")
+
+
+
+
 
 
 

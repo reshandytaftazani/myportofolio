@@ -1,4 +1,4 @@
-html {
+﻿html {
     scroll-behavior: smooth;
 }
 
@@ -28,7 +28,7 @@ img {
 }
 
 html, body {
-    overflow-x: hidden;
+    overflow-x: clip;
     width: 100%;
 }
 
@@ -71,6 +71,7 @@ h1, .brand {
 
 .site-header {
     border-bottom: 1px solid var(--line);
+    position: -webkit-sticky;
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -1324,13 +1325,72 @@ body, .skill-card, .timeline-content, .experience-card {
  align-items: center;
  gap: 0.4rem;
  background: var(--ink);
+ color: var(--paper);
 }
 .button-star.is-starred {
  background: var(--accent);
+ color: white;
 }
 .star-count {
  padding: 0.05rem 0.4rem;
  border-radius: 999px;
- background: rgba(255, 255, 255, 0.25);
+ background: var(--paper);
+ color: var(--ink);
  font-size: 0.8rem;
 }
+.button-star.is-starred .star-count {
+ background: rgba(255, 255, 255, 0.25);
+ color: white;
+}
+
+/* FASE 4 - Visual & UX Enhancements */
+
+/* VIS-3: Project Filter Inactive State */
+.project-filter-btn--inactive {
+    background: var(--line);
+    color: var(--ink);
+}
+.project-filter-btn.active {
+    background: var(--accent);
+    color: white;
+}
+[data-theme="dark"] .project-filter-btn--inactive {
+    background: #2a2a2a;
+    color: var(--ink);
+}
+
+/* VIS-4: Footer Enhancements */
+.footer-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.footer-nav {
+    display: flex;
+    gap: 1rem;
+}
+.footer-nav a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s ease;
+}
+.footer-nav a:hover { color: var(--accent); }
+.footer-social {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+.footer-social a {
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+}
+.footer-social a:hover { color: var(--accent); }
+@media (max-width: 600px) {
+    .footer-grid { flex-direction: column; text-align: center; }
+    .footer-nav { justify-content: center; flex-wrap: wrap; }
+    .footer-social { justify-content: center; }
+}
+
