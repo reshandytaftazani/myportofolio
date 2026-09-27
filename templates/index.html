@@ -137,6 +137,39 @@
         </div>
     </section>
 
+    <!-- SECTION: Featured Projects -->
+    <section id="featured-projects" class="tech-section">
+        <div class="container">
+            <div class="section-header">
+                <p class="section-subtitle">Showcase</p>
+                <h2 class="section-title">Featured Projects</h2>
+            </div>
+            <div class="experience-grid project-grid" style="margin-bottom: 2rem;">
+                {% for project in featured_projects %}
+                <article class="experience-card" data-aos="fade-up">
+                    {% if project.project_image_url %}
+                    <img src="{{ project.project_image_url }}" alt="{{ project.title }}" class="project-image" style="margin-bottom: 1rem;">
+                    {% endif %}
+                    <h2 style="margin-bottom: 0.5rem;">{{ project.title }}</h2>
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+                        {% for tag in project.tags.all %}
+                        <span style="background-color:{{ tag.color }}20; color:{{ tag.color }}; border:1px solid {{ tag.color }}; padding:0.2rem 0.6rem; border-radius:9999px; font-size:0.8rem; font-weight:600;">{{ tag.name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% if project.project_url %}
+                    <a href="{{ project.project_url }}" target="_blank" rel="noopener noreferrer" class="button" style="margin-top:auto; display:inline-block;">Lihat Project ↗</a>
+                    {% endif %}
+                </article>
+                {% empty %}
+                <p style="text-align:center; color:var(--text-muted); grid-column: 1/-1;">Tandai proyek sebagai featured di Dashboard.</p>
+                {% endfor %}
+            </div>
+            <div style="text-align:center;">
+                <a href="{% url 'main:show_projects' %}" class="button button-secondary">Lihat Semua Proyek →</a>
+            </div>
+        </div>
+    </section>
+
     <!-- SECTION BARU: Contact -->
     <section id="contact" class="tech-section" style="padding-bottom: 5rem;">
         <div class="container">
@@ -146,8 +179,10 @@
             </div>
             
             <div style="max-width: 600px; margin: 0 auto; background: var(--surface); padding: 2rem; border-radius: 12px; border: 1px solid var(--line);" data-aos="fade-up">
-                <form method="post" action="{% url 'main:show_main' %}#contact">
+                <form id="contact-form" method="post" action="{% url 'main:show_main' %}">
                     {% csrf_token %}
+                    <!-- Honeypot: tersembunyi dari manusia, diisi bot -->
+                    <input type="text" name="website" style="display:none; position:absolute; left:-9999px;" tabindex="-1" autocomplete="off">
                     {% for field in contact_form %}
                         <div class="form-group" style="margin-bottom: 1.5rem;">
                             <label for="{{ field.id_for_label }}" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">{{ field.label }}</label>
@@ -162,6 +197,61 @@
             </div>
         </div>
     </section>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const contactForm = document.getElementById('contact-form');
+        if (!contactForm) return;
+
+        contactForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = contactForm.querySelector('button[type="submit"]');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Mengirim...';
+
+            const formData = new FormData(contactForm);
+            try {
+                const response = await fetch(contactForm.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData,
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    showToast(data.message, 'success');
+                    contactForm.reset();
+                } else {
+                    const firstError = Object.values(data.errors || {})[0]?.[0];
+                    showToast(firstError || 'Terjadi kesalahan. Coba lagi.', 'error');
+                }
+            } catch (err) {
+                showToast('Gagal mengirim pesan. Coba lagi.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.cssText = [
+                'position:fixed', 'bottom:2rem', 'right:2rem', 'z-index:99999',
+                'padding:1rem 1.5rem', 'border-radius:8px', 'font-weight:600',
+                'background:' + (type === 'success' ? 'var(--accent)' : '#b42318'),
+                'color:white', 'box-shadow:0 4px 16px rgba(0,0,0,0.2)',
+                'transition:opacity 0.3s ease', 'max-width:320px'
+            ].join(';');
+            document.body.appendChild(toast);
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 4000);
+        }
+    });
+    </script>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {

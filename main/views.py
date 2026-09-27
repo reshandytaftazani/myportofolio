@@ -18,8 +18,16 @@ def show_main(request):
     last_login = request.COOKIES.get('last_login', 'Belum ada sesi login / Cookie tidak ditemukan')
     educations = Education.objects.all()
     tech_stacks = TechStack.objects.all()
-    
+    featured_projects = Project.objects.filter(is_featured=True).prefetch_related('tags')[:3]
+
     if request.method == "POST":
+        # Honeypot check — jika field "website" terisi, kemungkinan bot
+        if request.POST.get('website'):
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'success', 'message': 'Pesan Anda berhasil dikirim!'})
+            messages.success(request, "Pesan Anda berhasil dikirim!")
+            return redirect('main:show_main')
+
         form = ContactMessageForm(request.POST)
         if form.is_valid():
             contact = form.save()
@@ -31,14 +39,23 @@ def show_main(request):
                     subject,
                     message,
                     settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'webmaster@localhost',
-                    ['admin@myportofolio.com'], # You can change this to actual admin email
+                    [os.getenv('CONTACT_RECIPIENT_EMAIL', 'admin@myportofolio.com')],
                     fail_silently=True,
                 )
             except Exception as e:
                 print(e)
-            
+
+            # AJAX response
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'success', 'message': 'Pesan Anda berhasil dikirim!'})
+
             messages.success(request, "Pesan Anda berhasil dikirim!")
             return redirect('main:show_main')
+        else:
+            # AJAX error response
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                errors = {field: [str(e) for e in errs] for field, errs in form.errors.items()}
+                return JsonResponse({'status': 'error', 'errors': errors}, status=400)
     else:
         form = ContactMessageForm()
 
@@ -52,6 +69,7 @@ def show_main(request):
         'tech_stacks': tech_stacks,
         'contact_form': form,
         'is_editor': is_editor,
+        'featured_projects': featured_projects,
     }
     return render(request, "index.html", context)
 

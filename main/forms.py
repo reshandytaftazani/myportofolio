@@ -159,6 +159,7 @@ class ProjectForm(ModelForm):
             "tags",
             "project_url",
             "project_image_url",
+            "is_featured",
         ]
 
         labels = {
@@ -168,6 +169,7 @@ class ProjectForm(ModelForm):
             "tags": "Tags",
             "project_url": "URL Proyek",
             "project_image_url": "URL Gambar Proyek",
+            "is_featured": "Tampilkan di Beranda (Featured)",
         }
 
         widgets = {

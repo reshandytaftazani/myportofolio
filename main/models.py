@@ -70,6 +70,7 @@ class Project(models.Model):
     tags = models.ManyToManyField(Tag, blank=True)
     project_url = models.URLField(blank=True)
     project_image_url = models.URLField(blank=True, max_length=500)
+    is_featured = models.BooleanField(default=False, help_text="Tampilkan di halaman utama sebagai Featured Project")
     starred_by = models.ManyToManyField(User, related_name='starred_projects', blank=True)
 
     def __str__(self):

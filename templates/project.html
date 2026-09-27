@@ -1,8 +1,10 @@
 {% extends "base.html" %}
 {% load markdown_extras %}
-{% block meta %}
-    <title>Projects - {{ owner_name }}</title>
-{% endblock meta %}
+{% block title %}Projects - {{ owner_name }}{% endblock %}
+{% block og_title %}Projects | {{ owner_name }} - Portfolio{% endblock %}
+{% block og_description %}Lihat proyek-proyek yang telah dikerjakan oleh {{ owner_name }}, mahasiswa Ilmu Komputer Universitas Indonesia.{% endblock %}
+{% block twitter_title %}Projects | {{ owner_name }} - Portfolio{% endblock %}
+{% block twitter_description %}Lihat proyek-proyek yang telah dikerjakan oleh {{ owner_name }}.{% endblock %}
 {% block content %}
     <main>
         <section class="experience-section animate-fade-in" id="projects">

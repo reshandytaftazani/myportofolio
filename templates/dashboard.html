@@ -64,6 +64,7 @@
                     <tr style="border-bottom: 2px solid var(--line); text-align: left;">
                         <th style="padding: 10px;">Title</th>
                         <th style="padding: 10px;">Category</th>
+                        <th style="padding: 10px; text-align:center;">Featured</th>
                         <th style="padding: 10px; width: 200px;">Actions</th>
                     </tr>
                 </thead>
@@ -72,6 +73,7 @@
                     <tr style="border-bottom: 1px solid var(--line);">
                         <td style="padding: 10px;">{{ proj.title }}</td>
                         <td style="padding: 10px;">{{ proj.category }}</td>
+                        <td style="padding: 10px; text-align:center;">{% if proj.is_featured %}✅{% else %}—{% endif %}</td>
                         <td style="padding: 10px; display: flex; gap: 10px;">
                             <a href="{% url 'main:edit_project' proj.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
                             {% if user.is_superuser %}
