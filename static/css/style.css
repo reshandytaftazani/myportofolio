@@ -1,4 +1,4 @@
-﻿html {
+html {
     scroll-behavior: smooth;
 }
 
@@ -23,6 +23,7 @@ img {
     --accent-dark: #a8442a;
     --line: #e3d9c9;
     --text-muted: #6b6459;
+    --surface: #f3ede3;
     --radius: 4px;
     color-scheme: light;
 }
@@ -703,7 +704,8 @@ h1, .brand {
     --accent: #ff7f59;
     --accent-dark: #ff9d80;
     --line: #333333;  
-    --text-muted: #a3a3a3; 
+    --text-muted: #a3a3a3;
+    --surface: #1a1a1a;
 }
 
 [data-theme="dark"] .skills-section,
@@ -1394,3 +1396,34 @@ body, .skill-card, .timeline-content, .experience-card {
     .footer-social { justify-content: center; }
 }
 
+
+.about-badges {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.about-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 9999px;
+    background: rgba(217, 93, 57, 0.08);
+    border: 1px solid rgba(217, 93, 57, 0.25);
+    color: var(--accent-dark);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+.about-badge:hover {
+    background: rgba(217, 93, 57, 0.15);
+    transform: translateY(-2px);
+}
+[data-theme="dark"] .about-badge {
+    background: rgba(255, 127, 89, 0.1);
+    border-color: rgba(255, 127, 89, 0.3);
+    color: var(--accent);
+}
