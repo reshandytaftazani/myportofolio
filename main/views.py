@@ -234,16 +234,16 @@ def delete_project(request, project_id):
 
     return redirect("main:dashboard")
 
-@login_required(login_url='/login/')
 def register(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied
     form = UserCreationForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Akun berhasil dibuat. Silakan login.")
-        return redirect("main:login")
+        user = form.save()
+        login(request, user)
+        messages.success(request, "Akun berhasil dibuat dan berhasil login.")
+        response = redirect("main:show_main")
+        response.set_cookie('last_login', datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        return response
 
     context = {
         "form": form,
