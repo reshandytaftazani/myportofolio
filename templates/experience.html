@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% load markdown_extras %}
 
 {% block title %}Experience - {{ owner_name }}{% endblock title %}
@@ -32,7 +32,7 @@
                             <div class="header-info">
                                 <h2 class="experience-title">{{ experience.title }}</h2>
                                 <p class="experience-date">
-                                    {% if experience.company %}{{ experience.company }} â€¢ {% endif %}
+                                    {% if experience.company %}{{ experience.company }} &bull; {% endif %}
                                     {% if experience.started_at %}{{ experience.started_at|date:"M Y" }}{% else %}Unknown{% endif %} - 
                                     {% if experience.is_ongoing %}Present{% else %}{{ experience.ended_at|date:"M Y" }}{% endif %}
                                 </p>
