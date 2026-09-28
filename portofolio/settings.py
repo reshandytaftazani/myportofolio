@@ -34,6 +34,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,reshandy-taftaza
 PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 
 if PRODUCTION:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_HSTS_SECONDS = 31536000
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
