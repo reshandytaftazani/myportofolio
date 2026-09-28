@@ -1,4 +1,4 @@
-﻿from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied
 import datetime
 import os
 from django.contrib import messages
@@ -159,7 +159,7 @@ from main.templatetags.markdown_extras import markdown_format
 def show_projects(request):
     title_query = request.GET.get("title", "").strip()
     tag_query = request.GET.get("tag", "").strip()
-    projects = Project.objects.prefetch_related('tags').all()
+    projects = Project.objects.prefetch_related('tags', 'starred_by').all()
     
     if title_query:
         projects = projects.filter(title__icontains=title_query)
@@ -434,10 +434,19 @@ def get_tech_stack_json(request):
 def toggle_star_project(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
     if request.method == "POST":
-        if request.user in project.starred_by.all():
+        is_starred = False  # inisialisasi defensif
+        if project.starred_by.filter(id=request.user.id).exists():
             project.starred_by.remove(request.user)
+            is_starred = False
         else:
             project.starred_by.add(request.user)
+            is_starred = True
+            
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'is_starred': is_starred,
+                'count': project.starred_by.count()
+            })
     return redirect("main:show_projects")
 
 

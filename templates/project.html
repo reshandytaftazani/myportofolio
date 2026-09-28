@@ -211,5 +211,56 @@
             initFilters();
         });
     </script>
+
+    <script>
+        /* REF-1: AJAX Star Toggle — didefinisikan sekali di sini, bukan di tiap komponen */
+        window.handleStarToggle = async function(e, form) {
+            e.preventDefault();
+            const btn = form.querySelector('button');
+            const textSpan = btn.querySelector('span:not(.star-count)');
+            const countSpan = btn.querySelector('.star-count');
+
+            // Loading state — cegah double-click / race condition
+            btn.disabled = true;
+            const prevText = textSpan.textContent;
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData,
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Server error: ' + response.status);
+                }
+
+                const data = await response.json();
+
+                if (data.is_starred) {
+                    btn.classList.add('is-starred');
+                    textSpan.textContent = 'Unstar';
+                } else {
+                    btn.classList.remove('is-starred');
+                    textSpan.textContent = 'Star';
+                }
+                countSpan.textContent = data.count;
+            } catch (error) {
+                console.error("Error toggling star:", error);
+                // Feedback visual ke user — tampilkan teks error sementara
+                textSpan.textContent = 'Error!';
+                setTimeout(() => { textSpan.textContent = prevText; }, 2000);
+            } finally {
+                // Selalu aktifkan kembali tombol setelah selesai
+                btn.disabled = false;
+            }
+        };
+    </script>
 {% endblock content %}
 
