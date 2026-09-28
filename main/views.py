@@ -1,6 +1,7 @@
 from django.core.exceptions import PermissionDenied
 import datetime
 import os
+import logging
 from django.contrib import messages
 from django.core import serializers
 from django.http import HttpResponse, JsonResponse
@@ -13,7 +14,11 @@ from django.core.mail import send_mail
 from django.conf import settings
 from main.models import Experience, Skill, Education, Project, TechStack, ContactMessage
 from main.forms import ExperienceForm, SkillForm, EducationForm, ProjectForm, TechStackForm, ContactMessageForm
+from django_ratelimit.decorators import ratelimit
 
+logger = logging.getLogger('main')
+
+@ratelimit(key='ip', rate='5/m', method='POST', block=True)
 def show_main(request):
     educations = Education.objects.all()
     tech_stacks = TechStack.objects.all()
@@ -34,15 +39,19 @@ def show_main(request):
             subject = f"New Contact Message from {contact.name}"
             message = f"Name: {contact.name}\nEmail: {contact.email}\n\nMessage:\n{contact.message}"
             try:
-                send_mail(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'webmaster@localhost',
-                    [os.getenv('CONTACT_RECIPIENT_EMAIL', 'admin@myportofolio.com')],
-                    fail_silently=True,
-                )
+                recipient = settings.CONTACT_RECIPIENT_EMAIL
+                if recipient:
+                    send_mail(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [recipient],
+                        fail_silently=False,
+                    )
+                else:
+                    logger.warning("CONTACT_RECIPIENT_EMAIL is not set. Contact email was saved to DB but not sent via SMTP.")
             except Exception as e:
-                print(e)
+                logger.error("Gagal mengirim email kontak", exc_info=True)
 
             # AJAX response
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -235,6 +244,10 @@ def delete_project(request, project_id):
     return redirect("main:dashboard")
 
 def register(request):
+    if not settings.ALLOW_PUBLIC_REGISTRATION:
+        messages.error(request, "Registrasi publik saat ini dinonaktifkan.")
+        return redirect("main:show_main")
+
     form = UserCreationForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
