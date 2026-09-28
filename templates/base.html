@@ -17,7 +17,7 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
         <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-        <link rel="stylesheet" href="/static/css/style.css?v=2">
+        <link rel="stylesheet" href="/static/css/style.css?v=7">
         {% block meta %}{% endblock meta %}
         <meta name="color-scheme" content="light dark">
         <title>{% block title %}{{ owner_name }} - Portfolio{% endblock title %}</title>
@@ -34,22 +34,31 @@
 
             <div class="header-right">
                 <nav id="nav-links">
-                    <a href="{% url 'main:show_main' %}" style="--i: 1;">Profile</a>
-                    <a href="{% url 'main:show_main' %}#about" style="--i: 2;">About</a>
-                    <a href="{% url 'main:show_experience' %}" style="--i: 3;">Experience</a>
-                    <a href="{% url 'main:show_skills' %}" style="--i: 4;">Skills</a>
-                    <a href="{% url 'main:show_projects' %}" style="--i: 5;">Projects</a>
-                    <a href="{% url 'main:show_main' %}#tech-stack" style="--i: 6;">Tools</a>
-                    <a href="{% url 'main:show_main' %}#education" style="--i: 7;">Education</a>
+                    <a href="{% url 'main:show_main' %}#about" style="--i: 1;">About</a>
+                    <a href="{% url 'main:show_experience' %}" style="--i: 2;">Experience</a>
+                    <a href="{% url 'main:show_skills' %}" style="--i: 3;">Skills</a>
+                    <a href="{% url 'main:show_projects' %}" style="--i: 4;">Projects</a>
+                    <a href="{% url 'main:show_main' %}#tech-stack" style="--i: 5;">Tools</a>
+                    <a href="{% url 'main:show_main' %}#education" style="--i: 6;">Education</a>
+                    
+                    <div class="nav-divider"></div>
+                    
                     {% if user.is_authenticated %}
-                        {% if user.is_superuser or is_editor %}
-                            <a href="{% url 'main:dashboard' %}">Dashboard</a>
-                        {% endif %}
-                        <span class="nav-user">{{ user.username }}</span>
-                        <a href="{% url 'main:logout' %}">Logout</a>
+                        <div class="user-dropdown">
+                            <button class="user-btn" aria-haspopup="true" aria-expanded="false">
+                                {{ user.username }} 
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px; vertical-align:middle;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                            <div class="user-dropdown-content">
+                                {% if user.is_superuser or is_editor %}
+                                    <a href="{% url 'main:dashboard' %}">Dashboard</a>
+                                {% endif %}
+                                <a href="{% url 'main:logout' %}">Logout</a>
+                            </div>
+                        </div>
                     {% else %}
                         <a href="{% url 'main:login' %}">Login</a>
-                        <a href="{% url 'main:register' %}">Register</a>
+                        <a href="{% url 'main:register' %}" class="register-btn">Register</a>
                     {% endif %}
                 </nav>
 
@@ -167,6 +176,7 @@
 
             menuItems.forEach(link => {
                 link.classList.remove('active');
+                if (link.closest('.user-dropdown-content')) return;
                 const url = new URL(link.href, window.location.origin);
                 
                 if (url.pathname === currentPath) {
@@ -175,7 +185,9 @@
                             link.classList.add('active');
                         }
                     } else {
-                        if (!activeId) {
+                        if (currentPath === '/' && activeId) {
+                            // Do not highlight a root link if a specific section is active
+                        } else {
                             link.classList.add('active');
                         }
                     }
