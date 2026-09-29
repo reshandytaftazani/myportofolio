@@ -7,6 +7,7 @@ from django.core import serializers
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
@@ -167,39 +168,16 @@ from main.templatetags.markdown_extras import markdown_format
 
 def show_projects(request):
     title_query = request.GET.get("title", "").strip()
-    tag_query = request.GET.get("tag", "").strip()
-    projects = Project.objects.prefetch_related('tags', 'starred_by').all()
     
-    if title_query:
-        projects = projects.filter(title__icontains=title_query)
-        
-    if tag_query:
-        projects = projects.filter(tags__slug=tag_query)
-    
-    # Handle AJAX response for Skeleton Loader demo
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax') == '1':
-        project_data = []
-        for p in projects:
-            tags = [{"name": t.name, "color": t.color, "slug": t.slug} for t in p.tags.all()]
-            project_data.append({
-                "id": p.id,
-                "title": p.title,
-                "description": markdown_format(p.description),
-                "category": p.category,
-                "project_url": p.project_url,
-                "project_image_url": p.project_image_url,
-                "tags": tags,
-            })
-        return JsonResponse({"projects": project_data})
-
-    categories = set(p.category for p in projects if p.category)
+    # Tetap mengambil categories agar tombol filter di HTML tidak hilang
+    categories = set(p.category for p in Project.objects.all() if p.category)
     is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
 
     context = {
-        "project_list": projects,
         "title_query": title_query,
         "categories": categories,
         "is_editor": is_editor,
+        "form": ProjectForm(),
     }
     return render(request, "project.html", context)
 
@@ -219,16 +197,56 @@ def create_project(request):
     }
     return render(request, "projects_form.html", context)
 
-@login_required(login_url="/login/")
 def get_projects_json(request):
     title_query = request.GET.get("title", "").strip()
-    projects = Project.objects.all()
+    projects = Project.objects.prefetch_related('starred_by').all()
 
     if title_query:
         projects = projects.filter(title__icontains=title_query)
 
-    projects_json = serializers.serialize("json", projects, use_natural_foreign_keys=True)
-    return HttpResponse(projects_json, content_type="application/json")
+    # Konstruksi data JSON secara manual agar bisa menyisipkan logika Star
+    data = []
+    for project in projects:
+        starred_users = project.starred_by.all()
+        is_starred = request.user in starred_users if request.user.is_authenticated else False
+        starred_by_names = ", ".join([u.username for u in starred_users])
+        
+        # Mengambil nama-nama tag dan menggabungkannya menjadi string (contoh: "Python, Django")
+        tech_stack_str = ", ".join([tag.name for tag in project.tags.all()])
+
+        data.append({
+            "pk": str(project.id),
+            "fields": {
+                "title": project.title,
+                "description": project.description,
+                "tech_stack": tech_stack_str or project.category,
+                "project_url": project.project_url,
+                "project_image_url": project.project_image_url,
+                "star_count": starred_users.count(),
+                "is_starred": is_starred,
+                "starred_by_names": starred_by_names,
+            }
+        })
+
+    return JsonResponse(data, safe=False)
+
+@require_POST
+def create_project_ajax(request):
+    if not request.user.is_superuser:
+        return JsonResponse(
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan proyek."},
+            status=403,
+        )
+
+    form = ProjectForm(request.POST)
+    if form.is_valid():
+        project = form.save()
+        return JsonResponse(
+            {"message": "Proyek berhasil ditambahkan.", "pk": str(project.id)},
+            status=201,
+        )
+
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
 
 @login_required(login_url='/login/')
 def delete_project(request, project_id):

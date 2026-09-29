@@ -101,6 +101,11 @@
                 }, 4000);
             </script>
         {% endif %}
+        <div class="container" style="text-align: center; margin-top: 2rem; margin-bottom: 1rem;">
+            <button class="button button-secondary" onclick="showToast('Notifikasi Sistem', 'Toast berfungsi dengan baik!', 'success')">
+                Test Toast Notifikasi
+            </button>
+        </div>
         {% block content %} {% endblock content %}
     </main>
 
@@ -229,5 +234,7 @@
             easing: 'ease-out-cubic',
         });
     </script>
+
+    {% include 'components/toast.html' %}
     </body>
 </html>

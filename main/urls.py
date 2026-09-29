@@ -29,6 +29,7 @@ from main.views import (
     get_education_json,
     get_tech_stack_json,
     register,
+    create_project_ajax,
 )
 
 app_name = 'main'
@@ -53,6 +54,7 @@ urlpatterns = [
     path('education/delete/<int:id>/', delete_education, name='delete_education'),
     path('projects/', show_projects, name='show_projects'),
     path('projects/add/', create_project, name='create_project'),
+    path("projects/add-ajax/", create_project_ajax, name="create_project_ajax"),
     path('projects/edit/<uuid:id>/', edit_project, name='edit_project'),
     path('api/projects/', get_projects_json, name='get_projects_json'),
     path('api/experience/', get_experience_json, name='get_experience_json'),
