@@ -1,4 +1,3 @@
-from django.core.exceptions import PermissionDenied
 import datetime
 import os
 import logging
@@ -8,6 +7,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
@@ -16,6 +16,7 @@ from django.conf import settings
 from main.models import Experience, Skill, Education, Project, TechStack, ContactMessage
 from main.forms import ExperienceForm, SkillForm, EducationForm, ProjectForm, TechStackForm, ContactMessageForm
 from django_ratelimit.decorators import ratelimit
+from main.access import is_editor, require_access
 
 logger = logging.getLogger('main')
 
@@ -68,7 +69,7 @@ def show_main(request):
     else:
         form = ContactMessageForm()
 
-    is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
+    editor = is_editor(request.user)
     context = {
         "bio": (
             "CS student at Universitas Indonesia."
@@ -76,32 +77,31 @@ def show_main(request):
         'education_list': educations,
         'tech_stacks': tech_stacks,
         'contact_form': form,
-        'is_editor': is_editor,
+        'is_editor': editor,
         'featured_projects': featured_projects,
     }
     return render(request, "index.html", context)
 
 
 def show_experience(request):
-    is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
+    editor = is_editor(request.user)
     context = {
         "experience_list": Experience.objects.all(),
-        "is_editor": is_editor,
+        "is_editor": editor,
     }
     return render(request, "experience.html", context)
 
 def show_skills(request):
-    is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
+    editor = is_editor(request.user)
     context = {
         "skills": Skill.objects.all(),
-        "is_editor": is_editor,
+        "is_editor": editor,
     }
     return render(request, "skills.html", context)
 
 @login_required(login_url='/login/')
 def create_experience(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_access(request, "add")
     form = ExperienceForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -116,8 +116,7 @@ def create_experience(request):
 
 @login_required(login_url='/login/')
 def edit_experience(request, id):
-    if not (request.user.is_superuser or request.user.groups.filter(name='Editor').exists()):
-        raise PermissionDenied
+    require_access(request, "edit")
     experience = get_object_or_404(Experience, pk=id)
     form = ExperienceForm(request.POST or None, instance=experience)
 
@@ -134,8 +133,7 @@ def edit_experience(request, id):
 
 @login_required(login_url='/login/')
 def create_skill(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_access(request, "add")
     form = SkillForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -150,8 +148,7 @@ def create_skill(request):
 
 @login_required(login_url='/login/')
 def create_education(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_access(request, "add")
     form = EducationForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -166,6 +163,7 @@ def create_education(request):
 
 from main.templatetags.markdown_extras import markdown_format
 
+@ensure_csrf_cookie
 def show_projects(request):
     title_query = request.GET.get("title", "").strip()
     categories = (
@@ -175,21 +173,20 @@ def show_projects(request):
         .distinct()
         .order_by("category")
     )
-    is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
+    editor = is_editor(request.user)
 
     context = {
         "title_query": title_query,
         "category_query": request.GET.get("category", "all").strip() or "all",
         "categories": categories,
-        "is_editor": is_editor,
+        "is_editor": editor,
         "form": ProjectForm(),
     }
     return render(request, "project.html", context)
 
 @login_required(login_url='/login/')
 def create_project(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_access(request, "add")
     form = ProjectForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -241,11 +238,14 @@ def get_projects_json(request):
 
 @require_POST
 def create_project_ajax(request):
-    if not request.user.is_superuser:
-        return JsonResponse(
-            {"message": "Hanya pemilik portofolio yang dapat menambahkan proyek."},
-            status=403,
-        )
+    denied = require_access(
+        request,
+        "add",
+        "Hanya pemilik portofolio yang dapat menambahkan proyek.",
+        json_response=True,
+    )
+    if denied:
+        return denied
 
     form = ProjectForm(request.POST)
     if form.is_valid():
@@ -263,8 +263,7 @@ def create_project_ajax(request):
 
 @login_required(login_url='/login/')
 def delete_project(request, project_id):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_access(request, "delete")
     project = get_object_or_404(Project, pk=project_id)
 
     if request.method == "POST":
@@ -316,10 +315,8 @@ def logout_user(request):
 
 @login_required(login_url='/login/')
 def show_dashboard(request):
-    if not (request.user.is_superuser or request.user.groups.filter(name='Editor').exists()):
-        raise PermissionDenied
-    
-    is_editor = request.user.groups.filter(name='Editor').exists()
+    require_access(request, "dashboard")
+    editor = is_editor(request.user)
     
     context = {
         "experiences": Experience.objects.all(),
@@ -327,14 +324,13 @@ def show_dashboard(request):
         "educations": Education.objects.all(),
         "projects": Project.objects.all(),
         "tech_stacks": TechStack.objects.all(),
-        "is_editor": is_editor,
+        "is_editor": editor,
     }
     return render(request, "dashboard.html", context)
 
 @login_required(login_url='/login/')
 def delete_experience(request, id):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_access(request, "delete")
     experience = get_object_or_404(Experience, pk=id)
     if request.method == "POST":
         experience.delete()
@@ -343,8 +339,7 @@ def delete_experience(request, id):
 
 @login_required(login_url='/login/')
 def delete_skill(request, id):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_access(request, "delete")
     skill = get_object_or_404(Skill, pk=id)
     if request.method == "POST":
         skill.delete()
@@ -353,8 +348,7 @@ def delete_skill(request, id):
 
 @login_required(login_url='/login/')
 def delete_education(request, id):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_access(request, "delete")
     education = get_object_or_404(Education, pk=id)
     if request.method == "POST":
         education.delete()
@@ -363,8 +357,7 @@ def delete_education(request, id):
 
 @login_required(login_url='/login/')
 def edit_project(request, id):
-    if not (request.user.is_superuser or request.user.groups.filter(name='Editor').exists()):
-        raise PermissionDenied
+    require_access(request, "edit")
     project = get_object_or_404(Project, pk=id)
     form = ProjectForm(request.POST or None, instance=project)
     
@@ -381,8 +374,7 @@ def edit_project(request, id):
 
 @login_required(login_url='/login/')
 def edit_skill(request, id):
-    if not (request.user.is_superuser or request.user.groups.filter(name='Editor').exists()):
-        raise PermissionDenied
+    require_access(request, "edit")
     skill = get_object_or_404(Skill, pk=id)
     form = SkillForm(request.POST or None, instance=skill)
     
@@ -399,8 +391,7 @@ def edit_skill(request, id):
 
 @login_required(login_url='/login/')
 def edit_education(request, id):
-    if not (request.user.is_superuser or request.user.groups.filter(name='Editor').exists()):
-        raise PermissionDenied
+    require_access(request, "edit")
     education = get_object_or_404(Education, pk=id)
     form = EducationForm(request.POST or None, instance=education)
     
@@ -417,8 +408,7 @@ def edit_education(request, id):
 
 @login_required(login_url='/login/')
 def create_tech_stack(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_access(request, "add")
     form = TechStackForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -431,8 +421,7 @@ def create_tech_stack(request):
 
 @login_required(login_url='/login/')
 def edit_tech_stack(request, id):
-    if not (request.user.is_superuser or request.user.groups.filter(name='Editor').exists()):
-        raise PermissionDenied
+    require_access(request, "edit")
     tech = get_object_or_404(TechStack, pk=id)
     form = TechStackForm(request.POST or None, instance=tech)
     if request.method == "POST" and form.is_valid():
@@ -447,35 +436,43 @@ def edit_tech_stack(request, id):
 
 @login_required(login_url='/login/')
 def delete_tech_stack(request, id):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_access(request, "delete")
     tech = get_object_or_404(TechStack, pk=id)
     if request.method == "POST":
         tech.delete()
         messages.success(request, "Tech Stack berhasil dihapus!")
     return redirect("main:dashboard")
 
-@login_required(login_url="/login/")
 def get_experience_json(request):
+    denied = require_access(request, "authenticated", json_response=True)
+    if denied:
+        return denied
     data = Experience.objects.all()
     return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
 
-@login_required(login_url="/login/")
 def get_skills_json(request):
+    denied = require_access(request, "authenticated", json_response=True)
+    if denied:
+        return denied
     data = Skill.objects.all()
     return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
 
-@login_required(login_url="/login/")
 def get_education_json(request):
+    denied = require_access(request, "authenticated", json_response=True)
+    if denied:
+        return denied
     data = Education.objects.all()
     return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
 
-@login_required(login_url="/login/")
 def get_tech_stack_json(request):
+    denied = require_access(request, "authenticated", json_response=True)
+    if denied:
+        return denied
     data = TechStack.objects.all()
     return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
 @login_required(login_url="/login/")
 def toggle_star_project(request, project_id):
+    require_access(request, "star")
     project = get_object_or_404(Project, pk=project_id)
     if request.method == "POST":
         is_starred = False  # inisialisasi defensif

@@ -219,44 +219,30 @@
 
             const formData = new FormData(contactForm);
             try {
-                const response = await fetch(contactForm.action, {
+                const { response, data } = await window.PortfolioAjax.fetchJson(contactForm.action, {
                     method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': window.PortfolioAjax.getCsrfToken(contactForm),
+                    },
                     body: formData,
                 });
-                const data = await response.json();
 
-                if (data.status === 'success') {
-                    showToast(data.message, 'success');
+                if (response.ok && data?.status === 'success') {
+                    showToast('Pesan terkirim', data.message, 'success');
                     contactForm.reset();
                 } else {
-                    const firstError = Object.values(data.errors || {})[0]?.[0];
-                    showToast(firstError || 'Terjadi kesalahan. Coba lagi.', 'error');
+                    const errors = window.PortfolioAjax.validationMessages(data?.errors);
+                    showToast('Gagal mengirim pesan', errors[0] || data?.message || 'Terjadi kesalahan. Coba lagi.', 'error');
                 }
             } catch (err) {
-                showToast('Gagal mengirim pesan. Coba lagi.', 'error');
+                showToast('Gagal mengirim pesan', 'Periksa koneksi lalu coba lagi.', 'error');
             } finally {
                 btn.disabled = false;
                 btn.textContent = originalText;
             }
         });
 
-        function showToast(message, type) {
-            const toast = document.createElement('div');
-            toast.textContent = message;
-            toast.style.cssText = [
-                'position:fixed', 'bottom:2rem', 'right:2rem', 'z-index:99999',
-                'padding:1rem 1.5rem', 'border-radius:8px', 'font-weight:600',
-                'background:' + (type === 'success' ? 'var(--accent)' : '#b42318'),
-                'color:white', 'box-shadow:0 4px 16px rgba(0,0,0,0.2)',
-                'transition:opacity 0.3s ease', 'max-width:320px'
-            ].join(';');
-            document.body.appendChild(toast);
-            setTimeout(function() {
-                toast.style.opacity = '0';
-                setTimeout(function() { toast.remove(); }, 300);
-            }, 4000);
-        }
     });
     </script>
 

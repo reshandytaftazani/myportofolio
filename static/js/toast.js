@@ -5,7 +5,7 @@ function showToast(title, message, type = 'normal', duration = 3000) {
   const toastTitle = document.getElementById('toast-title');
   const toastMessage = document.getElementById('toast-message');
 
-  if (!toastComponent) return;
+  if (!toastComponent || !toastTitle || !toastMessage) return;
 
   // Hapus class tipe sebelumnya
   toastComponent.classList.remove('toast-success', 'toast-error', 'toast-normal');
