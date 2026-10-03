@@ -1,217 +1,40 @@
-{% extends "base.html" %}
-{% block meta %}
-    <title>Dashboard - {{ owner_name }}</title>
-{% endblock meta %}
-
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard - {{ owner_name }}{% endblock %}
 {% block content %}
-<section class="py-5" style="padding-top: 6rem;">
+<section class="experience-section" data-dashboard-app>
     <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <h1>Management Dashboard</h1>
+        <h1>Management Dashboard</h1>
+        <div class="dashboard-tabs" role="tablist" aria-label="Kelola konten">
+            {% for resource in resources %}
+            <button type="button" class="button button-secondary" role="tab"
+                    id="dashboard-tab-{{ resource.name }}" data-dashboard-tab="{{ resource.name }}"
+                    aria-controls="dashboard-panel-{{ resource.name }}"
+                    aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                    tabindex="{% if forloop.first %}0{% else %}-1{% endif %}">{{ resource.label }}</button>
+            {% endfor %}
         </div>
-        
-        <!-- EXPERIENCE SECTION -->
-        <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h2>Experience</h2>
-                {% if user.is_superuser %}
-                <a href="{% url 'main:create_experience' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
-                {% endif %}
+        {% for resource in resources %}
+        <div class="dashboard-panel" role="tabpanel" data-dashboard-resource
+             id="dashboard-panel-{{ resource.name }}" aria-labelledby="dashboard-tab-{{ resource.name }}"
+             {% if not forloop.first %}hidden{% endif %}
+             {% include 'components/resource_attributes.html' %}>
+            <h2>{{ resource.label }}</h2>
+            {% include 'components/resource_controls.html' with show_search=True %}
+            <div class="dashboard-table-wrap" data-list hidden>
+                <table class="dashboard-table">
+                    <thead><tr>
+                        {% for field, label in resource.columns %}<th scope="col" data-column="{{ field }}">{{ label }}</th>{% endfor %}
+                        <th scope="col">Actions</th>
+                    </tr></thead>
+                    <tbody></tbody>
+                </table>
             </div>
-            {% if experiences %}
-            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
-                <thead>
-                    <tr style="border-bottom: 2px solid var(--line); text-align: left;">
-                        <th style="padding: 10px;">Title</th>
-                        <th style="padding: 10px;">Company</th>
-                        <th style="padding: 10px; width: 200px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for exp in experiences %}
-                    <tr style="border-bottom: 1px solid var(--line);">
-                        <td style="padding: 10px;">{{ exp.title }}</td>
-                        <td style="padding: 10px;">{{ exp.company }}</td>
-                        <td style="padding: 10px; display: flex; gap: 10px;">
-                            <a href="{% url 'main:edit_experience' exp.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
-                            {% if user.is_superuser %}
-                            <form method="post" action="{% url 'main:delete_experience' exp.id %}" style="display:inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
-                            </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p>Belum ada data Experience.</p>
-            {% endif %}
         </div>
-
-        <!-- PROJECTS SECTION -->
-        <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h2>Projects</h2>
-                {% if user.is_superuser %}
-                <a href="{% url 'main:create_project' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
-                {% endif %}
-            </div>
-            {% if projects %}
-            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
-                <thead>
-                    <tr style="border-bottom: 2px solid var(--line); text-align: left;">
-                        <th style="padding: 10px;">Title</th>
-                        <th style="padding: 10px;">Category</th>
-                        <th style="padding: 10px; text-align:center;">Featured</th>
-                        <th style="padding: 10px; width: 200px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for proj in projects %}
-                    <tr style="border-bottom: 1px solid var(--line);">
-                        <td style="padding: 10px;">{{ proj.title }}</td>
-                        <td style="padding: 10px;">{{ proj.category }}</td>
-                        <td style="padding: 10px; text-align:center;">{% if proj.is_featured %}✅{% else %}—{% endif %}</td>
-                        <td style="padding: 10px; display: flex; gap: 10px;">
-                            <a href="{% url 'main:edit_project' proj.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
-                            {% if user.is_superuser %}
-                            <form method="post" action="{% url 'main:delete_project' proj.id %}" style="display:inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
-                            </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p>Belum ada data Projects.</p>
-            {% endif %}
-        </div>
-
-        <!-- SKILLS SECTION -->
-        <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h2>Skills</h2>
-                {% if user.is_superuser %}
-                <a href="{% url 'main:create_skill' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
-                {% endif %}
-            </div>
-            {% if skills %}
-            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
-                <thead>
-                    <tr style="border-bottom: 2px solid var(--line); text-align: left;">
-                        <th style="padding: 10px;">Title</th>
-                        <th style="padding: 10px;">Level</th>
-                        <th style="padding: 10px; width: 100px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for skill in skills %}
-                    <tr style="border-bottom: 1px solid var(--line);">
-                        <td style="padding: 10px;">{{ skill.title }}</td>
-                        <td style="padding: 10px;">{{ skill.level }}</td>
-                        <td style="padding: 10px; display: flex; gap: 10px;">
-                            <a href="{% url 'main:edit_skill' skill.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
-                            {% if user.is_superuser %}
-                            <form method="post" action="{% url 'main:delete_skill' skill.id %}" style="display:inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
-                            </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p>Belum ada data Skills.</p>
-            {% endif %}
-        </div>
-
-        <!-- EDUCATION SECTION -->
-        <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h2>Education</h2>
-                {% if user.is_superuser %}
-                <a href="{% url 'main:create_education' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
-                {% endif %}
-            </div>
-            {% if educations %}
-            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
-                <thead>
-                    <tr style="border-bottom: 2px solid var(--line); text-align: left;">
-                        <th style="padding: 10px;">School Name</th>
-                        <th style="padding: 10px;">Period</th>
-                        <th style="padding: 10px; width: 100px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for edu in educations %}
-                    <tr style="border-bottom: 1px solid var(--line);">
-                        <td style="padding: 10px;">{{ edu.school_name }}</td>
-                        <td style="padding: 10px;">{{ edu.period }}</td>
-                        <td style="padding: 10px; display: flex; gap: 10px;">
-                            <a href="{% url 'main:edit_education' edu.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
-                            {% if user.is_superuser %}
-                            <form method="post" action="{% url 'main:delete_education' edu.id %}" style="display:inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
-                            </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p>Belum ada data Education.</p>
-            {% endif %}
-        </div>
-        <!-- TECH STACK SECTION -->
-        <div style="background: var(--surface); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--line);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h2>Tech Stack (Languages)</h2>
-                {% if user.is_superuser %}
-                <a href="{% url 'main:create_tech_stack' %}" class="button" style="font-size: 0.9rem;">+ Tambah</a>
-                {% endif %}
-            </div>
-            {% if tech_stacks %}
-            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
-                <thead>
-                    <tr style="border-bottom: 2px solid var(--line); text-align: left;">
-                        <th style="padding: 10px;">Name</th>
-                        <th style="padding: 10px;">Filename</th>
-                        <th style="padding: 10px;">Order</th>
-                        <th style="padding: 10px; width: 100px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for tech in tech_stacks %}
-                    <tr style="border-bottom: 1px solid var(--line);">
-                        <td style="padding: 10px;">{{ tech.name }}</td>
-                        <td style="padding: 10px;">{{ tech.filename }}</td>
-                        <td style="padding: 10px;">{{ tech.order }}</td>
-                        <td style="padding: 10px; display: flex; gap: 10px;">
-                            <a href="{% url 'main:edit_tech_stack' tech.id %}" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Edit</a>
-                            {% if user.is_superuser %}
-                            <form method="post" action="{% url 'main:delete_tech_stack' tech.id %}" style="display:inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="button" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background-color: var(--danger, #dc3545);">Hapus</button>
-                            </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p>Belum ada data Tech Stack.</p>
-            {% endif %}
-        </div>
+        {% include 'components/resource_dialog.html' %}
+        {% endfor %}
+        <noscript>Aktifkan JavaScript untuk mengelola konten.</noscript>
     </div>
 </section>
-{% endblock content %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

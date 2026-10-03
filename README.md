@@ -4,6 +4,13 @@ NPM : 2506547651
 
 Kelas : PBP D
 
+## Implementasi AJAX
+
+Experience, Skills, Education, dan Tech Stack dimuat melalui API publik. Dashboard memakai
+daftar per tab dan modal tambah/edit/hapus dengan otorisasi server; Projects juga mendukung
+edit/hapus tanpa reload. Kontrak API, keputusan rendering, dan cara menjalankan pemeriksaan
+tersedia di [dokumentasi AJAX resource](docs/AJAX_RESOURCES.md).
+
 ## Refleksi Tutorial dan Tugas 1
 
 **1. Penggunaan Elemen Semantik HTML5**

@@ -9,8 +9,15 @@
 {% block content %}
         <section class="experience-section animate-fade-in" id="projects"
                  data-projects-app
+                 data-resource="projects"
+                 data-resource-label="Projects"
+                 data-detail-url="{{ project_resource.detail_url }}"
+                 data-edit-url="{{ project_resource.edit_url }}"
+                 data-delete-url="{{ project_resource.delete_url }}"
+                 data-can-edit="{% if user.is_superuser or is_editor %}true{% else %}false{% endif %}"
+                 data-can-delete="{{ user.is_superuser|yesno:'true,false' }}"
                  data-projects-url="{% url 'main:get_projects_json' %}"
-                 data-create-url="{% url 'main:create_project_ajax' %}"
+                 data-create-url="{{ project_resource.create_url }}"
                  data-star-url-template="{% url 'main:toggle_star_project' '00000000-0000-0000-0000-000000000000' %}"
                  data-delete-url-template="{% url 'main:delete_project' '00000000-0000-0000-0000-000000000000' %}"
                  data-login-url="{% url 'main:login' %}?next={{ request.get_full_path|urlencode }}"
@@ -22,16 +29,13 @@
                     <div>
                         <p class="section-subtitle">Karya</p>
                         <h2 class="section-title" style="margin-bottom: 1rem;">Projects</h2>
-                        <button class="button button-secondary" onclick="showToast('Notifikasi Sistem', 'Toast berfungsi dengan baik!', 'success')">
-                            Test Toast Notifikasi
-                        </button>
                     </div>
                     {% if user.is_superuser %}
                         <button type="button"
-                                class="button project-add-button"
-                                popovertarget="add-project-modal">
-                            <span aria-hidden="true">+</span>
-                            Tambah Proyek
+                                class="button resource-button resource-button--primary project-add-button"
+                                data-open-create>
+                            {% include 'components/resource_icon.html' with name='plus' %}
+                            <span>Tambah Proyek</span>
                         </button>
                     {% endif %}
                 </div>
@@ -73,10 +77,9 @@
             </div>
         </section>
 
-    {% if user.is_superuser %}
-        {% include "components/project_form_modal.html" %}
+    {% if user.is_superuser or is_editor %}
+        {% include 'components/resource_dialog.html' with resource=project_resource %}
     {% endif %}
-
     <script src="{% static 'js/projects.js' %}"></script>
 {% endblock content %}
 

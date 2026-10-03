@@ -3,6 +3,7 @@
     if (!app || !window.PortfolioAjax) return;
 
     const ajax = window.PortfolioAjax;
+    const resources = window.PortfolioResources;
     const config = app.dataset;
     const loadingState = document.getElementById('loading');
     const errorState = document.getElementById('error');
@@ -11,7 +12,6 @@
     const searchForm = document.getElementById('project-search-form');
     const searchInput = document.getElementById('search-input');
     const filters = app.querySelector('.project-filters');
-    const projectForm = document.getElementById('project-form');
     let activeCategory = config.initialCategory || 'all';
     let activeRequest;
     const projectIdPlaceholder = '00000000-0000-0000-0000-000000000000';
@@ -71,12 +71,6 @@
         const projectLinkHtml = projectUrl
             ? `<a href="${escapeHtml(projectUrl)}" class="button" target="_blank" rel="noopener noreferrer">Lihat Project</a>`
             : '';
-        const deleteHtml = config.isSuperuser === 'true'
-            ? `<form method="post" action="${escapeHtml(config.deleteUrlTemplate.replace(projectIdPlaceholder, encodeURIComponent(projectId)))}" class="project-delete-form" style="display:inline;">
-                    ${csrfInput()}
-                    <button type="submit" class="button button-danger" data-confirm="Yakin ingin menghapus project ini?">Hapus</button>
-                </form>`
-            : '';
 
         article.innerHTML = `
             ${imageHtml}
@@ -94,15 +88,16 @@
                             <span class="star-count">${Number(project.star_count) || 0}</span>
                         </button>
                     </form>
-                    ${deleteHtml}
                 </div>
             </div>`;
+        article.append(resources.actions(app, item));
         return article;
     }
 
     async function fetchProjects(title = searchInput?.value.trim() || '', category = activeCategory) {
         activeRequest?.abort();
         activeRequest = new AbortController();
+        const request = activeRequest;
         displaySection({ loading: true });
 
         const url = new URL(config.projectsUrl, window.location.origin);
@@ -110,7 +105,8 @@
         if (category && category !== 'all') url.searchParams.set('category', category);
 
         try {
-            const { response, data } = await ajax.fetchJson(url, { signal: activeRequest.signal });
+            const { response, data } = await ajax.fetchJson(url, { signal: request.signal });
+            if (request !== activeRequest || request.signal.aborted) return;
             if (!response.ok || !Array.isArray(data)) throw new Error(`Projects request failed (${response.status})`);
 
             grid.replaceChildren();
@@ -121,24 +117,14 @@
             data.forEach(item => grid.appendChild(buildProjectCard(item)));
             displaySection({ grid: true });
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || request !== activeRequest) return;
             console.error('Error loading projects:', error);
             displaySection({ error: true });
         }
     }
 
-    function debounce(callback, delay) {
-        let timer;
-        const debounced = (...args) => {
-            clearTimeout(timer);
-            timer = setTimeout(() => callback(...args), delay);
-        };
-        debounced.cancel = () => clearTimeout(timer);
-        return debounced;
-    }
-
-    const searchProjects = debounce(() => fetchProjects(), 300);
-    searchInput?.addEventListener('input', searchProjects);
+    const searchProjects = resources.debounce(() => fetchProjects(), 300);
+    searchInput?.addEventListener('input', () => { activeRequest?.abort(); searchProjects(); });
     searchForm?.addEventListener('submit', event => {
         event.preventDefault();
         searchProjects.cancel();
@@ -177,43 +163,6 @@
         button.textContent = category;
         filters.appendChild(button);
     }
-
-    async function submitProject(event) {
-        event.preventDefault();
-        const submitButton = projectForm?.querySelector('button[type="submit"]');
-        if (!projectForm || !submitButton) return;
-        submitButton.disabled = true;
-
-        try {
-            const { response, data } = await ajax.fetchJson(config.createUrl, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': ajax.getCsrfToken(projectForm) },
-                body: new FormData(projectForm),
-            });
-            if (response.ok) {
-                projectForm.reset();
-                document.getElementById('add-project-modal')?.hidePopover();
-                addCategoryFilter(data?.category);
-                showToast('Berhasil', data?.message || 'Proyek berhasil ditambahkan.', 'success');
-                fetchProjects();
-                return;
-            }
-
-            const messages = ajax.validationMessages(data?.errors);
-            showToast(
-                'Gagal menambahkan proyek',
-                messages.join(' ') || data?.message || `Terjadi kesalahan (status ${response.status}).`,
-                'error',
-            );
-        } catch (error) {
-            console.error('Error adding project:', error);
-            showToast('Gagal menambahkan proyek', 'Tidak dapat terhubung ke server. Silakan coba lagi.', 'error');
-        } finally {
-            submitButton.disabled = false;
-        }
-    }
-
-    projectForm?.addEventListener('submit', submitProject);
 
     grid?.addEventListener('submit', async event => {
         const form = event.target.closest('.star-form');
@@ -260,9 +209,10 @@
         }
     });
 
-    grid?.addEventListener('click', event => {
-        const button = event.target.closest('[data-confirm]');
-        if (button && !window.confirm(button.dataset.confirm)) event.preventDefault();
+    resources.bindManagement(app, item => {
+        searchProjects.cancel();
+        addCategoryFilter(item?.fields.category);
+        fetchProjects();
     });
 
     fetchProjects();

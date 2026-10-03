@@ -1,139 +1,36 @@
-{% extends "base.html" %}
-{% load markdown_extras %}
-
-{% block title %}{{ owner_name }} - Skills{% endblock title %}
-
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ owner_name }} - Skills{% endblock %}
 {% block meta %}
-    <link rel="stylesheet" href="/static/css/skills.css">
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-{% endblock meta %}
-
+<link rel="stylesheet" href="{% static 'css/skills.css' %}">
+<script>
+    window.MathJax = {
+        loader: { load: ['ui/safe'] },
+        startup: { typeset: false },
+        options: {
+            safeOptions: {
+                allow: { URLs: 'safe', classes: 'none', cssIDs: 'none', styles: 'none' },
+                safeProtocols: { http: true, https: true, file: false, javascript: false, data: false },
+            },
+        },
+    };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+<script id="highlight-script" defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+{% endblock %}
 {% block content %}
-<section id="skills" class="skills-section animate-fade-in">
+<section id="skills" class="skills-section animate-fade-in" data-public-resource
+         {% include 'components/resource_attributes.html' %}>
     <div class="container">
         <div class="section-header">
-            <p class="section-subtitle">Skills</p>
-            <h2 class="section-title">My Skills</h2>
+            <p class="section-subtitle">Skills</p><h2 class="section-title">My Skills</h2>
         </div>
-        <div class="skills-tabs-container" data-aos="fade-up">
-            
-            <div class="tabs-header">
-                {% for skill in skills %}
-                    <button class="tab-btn {% if forloop.first %}active{% endif %}" onclick="openTab(event, 'skill-{{ forloop.counter }}')">
-                        {{ skill.title }}
-                    </button>
-                {% endfor %}
-            </div>
-
-            <div class="tabs-content">
-                {% for skill in skills %}
-                    <div id="skill-{{ forloop.counter }}" class="tab-panel {% if forloop.first %}active{% endif %}">
-                        <div class="skill-details">
-                            <span class="experience-category">{{ skill.level }}</span>
-
-                            <h3>{{ skill.title }}</h3>
-                            <div>{{ skill.description|markdown|safe }}</div>
-
-                            {% if skill.code_snippet %}
-                            <div class="ide-window">
-                                <div class="ide-header">
-                                    <div class="ide-buttons">
-                                        <span class="btn-close"></span>
-                                        <span class="btn-minimize"></span>
-                                        <span class="btn-maximize"></span>
-                                    </div>
-                                    <div class="ide-title">
-                                        {% if '\begin' in skill.code_snippet %}
-                                            📄 main.tex — Overleaf
-                                        {% elif '#include' in skill.code_snippet %}
-                                            ⚙️ main.cpp — VS Code
-                                        {% else %}
-                                            🐍 main.py — VS Code
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                
-                                {% if '\begin' in skill.code_snippet %}
-                                    <div class="ide-content overleaf-mode">
-                                        <div class="overleaf-editor">
-                                            <pre><code>{{ skill.code_snippet }}</code></pre>
-                                        </div>
-                                        <div class="overleaf-pdf">
-                                            <div class="pdf-paper">
-                                                $$ {{ skill.code_snippet|safe }} $$
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% else %}
-                                    <div class="ide-content vscode-mode">
-                                        <pre><code>{{ skill.code_snippet }}</code></pre>
-                                    </div>
-                                {% endif %}
-                            </div>
-                            {% endif %}
-                            
-                        </div>
-                    </div>
-                {% empty %}
-                    <div class="empty-state-card">
-                        <div class="empty-icon-wrapper">
-                            <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                        </div>
-                        <h3 class="empty-state-title">Tidak ada data</h3>
-                        <p class="empty-state-text">Data skill belum ditambahkan.</p>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
+        {% include 'components/resource_controls.html' %}
+        <div class="skills-tabs-container" data-list hidden></div>
+        <noscript>Aktifkan JavaScript untuk memuat Skills.</noscript>
     </div>
 </section>
-
-<script>
-    function openTab(evt, tabId) {
-        let tabPanels = document.getElementsByClassName("tab-panel");
-        for (let i = 0; i < tabPanels.length; i++) {
-            tabPanels[i].classList.remove("active");
-        }
-
-        let tabBtns = document.getElementsByClassName("tab-btn");
-        for (let i = 0; i < tabBtns.length; i++) {
-            tabBtns[i].classList.remove("active");
-        }
-
-        document.getElementById(tabId).classList.add("active");
-        evt.currentTarget.classList.add("active");
-    }
-
-    hljs.highlightAll();
-
-    // Drag-to-scroll functionality for tabs
-    const slider = document.querySelector('.tabs-header');
-    let isDown = false;
-    let startX;
-    let scrollLeft;
-
-    slider.addEventListener('mousedown', (e) => {
-        isDown = true;
-        startX = e.pageX - slider.offsetLeft;
-        scrollLeft = slider.scrollLeft;
-    });
-
-    slider.addEventListener('mouseleave', () => {
-        isDown = false;
-    });
-
-    slider.addEventListener('mouseup', () => {
-        isDown = false;
-    });
-
-    slider.addEventListener('mousemove', (e) => {
-        if (!isDown) return;
-        e.preventDefault();
-        const x = e.pageX - slider.offsetLeft;
-        const walk = (x - startX) * 2; // Scroll speed
-        slider.scrollLeft = scrollLeft - walk;
-    });
-</script>
-{% endblock content %}
+{% if user.is_superuser or is_editor %}{% include 'components/resource_dialog.html' %}{% endif %}
+<script src="{% static 'js/public-resources.js' %}"></script>
+{% endblock %}

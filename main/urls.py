@@ -1,4 +1,5 @@
 from django.urls import path
+from main import resource_api
 from main.views import (
     toggle_star_project,
     show_main, 
@@ -35,6 +36,13 @@ from main.views import (
 app_name = 'main'
 
 urlpatterns = [
+    path('api/manage/tags/', resource_api.manage_tag_list, name='manage_tag_list'),
+    path('api/manage/tags/create/', resource_api.manage_tag_create, name='manage_tag_create'),
+    path('api/manage/<slug:resource>/', resource_api.manage_resource_list, name='manage_resource_list'),
+    path('api/manage/<slug:resource>/create/', resource_api.manage_resource_create, name='manage_resource_create'),
+    path('api/manage/<slug:resource>/<str:pk>/', resource_api.manage_resource_detail, name='manage_resource_detail'),
+    path('api/manage/<slug:resource>/<str:pk>/edit/', resource_api.manage_resource_edit, name='manage_resource_edit'),
+    path('api/manage/<slug:resource>/<str:pk>/delete/', resource_api.manage_resource_delete, name='manage_resource_delete'),
     path("projects/<uuid:project_id>/star/", toggle_star_project, name="toggle_star_project"),
 
 

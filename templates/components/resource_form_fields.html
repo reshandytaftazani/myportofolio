@@ -1,0 +1,16 @@
+{% for field in form %}
+<div class="form-group resource-field{% if field.name == 'category' or field.name == 'level' or field.name == 'started_at' or field.name == 'ended_at' or field.name == 'period' or field.name == 'start_year' or field.name == 'filename' or field.name == 'order' %} resource-field--half{% endif %}{% if field.field.widget.input_type == 'checkbox' %} resource-field--checkbox{% endif %}{% if field.name == 'code_snippet' %} resource-field--code{% endif %}">
+    {% if field.field.widget.input_type == 'checkbox' %}
+    <label class="resource-checkbox" for="{{ field.id_for_label }}">{{ field }}<span>{{ field.label }}</span></label>
+    {% else %}
+    <label id="{{ field.id_for_label }}_label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="resource-required" aria-hidden="true"> *</span>{% else %}<span class="resource-optional">Opsional</span>{% endif %}</label>
+    {% if field.name == 'tags' %}
+    {% include 'components/project_tags.html' %}
+    {% else %}
+    {{ field }}
+    {% endif %}
+    {% endif %}
+    {% if field.help_text %}<small id="{{ field.id_for_label }}_helptext" class="resource-field-help">{{ field.help_text }}</small>{% endif %}
+    <p id="{{ field.id_for_label }}_error" class="resource-field-error" data-field-error role="alert" hidden></p>
+</div>
+{% endfor %}

@@ -470,14 +470,6 @@ h1, .brand {
     transition: transform 0.3s ease;
 }
 
-.tech-item:hover {
-    transform: translateY(-8px);
-}
-
-.tech-item:hover .tech-icon {
-    filter: drop-shadow(0 8px 15px rgba(0,0,0,0.12));
-}
-
 .tech-icon {
     width: 64px;
     height: 64px;
@@ -1007,6 +999,29 @@ body, .skill-card, .timeline-content, .experience-card {
 .project-grid .experience-card {
     display: flex;
     flex-direction: column;
+}
+
+.featured-projects-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.featured-projects-grid > .experience-card {
+    grid-column: span 2;
+}
+
+.featured-projects-grid > .experience-card:last-child:nth-child(odd) {
+    grid-column: 2 / span 2;
+}
+
+@media (max-width: 600px) {
+    .featured-projects-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .featured-projects-grid > .experience-card,
+    .featured-projects-grid > .experience-card:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+    }
 }
 
 .project-image {

@@ -73,76 +73,30 @@
         </div>
     </section>
 
-    <!-- SECTION BARU: Tech Stack -->
-    <section id="tech-stack" class="tech-section">
+    {% with resource=techstack_resource %}
+    <section id="tech-stack" class="tech-section" data-public-resource
+             {% include 'components/resource_attributes.html' %}>
         <div class="container">
             <div class="section-header">
-                <p class="section-subtitle">Tools</p>
-                <h2 class="section-title">Languages I Use</h2>
+                <p class="section-subtitle">Tools</p><h2 class="section-title">Languages I Use</h2>
             </div>
-            
-            <div class="tech-grid">
-                {% for tech in tech_stacks %}
-                <div class="tech-item" 
-                     data-lang="{{ tech.name }}" 
-                     data-filename="{{ tech.filename }}" 
-                     data-snippet="{{ tech.code_snippet }}"
-                     data-aos="fade-up">
-                    <img src="{{ tech.icon_url }}" alt="{{ tech.name }}" class="tech-icon">
-                    <span>{{ tech.name }}</span>
-
-                </div>
-                {% empty %}
-                    <div class="empty-state-card" style="grid-column: 1 / -1;">
-                        <div class="empty-icon-wrapper">
-                            <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="16 18 22 12 16 6"></polyline>
-                                <polyline points="8 6 2 12 8 18"></polyline>
-                            </svg>
-                        </div>
-                        <h3 class="empty-state-title">Tidak ada data</h3>
-                        <p class="empty-state-text">Data Tech Stack belum ditambahkan.</p>
-                    </div>
-                {% endfor %}            </div>
+            {% include 'components/resource_controls.html' %}
+            <div class="tech-grid" data-list hidden></div>
         </div>
     </section>
-
-    <!-- SECTION BARU: Education -->
-    <section id="education" class="education-section">
+    {% endwith %}
+    {% with resource=education_resource %}
+    <section id="education" class="education-section" data-public-resource
+             {% include 'components/resource_attributes.html' %}>
         <div class="container">
             <div class="section-header">
-                <p class="section-subtitle">Academic</p>
-                <h2 class="section-title">Education History</h2>
+                <p class="section-subtitle">Academic</p><h2 class="section-title">Education History</h2>
             </div>
-            
-            <div class="timeline">
-                
-                {% for edu in education_list %}
-                    <div class="timeline-item" data-aos="fade-up">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="timeline-date">{{ edu.period }}</span>
-
-                            <h3 class="timeline-school">{{ edu.school_name }}</h3>
-                            <p class="timeline-detail">{{ edu.detail }}</p>
-                        </div>
-                    </div>
-                {% empty %}
-                    <div class="empty-state-card">
-                        <div class="empty-icon-wrapper">
-                            <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-                            </svg>
-                        </div>
-                        <h3 class="empty-state-title">Tidak ada data</h3>
-                        <p class="empty-state-text">Data pendidikan belum ditambahkan.</p>
-                    </div>
-                {% endfor %}
-
-            </div>
+            {% include 'components/resource_controls.html' %}
+            <div class="timeline" data-list hidden></div>
         </div>
     </section>
+    {% endwith %}
 
     <!-- SECTION: Featured Projects -->
     <section id="featured-projects" class="tech-section">
@@ -151,7 +105,7 @@
                 <p class="section-subtitle">Showcase</p>
                 <h2 class="section-title">Featured Projects</h2>
             </div>
-            <div class="experience-grid project-grid" style="margin-bottom: 2rem;">
+            <div class="experience-grid project-grid featured-projects-grid" style="margin-bottom: 2rem;">
                 {% for project in featured_projects %}
                 <article class="experience-card" data-aos="fade-up">
                     {% if project.project_image_url %}
@@ -206,47 +160,6 @@
     </section>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const contactForm = document.getElementById('contact-form');
-        if (!contactForm) return;
-
-        contactForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const btn = contactForm.querySelector('button[type="submit"]');
-            const originalText = btn.textContent;
-            btn.disabled = true;
-            btn.textContent = 'Mengirim...';
-
-            const formData = new FormData(contactForm);
-            try {
-                const { response, data } = await window.PortfolioAjax.fetchJson(contactForm.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRFToken': window.PortfolioAjax.getCsrfToken(contactForm),
-                    },
-                    body: formData,
-                });
-
-                if (response.ok && data?.status === 'success') {
-                    showToast('Pesan terkirim', data.message, 'success');
-                    contactForm.reset();
-                } else {
-                    const errors = window.PortfolioAjax.validationMessages(data?.errors);
-                    showToast('Gagal mengirim pesan', errors[0] || data?.message || 'Terjadi kesalahan. Coba lagi.', 'error');
-                }
-            } catch (err) {
-                showToast('Gagal mengirim pesan', 'Periksa koneksi lalu coba lagi.', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = originalText;
-            }
-        });
-
-    });
-    </script>
-
-    <script>
         document.addEventListener("DOMContentLoaded", function () {
             const titleEl = document.getElementById("typewriter-title");
             if (titleEl) {
@@ -270,69 +183,14 @@
                 setTimeout(typeChar, 300);
             }
 
-            // Code Examples Inline Logic
-            const techItems = document.querySelectorAll('.tech-item');
-            
-            techItems.forEach(item => {
-                // Wrap existing content
-                const wrapper = document.createElement('div');
-                wrapper.className = 'tech-icon-wrapper';
-                while (item.firstChild) {
-                    wrapper.appendChild(item.firstChild);
-                }
-                item.appendChild(wrapper);
-
-                // Create code snippet element (Mac UI)
-                const snippetContainer = document.createElement('div');
-                snippetContainer.className = 'tech-code-snippet mac-window';
-                
-                const header = document.createElement('div');
-                header.className = 'mac-header';
-                
-                const dots = document.createElement('div');
-                dots.className = 'mac-dots';
-                dots.innerHTML = '<span></span><span></span><span></span>';
-                
-                const title = document.createElement('div');
-                title.className = 'mac-title';
-                
-                const pre = document.createElement('pre');
-                pre.className = 'mac-body';
-                const code = document.createElement('code');
-                
-                const langSpan = wrapper.querySelector('span');
-                if (langSpan) {
-                    const fileName = item.getAttribute('data-filename');
-                    const snippetCode = item.getAttribute('data-snippet');
-                    
-                    title.innerHTML = `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style="opacity:0.7"><path d="M4 1.5H9.5L13.5 5.5V14.5C13.5 15.0523 13.0523 15.5 12.5 15.5H4C3.44772 15.5 3 15.0523 3 14.5V2.5C3 1.94772 3.44772 1.5 4 1.5ZM9 2.5V6H12.5L9 2.5Z"/></svg> ${fileName || 'code.txt'}`;
-                    code.innerText = snippetCode || '// No example available';
-                }
-                
-                header.appendChild(dots);
-                header.appendChild(title);
-                pre.appendChild(code);
-                snippetContainer.appendChild(header);
-                snippetContainer.appendChild(pre);
-                item.appendChild(snippetContainer);
-
-                // Toggle logic
-                item.addEventListener('click', () => {
-                    const isExpanded = item.classList.contains('expanded');
-                    
-                    // Close all
-                    techItems.forEach(otherItem => {
-                        otherItem.classList.remove('expanded');
-                    });
-                    
-                    // Open if it wasn't open
-                    if (!isExpanded) {
-                        item.classList.add('expanded');
-                    }
-                });
-            });
         });
     </script>
+    {% if user.is_superuser or is_editor %}
+        {% include 'components/resource_dialog.html' with resource=education_resource %}
+        {% include 'components/resource_dialog.html' with resource=techstack_resource %}
+    {% endif %}
+    <script src="{% static 'js/contact.js' %}"></script>
+    <script src="{% static 'js/public-resources.js' %}"></script>
 {% endblock content %}
 
 

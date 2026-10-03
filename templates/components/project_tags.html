@@ -1,0 +1,32 @@
+<div class="resource-tags" data-tag-picker data-tag-list-url="{% url 'main:manage_tag_list' %}"
+     data-tag-create-url="{% url 'main:manage_tag_create' %}">
+    {{ field }}
+    <div class="resource-tags__choices" data-tag-choices role="group" aria-labelledby="{{ field.id_for_label }}_label" hidden></div>
+    <p class="resource-tags__status" data-tag-status role="status" hidden></p>
+    <p class="resource-field-help">Pilih satu atau beberapa tag yang sesuai dengan proyek.</p>
+    {% if can_create_tags %}
+    <button type="button" class="resource-tags__add" data-open-tag
+            aria-expanded="false" aria-controls="{{ field.id_for_label }}_creator" hidden>
+        {% include 'components/resource_icon.html' with name='plus' %}<span>Tambah tag baru</span>
+    </button>
+    <div class="resource-tag-creator" id="{{ field.id_for_label }}_creator" data-tag-creator hidden>
+        <p class="resource-tag-creator__title">Tag baru</p>
+        <div class="resource-tag-creator__fields">
+            <div>
+                <label for="{{ field.id_for_label }}_new_name">Nama tag</label>
+                <input type="text" id="{{ field.id_for_label }}_new_name" data-tag-name maxlength="50"
+                       placeholder="Contoh: Django" autocomplete="off" aria-describedby="{{ field.id_for_label }}_create_error">
+            </div>
+            <div>
+                <label for="{{ field.id_for_label }}_new_color">Warna</label>
+                <input type="color" id="{{ field.id_for_label }}_new_color" data-tag-color value="#3b82f6">
+            </div>
+        </div>
+        <p id="{{ field.id_for_label }}_create_error" class="resource-field-error" data-tag-error role="alert" hidden></p>
+        <div class="resource-tag-creator__actions">
+            <button type="button" class="button resource-button resource-button--quiet" data-cancel-tag>Batal</button>
+            <button type="button" class="button resource-button resource-button--primary" data-save-tag>Buat &amp; pilih tag</button>
+        </div>
+    </div>
+    {% endif %}
+</div>

@@ -1,0 +1,18 @@
+{% if show_search or user.is_superuser %}
+<div class="resource-controls">
+    {% if show_search %}
+    <form data-search-form class="project-search" role="search">
+        <input type="search" name="q" class="project-search__input"
+               placeholder="Cari {{ resource.label }}" aria-label="Cari {{ resource.label }}" data-search-input>
+        <button type="submit" class="button">Cari</button>
+    </form>
+    {% endif %}
+    {% if user.is_superuser %}
+    <button type="button" class="button resource-button resource-button--primary" data-open-create>
+        {% include 'components/resource_icon.html' with name='plus' %}
+        <span>Tambah {{ resource.label }}</span>
+    </button>
+    {% endif %}
+</div>
+{% endif %}
+{% include 'components/resource_states.html' %}

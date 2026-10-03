@@ -1,10 +1,44 @@
 from django.forms import ModelForm, TextInput, Textarea, URLInput, Select, DateTimeInput, NumberInput, DateInput
 from django.core.exceptions import ValidationError
 from django.utils.html import strip_tags
+from django.core.validators import RegexValidator
+from urllib.parse import urlsplit
 
-from main.models import Experience, Skill, Education, Project, TechStack, ContactMessage
+from main.models import Experience, Skill, Education, Project, TechStack, ContactMessage, Tag
 
-class ExperienceForm(ModelForm):
+class PortfolioForm(ModelForm):
+    """Clean plain text while preserving Markdown and source code."""
+    plain_text_fields = ()
+    http_url_fields = ()
+    markdown_fields = ()
+
+    def clean(self):
+        cleaned = super().clean()
+        for name in self.plain_text_fields:
+            if name not in cleaned:
+                continue
+            value = strip_tags(cleaned[name] or '').strip()
+            if self.fields[name].required and not value:
+                self.add_error(name, 'Field ini tidak boleh kosong setelah sanitasi HTML.')
+            else:
+                cleaned[name] = value
+        for name in self.http_url_fields:
+            value = cleaned.get(name)
+            if value and urlsplit(value).scheme.lower() not in {'http', 'https'}:
+                self.add_error(name, 'Gunakan URL dengan skema http atau https.')
+        if self.markdown_fields:
+            from main.templatetags.markdown_extras import markdown_format
+            for name in self.markdown_fields:
+                value = cleaned.get(name)
+                if value and not strip_tags(markdown_format(value)).strip():
+                    self.add_error(name, 'Deskripsi harus memuat teks yang dapat ditampilkan.')
+        return cleaned
+
+
+class ExperienceForm(PortfolioForm):
+    plain_text_fields = ('title', 'company')
+    http_url_fields = ('thumbnail',)
+    markdown_fields = ('description',)
     class Meta:
         model = Experience
         fields = [
@@ -64,7 +98,9 @@ class ExperienceForm(ModelForm):
             ),
         }
 
-class SkillForm(ModelForm):
+class SkillForm(PortfolioForm):
+    plain_text_fields = ('title', 'level')
+    markdown_fields = ('description',)
     class Meta:
         model = Skill
         fields = [
@@ -108,7 +144,8 @@ class SkillForm(ModelForm):
             ),
         }
 
-class EducationForm(ModelForm):
+class EducationForm(PortfolioForm):
+    plain_text_fields = ('school_name', 'period', 'detail')
     class Meta:
         model = Education
         fields = [
@@ -151,7 +188,21 @@ class EducationForm(ModelForm):
             ),
         }
 
-class ProjectForm(ModelForm):
+class TagForm(PortfolioForm):
+    plain_text_fields = ('name',)
+
+    class Meta:
+        model = Tag
+        fields = ('name', 'color')
+
+    def clean_color(self):
+        color = self.cleaned_data['color'].strip()
+        RegexValidator(r'^#[0-9a-fA-F]{6}$', 'Gunakan warna hex, misalnya #3b82f6.')(color)
+        return color.lower()
+
+
+class ProjectForm(PortfolioForm):
+    http_url_fields = ('project_url', 'project_image_url')
     class Meta:
         model = Project
         fields = [
@@ -223,7 +274,9 @@ class ProjectForm(ModelForm):
             raise ValidationError("Deskripsi tidak boleh hanya berisi tag HTML.")
         return description
 
-class TechStackForm(ModelForm):
+class TechStackForm(PortfolioForm):
+    plain_text_fields = ('name', 'filename')
+    http_url_fields = ('icon_url',)
     class Meta:
         model = TechStack
         fields = [
@@ -248,7 +301,8 @@ class TechStackForm(ModelForm):
             "order": NumberInput(attrs={"placeholder": "1"}),
         }
 
-class ContactMessageForm(ModelForm):
+class ContactMessageForm(PortfolioForm):
+    plain_text_fields = ('name', 'message')
     class Meta:
         model = ContactMessage
         fields = ["name", "email", "message"]

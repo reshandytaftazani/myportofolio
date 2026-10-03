@@ -73,17 +73,20 @@ class MainTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "experience.html")
-        self.assertContains(response, self.experience.title)
-        self.assertContains(response, self.experience.description)
-        self.assertContains(response, "PART-TIME")
-        self.assertContains(response, "Sedang berlangsung")
+        self.assertContains(response, 'data-list-url="/api/experience/"')
+        data = self.client.get(reverse('main:get_experience_json')).json()[0]['fields']
+        self.assertEqual(data['title'], self.experience.title)
+        self.assertIn(self.experience.description, data['description_html'])
+        self.assertEqual(data['category_display'], 'Part-Time')
+        self.assertTrue(data['is_ongoing'])
         self.assertContains(response, f'href="{reverse("main:show_main")}"')
 
     def test_empty_experience_page(self):
         Experience.objects.all().delete()
         response = self.client.get(reverse("main:show_experience"))
 
-        self.assertContains(response, "Belum ada pengalaman yang ditambahkan.")
+        self.assertContains(response, 'data-empty')
+        self.assertEqual(self.client.get(reverse('main:get_experience_json')).json(), [])
 
     def test_completed_experience(self):
         self.experience.ended_at = timezone.now()
@@ -91,8 +94,9 @@ class MainTest(TestCase):
         response = self.client.get(reverse("main:show_experience"))
 
         self.assertFalse(self.experience.is_ongoing)
-        self.assertContains(response, "Selesai")
-        self.assertNotContains(response, "Sedang berlangsung")
+        data = self.client.get(reverse('main:get_experience_json')).json()[0]['fields']
+        self.assertFalse(data['is_ongoing'])
+        self.assertIsNotNone(data['ended_at'])
 
     #  Test skills
     def test_skills_url_and_template(self):
@@ -102,10 +106,10 @@ class MainTest(TestCase):
         self.assertTemplateUsed(response, 'skills.html')
 
     def test_skills_context_data(self):
-        """Memastikan data skills dari database berhasil dikirim ke template"""
+        """Skill data is loaded from the public JSON endpoint."""
         response = self.client.get(reverse('main:show_skills'))
-        self.assertTrue('skills' in response.context)
-        self.assertEqual(len(response.context['skills']), 3)
+        self.assertContains(response, 'data-list-url="/api/skills/"')
+        self.assertEqual(len(self.client.get(reverse('main:get_skills_json')).json()), 3)
 
     def test_tab_ui_rendering(self):
         """Memastikan elemen struktur Tab UI berhasil dirender"""
@@ -113,18 +117,16 @@ class MainTest(TestCase):
         content = response.content.decode('utf-8')
         
         self.assertIn('skills-tabs-container', content)
-        self.assertIn('tab-btn', content)
-        self.assertIn('tab-panel', content)
+        self.assertIn('data-list', content)
+        self.assertIn('public-resources.js', content)
 
     def test_ide_window_logic(self):
         """Menguji logika if-else untuk menampilkan judul file dan tema editor yang tepat"""
-        response = self.client.get(reverse('main:show_skills'))
-        content = response.content.decode('utf-8')
-
-        self.assertIn('📄 main.tex — Overleaf', content)
-        self.assertIn('overleaf-mode', content)
-        self.assertIn('⚙️ main.cpp — VS Code', content)
-        self.assertIn('🐍 main.py — VS Code', content)
+        data = self.client.get(reverse('main:get_skills_json')).json()
+        snippets = {item['fields']['title']: item['fields']['code_snippet'] for item in data}
+        self.assertIn('\\begin', snippets['Mathematic Olympiad'])
+        self.assertIn('#include <bits/stdc++.h>', snippets['Problem Solving'])
+        self.assertIn("print('Hello')", snippets['Software Dev'])
 
     def test_external_scripts_loaded(self):
         """Memastikan library MathJax dan Highlight.js sudah dipanggil"""
@@ -133,7 +135,7 @@ class MainTest(TestCase):
         
         self.assertIn('mathjax@3', content)
         self.assertIn('highlight.min.js', content)
-        self.assertIn('hljs.highlightAll()', content)
+        self.assertIn("load: ['ui/safe']", content)
 
     # Test untuk education
     def test_education_model_and_ordering(self):
@@ -144,15 +146,17 @@ class MainTest(TestCase):
         self.assertEqual(educations[1], self.edu_sma)
 
     def test_main_context_contains_education(self):
-        """Memastikan data education dikirim ke index.html"""
+        """Education loads independently of the rest of the home page."""
         response = self.client.get(reverse("main:show_main"))
-        self.assertTrue('education_list' in response.context)
-        self.assertEqual(len(response.context['education_list']), 2)
+        self.assertContains(response, 'data-list-url="/api/education/"')
+        self.assertEqual(len(self.client.get(reverse('main:get_education_json')).json()), 2)
 
     def test_education_rendering_on_main_page(self):
         """Memastikan data education dirender dengan benar di HTML"""
         response = self.client.get(reverse("main:show_main"))
-        self.assertContains(response, "Universitas Indonesia")
-        self.assertContains(response, "2025 - Present")
-        self.assertContains(response, "SMA Taruna Nusantara")
-        self.assertContains(response, "GPA : 93.5")
+        self.assertContains(response, 'data-public-resource')
+        data = self.client.get(reverse('main:get_education_json')).json()
+        self.assertEqual(data[0]['fields']['school_name'], 'Universitas Indonesia')
+        self.assertEqual(data[0]['fields']['period'], '2025 - Present')
+        self.assertEqual(data[1]['fields']['school_name'], 'SMA Taruna Nusantara')
+        self.assertEqual(data[1]['fields']['detail'], 'GPA : 93.5')

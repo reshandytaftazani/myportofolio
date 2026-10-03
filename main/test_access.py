@@ -134,7 +134,7 @@ class AccessRegressionTests(TestCase):
                     self.assertIn("message", json.loads(response.content))
         self.assertEqual(Project.objects.count(), 1)
 
-    def test_json_resource_denial_returns_json_instead_of_redirecting(self):
+    def test_public_resources_are_readable_without_login(self):
         for view in (
             views.get_experience_json,
             views.get_skills_json,
@@ -143,5 +143,5 @@ class AccessRegressionTests(TestCase):
         ):
             with self.subTest(view=view.__name__):
                 response = view(self.request(AnonymousUser(), method="get"))
-                self.assertEqual(response.status_code, 403)
-                self.assertIn("message", json.loads(response.content))
+                self.assertEqual(response.status_code, 200)
+                self.assertIsInstance(json.loads(response.content), list)

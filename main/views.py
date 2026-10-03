@@ -1,12 +1,10 @@
 import datetime
-import os
 import logging
 from django.contrib import messages
-from django.core import serializers
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
@@ -17,13 +15,12 @@ from main.models import Experience, Skill, Education, Project, TechStack, Contac
 from main.forms import ExperienceForm, SkillForm, EducationForm, ProjectForm, TechStackForm, ContactMessageForm
 from django_ratelimit.decorators import ratelimit
 from main.access import is_editor, require_access
+from main.resource_api import public_resource_list, resource_context, RESOURCES
 
 logger = logging.getLogger('main')
 
 @ratelimit(key='ip', rate='5/m', method='POST', block=True)
 def show_main(request):
-    educations = Education.objects.all()
-    tech_stacks = TechStack.objects.all()
     featured_projects = Project.objects.filter(is_featured=True).prefetch_related('tags')[:3]
 
     if request.method == "POST":
@@ -74,8 +71,8 @@ def show_main(request):
         "bio": (
             "CS student at Universitas Indonesia."
         ),
-        'education_list': educations,
-        'tech_stacks': tech_stacks,
+        'education_resource': resource_context('education'),
+        'techstack_resource': resource_context('techstack'),
         'contact_form': form,
         'is_editor': editor,
         'featured_projects': featured_projects,
@@ -83,18 +80,20 @@ def show_main(request):
     return render(request, "index.html", context)
 
 
+@ensure_csrf_cookie
 def show_experience(request):
     editor = is_editor(request.user)
     context = {
-        "experience_list": Experience.objects.all(),
+        "resource": resource_context('experience'),
         "is_editor": editor,
     }
     return render(request, "experience.html", context)
 
+@ensure_csrf_cookie
 def show_skills(request):
     editor = is_editor(request.user)
     context = {
-        "skills": Skill.objects.all(),
+        "resource": resource_context('skills'),
         "is_editor": editor,
     }
     return render(request, "skills.html", context)
@@ -161,8 +160,6 @@ def create_education(request):
     }
     return render(request, "education_form.html", context)
 
-from main.templatetags.markdown_extras import markdown_format
-
 @ensure_csrf_cookie
 def show_projects(request):
     title_query = request.GET.get("title", "").strip()
@@ -181,6 +178,7 @@ def show_projects(request):
         "categories": categories,
         "is_editor": editor,
         "form": ProjectForm(),
+        "project_resource": resource_context('projects'),
     }
     return render(request, "project.html", context)
 
@@ -314,16 +312,13 @@ def logout_user(request):
     return response
 
 @login_required(login_url='/login/')
+@ensure_csrf_cookie
 def show_dashboard(request):
     require_access(request, "dashboard")
     editor = is_editor(request.user)
     
     context = {
-        "experiences": Experience.objects.all(),
-        "skills": Skill.objects.all(),
-        "educations": Education.objects.all(),
-        "projects": Project.objects.all(),
-        "tech_stacks": TechStack.objects.all(),
+        "resources": [resource_context(name, admin=True) for name in RESOURCES],
         "is_editor": editor,
     }
     return render(request, "dashboard.html", context)
@@ -443,33 +438,21 @@ def delete_tech_stack(request, id):
         messages.success(request, "Tech Stack berhasil dihapus!")
     return redirect("main:dashboard")
 
+@require_GET
 def get_experience_json(request):
-    denied = require_access(request, "authenticated", json_response=True)
-    if denied:
-        return denied
-    data = Experience.objects.all()
-    return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
+    return public_resource_list(request, 'experience')
 
+@require_GET
 def get_skills_json(request):
-    denied = require_access(request, "authenticated", json_response=True)
-    if denied:
-        return denied
-    data = Skill.objects.all()
-    return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
+    return public_resource_list(request, 'skills')
 
+@require_GET
 def get_education_json(request):
-    denied = require_access(request, "authenticated", json_response=True)
-    if denied:
-        return denied
-    data = Education.objects.all()
-    return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
+    return public_resource_list(request, 'education')
 
+@require_GET
 def get_tech_stack_json(request):
-    denied = require_access(request, "authenticated", json_response=True)
-    if denied:
-        return denied
-    data = TechStack.objects.all()
-    return HttpResponse(serializers.serialize("json", data, use_natural_foreign_keys=True), content_type="application/json")
+    return public_resource_list(request, 'techstack')
 @login_required(login_url="/login/")
 def toggle_star_project(request, project_id):
     require_access(request, "star")
