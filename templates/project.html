@@ -58,13 +58,14 @@
                 </div>
 
                 <!-- Loading State -->
-                <div id="loading" class="empty-state hide">
+                <div id="loading" class="empty-state hide" role="status" aria-live="polite" aria-atomic="true">
                     <p>Memuat projects...</p>
                 </div>
 
                 <!-- Error State -->
-                <div id="error" class="empty-state hide">
+                <div id="error" class="empty-state hide" role="alert">
                     <p>Gagal memuat data projects. Silakan coba lagi.</p>
+                    <button type="button" class="button button-secondary" data-projects-retry>Coba lagi</button>
                 </div>
 
                 <!-- Empty State -->
@@ -80,6 +81,6 @@
     {% if user.is_superuser or is_editor %}
         {% include 'components/resource_dialog.html' with resource=project_resource %}
     {% endif %}
-    <script src="{% static 'js/projects.js' %}"></script>
+    <script src="{% static 'js/projects.js' %}?v=2"></script>
 {% endblock content %}
 

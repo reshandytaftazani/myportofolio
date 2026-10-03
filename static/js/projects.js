@@ -27,6 +27,7 @@
         errorState?.classList.toggle('hide', !error);
         emptyState?.classList.toggle('hide', !empty);
         grid?.classList.toggle('hide', !showGrid);
+        grid?.setAttribute('aria-busy', String(loading));
     }
 
     function escapeHtml(value) {
@@ -124,6 +125,11 @@
     }
 
     const searchProjects = resources.debounce(() => fetchProjects(), 300);
+    app.querySelector('[data-projects-retry]')?.addEventListener('click', async () => {
+        searchProjects.cancel();
+        await fetchProjects();
+        if (errorState?.classList.contains('hide')) searchInput?.focus({ preventScroll: true });
+    });
     searchInput?.addEventListener('input', () => { activeRequest?.abort(); searchProjects(); });
     searchForm?.addEventListener('submit', event => {
         event.preventDefault();

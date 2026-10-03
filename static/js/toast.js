@@ -1,4 +1,5 @@
 let toastTimer;
+let toastAnnouncementTimer;
 
 function showToast(title, message, type = 'normal', duration = 3000) {
   const toastComponent = document.getElementById('toast-component');
@@ -22,6 +23,18 @@ function showToast(title, message, type = 'normal', duration = 3000) {
   // Perbarui konten teks
   toastTitle.textContent = title;
   toastMessage.textContent = message;
+
+  // Dialogs make the rest of the page inert, so announce inside the active dialog.
+  const announcement = document.querySelector('dialog[open] [data-toast-announcement]')
+    || document.getElementById('toast-announcement');
+  clearTimeout(toastAnnouncementTimer);
+  if (announcement) {
+      announcement.textContent = '';
+      // Separate updates also announce consecutive toasts with identical text.
+      toastAnnouncementTimer = setTimeout(() => {
+          announcement.textContent = [title, message].filter(Boolean).join('. ');
+      }, 100);
+  }
 
   // Batalkan timer sebelumnya jika toast masih tampil
   clearTimeout(toastTimer);

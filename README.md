@@ -9,7 +9,42 @@ Kelas : PBP D
 Experience, Skills, Education, dan Tech Stack dimuat melalui API publik. Dashboard memakai
 daftar per tab dan modal tambah/edit/hapus dengan otorisasi server; Projects juga mendukung
 edit/hapus tanpa reload. Kontrak API, keputusan rendering, dan cara menjalankan pemeriksaan
-tersedia di [dokumentasi AJAX resource](docs/AJAX_RESOURCES.md).
+dirangkum di bawah. API daftar tetap mengembalikan array objek `pk`/`fields`; akses tambah/hapus
+dibatasi ke superuser dan edit ke Editor/superuser. API publik bisa dibaca tanpa login.
+
+### Pemeliharaan AJAX — Tahap 4
+
+Daftar publik dan Dashboard menyediakan loading/kosong/error serta tombol coba lagi.
+Retry Projects mempertahankan judul/kategori aktif. Error form resource dan Contact tampil
+dekat field dengan `aria-describedby`/`aria-invalid`, fokus ke field pertama yang gagal,
+dan input tetap tersedia untuk diperbaiki.
+
+Loading dan toast memakai live region `role="status"`/`aria-atomic="true"`. Toast diumumkan
+di dalam dialog yang sedang terbuka agar pesan tetap tersedia saat halaman lain inert;
+teks identik berulang juga dikirim sebagai pembaruan. Modal mengatur Tab/Shift+Tab,
+Escape, fokus awal, serta fokus kembali ke pembuka atau kontrol yang masih tersedia.
+Event penutupan yang tertunda tidak membatalkan permintaan edit baru.
+Perilaku ini mengikuti panduan [status messages](https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA22)
+dan [modal dialogs](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) dari W3C.
+
+Pagination ditunda berdasarkan volume lokal 2–7 item per resource pada 4 Oktober 2026;
+evaluasi kembali jika ukuran respons atau biaya render meningkat.
+
+Jalankan pemeriksaan melalui lingkungan proyek (PowerShell):
+
+```powershell
+$env:PRODUCTION = 'False'
+.\env\Scripts\python.exe manage.py check
+.\env\Scripts\python.exe manage.py test main --noinput
+```
+
+Tes menggunakan database terpisah. Suite browser membutuhkan `requirements-dev.txt` dan
+Chromium Playwright atau Edge/Chrome yang terpasang. AOS di-stub; tes memeriksa DOM,
+keyboard, dan live region. Pembacaan audio dengan screen reader belum diuji manual.
+Verifikasi 4 Oktober 2026: seluruh 41 tes lulus (32 backend, 9 Edge headless), Django check
+dan sintaks JavaScript lulus. `runserver` merespons 200 untuk empat halaman publik,
+lima endpoint daftar, serta empat aset JavaScript yang berubah.
+Dokumen `Planning/` dan `docs/` adalah catatan lokal yang diabaikan `.gitignore`.
 
 ## Refleksi Tutorial dan Tugas 1
 

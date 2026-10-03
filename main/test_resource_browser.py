@@ -5,6 +5,7 @@ Windows can also use the installed Edge or Chrome browser.
 """
 
 import importlib.util
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import unittest
 
@@ -73,6 +74,17 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
     def goto(self, path):
         self.page.goto(self.live_server_url + path, wait_until='domcontentloaded')
 
+    def database_call(self, callback):
+        # Playwright runs an event loop on this thread; keep synchronous ORM work separate.
+        def run():
+            from django.db import connections
+            try:
+                return callback()
+            finally:
+                connections.close_all()
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(run).result()
+
     def test_public_lists_without_search_errors_retry_skills_and_code(self):
         from playwright.sync_api import expect
         self.goto('/experience/')
@@ -88,8 +100,12 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
         self.goto('/experience/')
         expect(self.page.locator('[data-error]')).to_be_visible()
         self.context.unroute('**/api/experience/**')
-        self.page.locator('[data-retry]').click()
+        self.page.locator('[data-retry]').focus()
+        self.page.locator('[data-retry]').press('Enter')
         expect(self.page.locator('.timeline-card:visible')).to_have_count(2)
+        expect(self.page.locator('[data-list]')).to_be_focused()
+        expect(self.page.locator('[data-list]')).to_have_attribute('aria-busy', 'false')
+        expect(self.page.locator('[data-loading]')).to_have_attribute('role', 'status')
         self.goto('/skills/')
         expect(self.page.locator('.tab-btn')).to_have_count(2)
         expect(self.page.locator('.tab-panel.active pre code')).to_have_text('#include <iostream>')
@@ -145,6 +161,9 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
             dialog.locator(f'[name="{title_field}"]').fill('<b></b>')
             dialog.locator('[type=submit]').click()
             expect(dialog.locator('[data-form-error]')).to_be_visible()
+            invalid = dialog.locator(f'[name="{title_field}"]')
+            expect(invalid).to_have_attribute('aria-invalid', 'true')
+            expect(invalid.locator('xpath=..').locator('[data-field-error]')).to_be_visible()
             expect(dialog.locator('[type=submit]')).to_be_enabled()
             dialog.locator(f'[name="{title_field}"]').fill('Browser edited')
             dialog.locator('[type=submit]').click()
@@ -247,3 +266,129 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
         self.page.wait_for_timeout(1400)
         expect(root.locator('tbody tr:visible')).to_have_count(1)
         expect(root.locator('tbody')).to_contain_text('Tutor')
+
+    def test_projects_keyboard_retry_preserves_search_category_and_loading_status(self):
+        from playwright.sync_api import expect
+        self.context.route('**/api/projects/**', lambda route: route.fulfill(
+            status=503, content_type='text/html', body='<h1>Unavailable</h1>'))
+        self.goto('/projects/?title=Port&category=Web')
+        expect(self.page.locator('#error')).to_be_visible()
+        expect(self.page.locator('#error')).to_have_attribute('role', 'alert')
+        self.context.unroute('**/api/projects/**')
+        self.page.evaluate('''() => {
+            const original = window.fetch;
+            window.fetch = (url, options) => {
+                if (new URL(url, location.origin).pathname !== '/api/projects/') return original(url, options);
+                return new Promise(resolve => {
+                    window.releaseProjects = () => resolve(original(url, options));
+                });
+            };
+        }''')
+        retry = self.page.locator('[data-projects-retry]')
+        retry.focus()
+        retry.press('Enter')
+        expect(self.page.locator('#loading')).to_be_visible()
+        expect(self.page.locator('#loading')).to_have_attribute('role', 'status')
+        expect(self.page.locator('#grid')).to_have_attribute('aria-busy', 'true')
+        self.page.wait_for_function('typeof window.releaseProjects === "function"')
+        self.page.evaluate('window.releaseProjects()')
+        expect(self.page.locator('#grid h2')).to_have_text('Portfolio')
+        expect(self.page.locator('#grid')).to_have_attribute('aria-busy', 'false')
+        expect(self.page.locator('#search-input')).to_have_value('Port')
+        expect(self.page.locator('[data-filter="Web"]')).to_have_attribute('aria-pressed', 'true')
+        expect(self.page.locator('#search-input')).to_be_focused()
+
+    def test_modal_keyboard_inline_errors_and_focus_return(self):
+        from playwright.sync_api import expect
+        self.login(self.owner)
+        self.goto('/experience/')
+        expect(self.page.locator('.timeline-card')).to_have_count(2)
+        opener = self.page.locator('[data-open-create]')
+        opener.focus()
+        opener.press('Enter')
+        dialog = self.page.locator('#experience-dialog')
+        title = dialog.locator('[name="title"]')
+        expect(title).to_be_focused()
+        first = dialog.locator('[data-close-dialog]').first
+        last = dialog.locator('[type=submit]')
+        last.focus()
+        self.page.keyboard.press('Tab')
+        expect(first).to_be_focused()
+        self.page.keyboard.press('Shift+Tab')
+        expect(last).to_be_focused()
+        self.fill_form(dialog, {'title': '<b></b>', 'description': 'Saved', 'company': 'Acme'})
+        last.click()
+        error = title.locator('xpath=..').locator('[data-field-error]')
+        expect(error).to_be_visible()
+        expect(title).to_have_attribute('aria-invalid', 'true')
+        self.assertIn(error.get_attribute('id'), title.get_attribute('aria-describedby').split())
+        expect(title).to_be_focused()
+        expect(dialog.locator('[data-toast-announcement]')).to_contain_text('Gagal menyimpan')
+        title.fill('Corrected')
+        expect(error).not_to_be_visible()
+        self.assertIsNone(title.get_attribute('aria-invalid'))
+        self.page.keyboard.press('Escape')
+        expect(dialog).not_to_be_visible()
+        expect(opener).to_be_focused()
+        edit = self.page.locator('[data-resource-action="edit"]').first
+        edit.focus()
+        edit.press('Enter')
+        expect(title).to_be_focused()
+        self.page.keyboard.press('Escape')
+        expect(dialog).not_to_be_visible()
+        expect(edit).to_be_focused()
+        delete = self.page.locator('[data-resource-action="delete"]').first
+        delete.focus()
+        delete.press('Enter')
+        confirmation = self.page.locator('#experience-delete-dialog')
+        cancel = confirmation.locator('[data-close-delete][autofocus]')
+        expect(cancel).to_be_focused()
+        self.page.keyboard.press('Escape')
+        expect(confirmation).not_to_be_visible()
+        expect(delete).to_be_focused()
+
+    def test_contact_inline_validation_and_repeated_safe_toast_announcements(self):
+        from playwright.sync_api import expect
+        from main.models import ContactMessage
+        self.goto('/')
+        form = self.page.locator('#contact-form')
+        name = form.locator('[name="name"]')
+        name.fill('<b></b>')
+        form.locator('[name="email"]').fill('visitor@example.com')
+        form.locator('[name="message"]').fill('Hello')
+        form.locator('[type=submit]').click()
+        error = form.locator('#id_name_error')
+        expect(error).to_be_visible()
+        expect(name).to_have_attribute('aria-invalid', 'true')
+        self.assertIn('id_name_error', name.get_attribute('aria-describedby').split())
+        expect(name).to_be_focused()
+        self.assertEqual(self.database_call(ContactMessage.objects.count), 0)
+        name.fill('Visitor')
+        expect(error).not_to_be_visible()
+        self.assertIsNone(name.get_attribute('aria-invalid'))
+        with self.page.expect_response(lambda response: response.url == self.live_server_url + '/'
+                                       and response.request.method == 'POST') as saved:
+            form.locator('[type=submit]').click()
+        self.assertEqual(saved.value.status, 200, saved.value.text())
+        self.assertEqual(saved.value.json()['status'], 'success')
+        expect(name).to_have_value('')
+        expect(self.page.locator('#toast-announcement')).to_contain_text('Pesan terkirim')
+        self.assertEqual(self.database_call(ContactMessage.objects.count), 1)
+        name.focus()
+        self.page.evaluate('''() => {
+            const region = document.getElementById('toast-announcement');
+            window.announcements = [];
+            new MutationObserver(() => {
+                if (region.textContent) window.announcements.push(region.textContent);
+            }).observe(region, { childList: true });
+            window.showToast('Info', '<img src=x onerror=alert(1)>', 'normal', 5000);
+        }''')
+        region = self.page.locator('#toast-announcement')
+        expect(region).to_have_text('Info. <img src=x onerror=alert(1)>')
+        expect(region).to_have_attribute('role', 'status')
+        expect(region).to_have_attribute('aria-live', 'polite')
+        expect(region).to_have_attribute('aria-atomic', 'true')
+        self.assertEqual(self.page.locator('#toast-message img, #toast-announcement img').count(), 0)
+        self.page.evaluate("window.showToast('Info', '<img src=x onerror=alert(1)>', 'normal', 5000)")
+        self.page.wait_for_function('window.announcements.length === 2')
+        expect(name).to_be_focused()

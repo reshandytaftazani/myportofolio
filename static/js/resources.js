@@ -106,7 +106,35 @@
         let editRequest;
         let tagRequest;
         let tagSequence = 0;
+        let formOpener;
+        let deleteOpener;
         const endpoint = (pattern, pk) => pattern.replace('__pk__', encodeURIComponent(pk));
+
+        [dialog, deleteDialog].forEach(modal => modal?.addEventListener('keydown', event => {
+            if (event.key !== 'Tab' || event.defaultPrevented) return;
+            const controls = [...modal.querySelectorAll('a[href], button, input, textarea, select, [tabindex]')]
+                .filter(control => !control.disabled && control.tabIndex >= 0 && control.getClientRects().length);
+            const first = controls[0];
+            const last = controls.at(-1);
+            if (!first) { event.preventDefault(); return; }
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault(); last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault(); first.focus();
+            }
+        }));
+
+        function restoreFocus(opener) {
+            const available = element => element?.isConnected && !element.disabled && element.getClientRects().length;
+            const target = available(opener) ? opener
+                : root.querySelector('[data-open-create], [data-search-input], #search-input')
+                    || root.querySelector('h1, h2, h3') || root;
+            if (!available(target)) return;
+            if (!target.matches('button, input, textarea, select, a[href], [tabindex]')) {
+                target.setAttribute('tabindex', '-1');
+            }
+            target.focus({ preventScroll: true });
+        }
 
         function resetError() {
             if (feedback) { feedback.textContent = ''; feedback.hidden = true; }
@@ -311,7 +339,8 @@
             else firstInvalid?.focus();
         }
 
-        function openForm(editing) {
+        function openForm(editing, opener) {
+            formOpener = opener;
             submitLabel = editing ? 'Simpan perubahan' : 'Tambah data';
             title.textContent = `${editing ? 'Edit' : 'Tambah'} ${label}`;
             subtitle.textContent = editing ? 'Perbarui informasi agar portofolio tetap relevan.'
@@ -338,20 +367,28 @@
             tagRequest?.abort();
         }
 
-        root.querySelector('[data-open-create]')?.addEventListener('click', () => {
+        root.querySelector('[data-open-create]')?.addEventListener('click', event => {
             if (!dialog || !form || saving || deleting) return;
             cancelEdit();
             fields.innerHTML = initialFields;
             form.reset();
             form.action = config.createUrl;
-            openForm(false);
+            openForm(false, event.currentTarget);
         });
 
         dialog?.querySelectorAll('[data-close-dialog]').forEach(button => {
-            button.addEventListener('click', () => { if (!saving) dialog.close(); });
+            button.addEventListener('click', () => {
+                if (!saving) { cancelEdit(); dialog.close(); }
+            });
         });
-        dialog?.addEventListener('cancel', event => { if (saving) event.preventDefault(); });
-        dialog?.addEventListener('close', cancelEdit);
+        dialog?.addEventListener('cancel', event => {
+            if (saving) event.preventDefault();
+            else cancelEdit();
+        });
+        dialog?.addEventListener('close', () => {
+            // close is queued: it must not abort a newer edit or move focus out of a reopened dialog.
+            if (!dialog.open) restoreFocus(formOpener);
+        });
         form?.addEventListener('input', event => {
             const field = event.target;
             if (!field.hasAttribute('aria-invalid')) return;
@@ -362,10 +399,17 @@
         });
 
         deleteDialog?.querySelectorAll('[data-close-delete]').forEach(button => {
-            button.addEventListener('click', () => { if (!deleting) deleteDialog.close(); });
+            button.addEventListener('click', () => {
+                if (!deleting) { pendingDeletion = undefined; deleteDialog.close(); }
+            });
         });
-        deleteDialog?.addEventListener('cancel', event => { if (deleting) event.preventDefault(); });
-        deleteDialog?.addEventListener('close', () => { pendingDeletion = undefined; });
+        deleteDialog?.addEventListener('cancel', event => {
+            if (deleting) event.preventDefault();
+            else pendingDeletion = undefined;
+        });
+        deleteDialog?.addEventListener('close', () => {
+            if (!deleteDialog.open) restoreFocus(deleteOpener);
+        });
         deleteDialog?.querySelector('[data-confirm-delete]')?.addEventListener('click', async () => {
             if (!pendingDeletion || deleting) return;
             const { button, pk } = pendingDeletion;
@@ -380,6 +424,7 @@
                     method: 'POST', headers: { 'X-CSRFToken': ajax.getCsrfToken() },
                 });
                 if (!response.ok || !data?.pk) throw new Error(message(data, 'Gagal menghapus data.'));
+                pendingDeletion = undefined;
                 deleteDialog.close();
                 notify('Berhasil', data.message, 'success');
                 refresh();
@@ -393,6 +438,7 @@
                 deleteDialog.setAttribute('aria-busy', 'false');
                 deleteDialog.querySelectorAll('button').forEach(control => { control.disabled = false; });
                 deleteLabel.textContent = 'Ya, hapus data';
+                if (deleteDialog.open) deleteDialog.querySelector('[data-close-delete][autofocus]')?.focus();
             }
         });
 
@@ -423,6 +469,7 @@
                     return;
                 }
                 setBusy(false);
+                cancelEdit();
                 dialog.close();
                 notify('Berhasil', data.message, 'success');
                 refresh(data.item);
@@ -439,6 +486,7 @@
             const pk = button.dataset.pk;
             if (button.dataset.resourceAction === 'delete') {
                 if (!deleteDialog) return;
+                deleteOpener = button;
                 pendingDeletion = { button, pk };
                 deleteDialog.querySelector('[data-delete-label]').textContent = button.dataset.label;
                 deleteFeedback.textContent = '';
@@ -461,7 +509,7 @@
                     // HTML comes only from the role protected Django form renderer.
                     fields.innerHTML = data.form_html;
                     form.action = endpoint(config.editUrl, pk);
-                    openForm(true);
+                    openForm(true, button);
                 } catch (error) {
                     if (error.name !== 'AbortError') notify('Gagal membuka formulir', error.message);
                 } finally { button.disabled = false; }
@@ -484,7 +532,8 @@
             if (empty) empty.hidden = value !== 'empty';
             if (errorState) errorState.hidden = value !== 'error';
             content.hidden = value !== 'list';
-            root.setAttribute('aria-busy', String(value === 'loading'));
+            // Keep the loading announcement outside the region marked busy.
+            content.setAttribute('aria-busy', String(value === 'loading'));
         }
 
         function invalidate() { sequence++; controller?.abort(); }
@@ -514,7 +563,13 @@
         root.querySelector('[data-search-form]')?.addEventListener('submit', event => {
             event.preventDefault(); load();
         });
-        root.querySelector('[data-retry]')?.addEventListener('click', load);
+        root.querySelector('[data-retry]')?.addEventListener('click', async () => {
+            await load();
+            if (errorState && !errorState.hidden) return;
+            const target = content.hidden ? empty : content;
+            target?.setAttribute('tabindex', '-1');
+            target?.focus({ preventScroll: true });
+        });
         bindManagement(root, load);
         if (autoLoad) load();
         return { load, activate() { if (!loaded) load(); } };

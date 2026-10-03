@@ -148,11 +148,10 @@
                         <div class="form-group" style="margin-bottom: 1.5rem;">
                             <label for="{{ field.id_for_label }}" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">{{ field.label }}</label>
                             {{ field }}
-                            {% for error in field.errors %}
-                                <p class="form-error" style="color: var(--danger); font-size: 0.85rem; margin-top: 0.25rem;">{{ error }}</p>
-                            {% endfor %}
+                            <p id="{{ field.id_for_label }}_error" class="resource-field-error" data-contact-error role="alert"{% if not field.errors %} hidden{% endif %}>{{ field.errors|join:" " }}</p>
                         </div>
                     {% endfor %}
+                    <p data-contact-feedback class="resource-form-feedback" role="alert" hidden></p>
                     <button type="submit" class="button" style="width: 100%; justify-content: center;">Send Message</button>
                 </form>
             </div>
@@ -189,7 +188,7 @@
         {% include 'components/resource_dialog.html' with resource=education_resource %}
         {% include 'components/resource_dialog.html' with resource=techstack_resource %}
     {% endif %}
-    <script src="{% static 'js/contact.js' %}"></script>
+    <script src="{% static 'js/contact.js' %}?v=2"></script>
     <script src="{% static 'js/public-resources.js' %}"></script>
 {% endblock content %}
 

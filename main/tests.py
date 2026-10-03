@@ -1,8 +1,9 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
+from django.contrib.auth.models import User
 
-from main.models import Experience, Skill, Education
+from main.models import Experience, Skill, Education, Project
 
 
 class MainTest(TestCase):
@@ -160,3 +161,50 @@ class MainTest(TestCase):
         self.assertEqual(data[0]['fields']['period'], '2025 - Present')
         self.assertEqual(data[1]['fields']['school_name'], 'SMA Taruna Nusantara')
         self.assertEqual(data[1]['fields']['detail'], 'GPA : 93.5')
+
+
+class ProjectAjaxRegressionTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.owner = User.objects.create_user(username='project-owner', is_superuser=True)
+        cls.reader = User.objects.create_user(username='project-reader')
+        cls.project = Project.objects.create(title='Portfolio Web', description='Website', category='Web')
+        Project.objects.create(title='Portfolio Mobile', description='App', category='Mobile')
+        Project.objects.create(title='Other Web', description='Other', category='Web')
+        cls.project.starred_by.add(cls.reader)
+
+    def test_search_combines_title_category_and_role_specific_star_state(self):
+        url = reverse('main:get_projects_json')
+        query = {'title': '  pOrTfOlIo  ', 'category': 'Web'}
+        for user in (None, self.reader, self.owner):
+            self.client.logout()
+            if user:
+                self.client.force_login(user)
+            with self.subTest(user=user):
+                response = self.client.get(url, query)
+                self.assertEqual(response.status_code, 200)
+                item, = response.json()
+                self.assertEqual(item['pk'], str(self.project.pk))
+                self.assertEqual(item['fields']['star_count'], 1)
+                self.assertEqual(item['fields']['is_starred'], user == self.reader)
+        self.assertEqual(self.client.get(url, {'title': 'no-match', 'category': 'Web'}).json(), [])
+
+    def test_required_project_fields_empty_after_sanitizing_never_save(self):
+        self.client.force_login(self.owner)
+        valid = {'title': 'Valid', 'description': 'Content', 'category': 'Web'}
+        endpoints = (
+            reverse('main:create_project_ajax'),
+            reverse('main:manage_resource_create', args=['projects']),
+            reverse('main:manage_resource_edit', args=['projects', self.project.pk]),
+        )
+        for url in endpoints:
+            for field in valid:
+                with self.subTest(url=url, field=field):
+                    response = self.client.post(url, {**valid, field: '<b></b>'})
+                    self.assertEqual(response.status_code, 400)
+                    self.assertIn(field, response.json()['errors'])
+                    self.assertEqual(Project.objects.count(), 3)
+                    self.project.refresh_from_db()
+                    self.assertEqual(self.project.title, 'Portfolio Web')
+                    self.assertEqual(self.project.description, 'Website')
+                    self.assertEqual(self.project.category, 'Web')

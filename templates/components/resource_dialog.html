@@ -1,4 +1,5 @@
 <dialog class="resource-dialog" id="{{ resource.name }}-dialog" aria-labelledby="{{ resource.name }}-dialog-title">
+    <p class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-toast-announcement></p>
     <form method="post" action="{{ resource.create_url }}" data-resource-form>
         {% csrf_token %}
         <div class="resource-dialog__header">
@@ -30,6 +31,7 @@
 {% if user.is_superuser %}
 <dialog class="resource-dialog resource-dialog--delete" id="{{ resource.name }}-delete-dialog"
         aria-labelledby="{{ resource.name }}-delete-title" aria-describedby="{{ resource.name }}-delete-description">
+    <p class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-toast-announcement></p>
     <div class="resource-dialog__header">
         <span class="resource-dialog__icon resource-dialog__icon--danger">{% include 'components/resource_icon.html' with name='trash' %}</span>
         <div class="resource-dialog__heading">
