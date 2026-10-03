@@ -12,6 +12,7 @@
                 {% endfor %}
                 <form method="post" action="{% url 'main:login' %}" class="project-form">
                     {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next_url }}">
                     {% for field in form %}
                         <div class="form-group">
                             <label for="{{ field.id_for_label }}">{{ field.label }}</label>
