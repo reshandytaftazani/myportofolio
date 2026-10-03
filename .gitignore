@@ -14,5 +14,5 @@ __pycache__/
 !.vscode/settings.json
 .idea/
 
-ROADMAP.md
-AGENT_PLAN.md
+graphify-out/
+Planning/
