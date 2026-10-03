@@ -168,13 +168,18 @@ from main.templatetags.markdown_extras import markdown_format
 
 def show_projects(request):
     title_query = request.GET.get("title", "").strip()
-    
-    # Tetap mengambil categories agar tombol filter di HTML tidak hilang
-    categories = set(p.category for p in Project.objects.all() if p.category)
+    categories = (
+        Project.objects.order_by()
+        .values_list("category", flat=True)
+        .exclude(category="")
+        .distinct()
+        .order_by("category")
+    )
     is_editor = request.user.groups.filter(name='Editor').exists() if request.user.is_authenticated else False
 
     context = {
         "title_query": title_query,
+        "category_query": request.GET.get("category", "all").strip() or "all",
         "categories": categories,
         "is_editor": is_editor,
         "form": ProjectForm(),
@@ -199,26 +204,30 @@ def create_project(request):
 
 def get_projects_json(request):
     title_query = request.GET.get("title", "").strip()
-    projects = Project.objects.prefetch_related('starred_by').all()
+    category = request.GET.get("category", "").strip()
+    projects = Project.objects.prefetch_related('tags', 'starred_by').all()
 
     if title_query:
         projects = projects.filter(title__icontains=title_query)
+    if category and category.lower() != "all":
+        projects = projects.filter(category=category)
 
     # Konstruksi data JSON secara manual agar bisa menyisipkan logika Star
     data = []
     for project in projects:
         starred_users = project.starred_by.all()
         is_starred = request.user in starred_users if request.user.is_authenticated else False
-        starred_by_names = ", ".join([u.username for u in starred_users])
+        starred_by_names = ", ".join(user.username for user in starred_users)
         
         # Mengambil nama-nama tag dan menggabungkannya menjadi string (contoh: "Python, Django")
-        tech_stack_str = ", ".join([tag.name for tag in project.tags.all()])
+        tech_stack_str = ", ".join(tag.name for tag in project.tags.all())
 
         data.append({
             "pk": str(project.id),
             "fields": {
                 "title": project.title,
                 "description": project.description,
+                "category": project.category,
                 "tech_stack": tech_stack_str or project.category,
                 "project_url": project.project_url,
                 "project_image_url": project.project_image_url,
@@ -242,7 +251,11 @@ def create_project_ajax(request):
     if form.is_valid():
         project = form.save()
         return JsonResponse(
-            {"message": "Proyek berhasil ditambahkan.", "pk": str(project.id)},
+            {
+                "message": "Proyek berhasil ditambahkan.",
+                "pk": str(project.id),
+                "category": project.category,
+            },
             status=201,
         )
 
@@ -474,9 +487,13 @@ def toggle_star_project(request, project_id):
             is_starred = True
             
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            starred_by_names = ", ".join(
+                project.starred_by.order_by("username").values_list("username", flat=True)
+            )
             return JsonResponse({
                 'is_starred': is_starred,
-                'count': project.starred_by.count()
+                'count': project.starred_by.count(),
+                'starred_by_names': starred_by_names,
             })
     return redirect("main:show_projects")
 

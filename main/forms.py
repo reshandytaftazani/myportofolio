@@ -212,10 +212,16 @@ class ProjectForm(ModelForm):
         return title
 
     def clean_category(self):
-        return strip_tags(self.cleaned_data["category"]).strip()
+        category = strip_tags(self.cleaned_data["category"]).strip()
+        if not category:
+            raise ValidationError("Kategori tidak boleh hanya berisi tag HTML.")
+        return category
 
     def clean_description(self):
-        return strip_tags(self.cleaned_data["description"]).strip()
+        description = strip_tags(self.cleaned_data["description"]).strip()
+        if not description:
+            raise ValidationError("Deskripsi tidak boleh hanya berisi tag HTML.")
+        return description
 
 class TechStackForm(ModelForm):
     class Meta:

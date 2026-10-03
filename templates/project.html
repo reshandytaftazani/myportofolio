@@ -37,9 +37,9 @@
                 </form>
                 
                 <div class="project-filters" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; overflow-x: auto; padding-bottom: 0.5rem;">
-                    <button class="button project-filter-btn active" data-filter="all" style="white-space: nowrap; transition: all 0.3s ease;">All</button>
+                    <button class="button project-filter-btn{% if category_query == 'all' %} active{% else %} project-filter-btn--inactive{% endif %}" data-filter="all" aria-pressed="{% if category_query == 'all' %}true{% else %}false{% endif %}" style="white-space: nowrap; transition: all 0.3s ease;">All</button>
                     {% for cat in categories %}
-                        <button class="button project-filter-btn project-filter-btn--inactive" data-filter="{{ cat }}" style="white-space: nowrap; transition: all 0.3s ease;">{{ cat }}</button>
+                        <button class="button project-filter-btn{% if category_query == cat %} active{% else %} project-filter-btn--inactive{% endif %}" data-filter="{{ cat }}" aria-pressed="{% if category_query == cat %}true{% else %}false{% endif %}" style="white-space: nowrap; transition: all 0.3s ease;">{{ cat }}</button>
                     {% endfor %}
                 </div>
 
@@ -71,6 +71,8 @@
     // Konfigurasi
     const BASE_PROJECTS_ENDPOINT = "{% url 'main:get_projects_json' %}";
     const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
+    const IS_AUTHENTICATED = "{{ user.is_authenticated|yesno:'true,false' }}" === "true";
+    const LOGIN_URL = "{% url 'main:login' %}?next={{ request.get_full_path|urlencode }}";
     let projectsAbortController;
 
     // Elemen DOM
@@ -80,6 +82,8 @@
     const gridContainer = document.getElementById('grid');
     const searchForm = document.getElementById('project-search-form');
     const searchInput = document.getElementById('search-input');
+    const projectFilters = document.querySelector('.project-filters');
+    let activeCategory = "{{ category_query|escapejs }}";
     
     const SEARCH_DEBOUNCE_DELAY = 300;
     let searchDebounceTimer;
@@ -115,7 +119,7 @@
             : '';
 
         const urlHtml = project.project_url 
-            ? `<a href="${escapeHtml(project.project_url)}" class="button">Lihat Project</a>`
+            ? `<a href="${escapeHtml(project.project_url)}" class="button" target="_blank" rel="noopener noreferrer">Lihat Project</a>`
             : '';
 
         // Dummy UUID digunakan untuk digantikan oleh ID asli dari data JSON
@@ -152,8 +156,8 @@
                         <button type="submit" 
                                 class="button button-star${isStarredClass}"
                                 title="${starTitle}">
-                            <span aria-hidden="true">★</span>
-                            ${starText}
+                            <span class="star-icon" aria-hidden="true">★</span>
+                            <span class="star-label">${starText}</span>
                             <span class="star-count">${project.star_count}</span>
                         </button>
                     </form>
@@ -168,14 +172,16 @@
     }
 
     // Fetch data project
-    async function fetchProjects(searchQuery = "") {
+    async function fetchProjects(searchQuery = "", category = activeCategory) {
         if (projectsAbortController) projectsAbortController.abort();
         projectsAbortController = new AbortController();
 
         try {
             displayPageSection({ showLoading: true });
             
-            const url = searchQuery ? `${BASE_PROJECTS_ENDPOINT}?title=${encodeURIComponent(searchQuery)}` : BASE_PROJECTS_ENDPOINT;
+            const url = new URL(BASE_PROJECTS_ENDPOINT, window.location.origin);
+            if (searchQuery) url.searchParams.set('title', searchQuery);
+            if (category && category !== 'all') url.searchParams.set('category', category);
             
             const response = await fetch(url, {
                 headers: { 'Accept': 'application/json' },
@@ -220,6 +226,37 @@
         clearTimeout(searchDebounceTimer);
         searchProjects();
     });
+
+    function setActiveCategory(category) {
+        activeCategory = category;
+        projectFilters.querySelectorAll('[data-filter]').forEach(button => {
+            const isActive = button.dataset.filter === category;
+            button.classList.toggle('active', isActive);
+            button.classList.toggle('project-filter-btn--inactive', !isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        });
+        fetchProjects(searchInput.value.trim(), activeCategory);
+    }
+
+    projectFilters.addEventListener('click', function(event) {
+        const button = event.target.closest('[data-filter]');
+        if (button) setActiveCategory(button.dataset.filter);
+    });
+
+    function ensureProjectCategoryFilter(category) {
+        if (!category || [...projectFilters.querySelectorAll('[data-filter]')]
+            .some(button => button.dataset.filter === category)) return;
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'button project-filter-btn project-filter-btn--inactive';
+        button.dataset.filter = category;
+        button.setAttribute('aria-pressed', 'false');
+        button.style.cssText = 'white-space: nowrap; transition: all 0.3s ease;';
+        button.textContent = category;
+        projectFilters.appendChild(button);
+    }
+
     // Fungsi untuk menutup modal form proyek
     function closeProjectModal() {
         document.getElementById("add-project-modal").hidePopover();
@@ -262,8 +299,9 @@
             if (response.ok) {
                 projectForm.reset();
                 closeProjectModal();
+                ensureProjectCategoryFilter(result.category);
                 showToast('Berhasil', 'Proyek baru berhasil ditambahkan!', 'success');
-                fetchProjects(searchInput.value.trim());
+                fetchProjects(searchInput.value.trim(), activeCategory);
             } else {
                 const errorMessages = result.errors
                     ? Object.values(result.errors).flat().map(error => error.message)
@@ -282,6 +320,11 @@
         projectForm.addEventListener('submit', addProject);
     }
 
+    gridContainer.addEventListener('submit', function(event) {
+        const form = event.target.closest('.star-form');
+        if (form) window.handleStarToggle(event, form);
+    });
+
     // Start application
     fetchProjects(searchInput.value.trim());
     </script>
@@ -290,13 +333,17 @@
         /* REF-1: AJAX Star Toggle — didefinisikan sekali di sini, bukan di tiap komponen */
         window.handleStarToggle = async function(e, form) {
             e.preventDefault();
-            const btn = form.querySelector('button');
-            const textSpan = btn.querySelector('span:not(.star-count)');
-            const countSpan = btn.querySelector('.star-count');
+            if (!IS_AUTHENTICATED) {
+                window.location.assign(LOGIN_URL);
+                return;
+            }
 
-            // Loading state — cegah double-click / race condition
+            const btn = form.querySelector('button');
+            const textSpan = btn.querySelector('.star-label');
+            const countSpan = btn.querySelector('.star-count');
+            if (!textSpan || !countSpan || btn.disabled) return;
+
             btn.disabled = true;
-            const prevText = textSpan.textContent;
 
             try {
                 const formData = new FormData(form);
@@ -311,9 +358,11 @@
                     return;
                 }
 
-                if (!response.ok) {
-                    throw new Error('Server error: ' + response.status);
+                if (response.redirected) {
+                    window.location.assign(response.url);
+                    return;
                 }
+                if (!response.ok) throw new Error('Server error: ' + response.status);
 
                 const data = await response.json();
 
@@ -325,13 +374,15 @@
                     textSpan.textContent = 'Star';
                 }
                 countSpan.textContent = data.count;
+                btn.title = data.starred_by_names
+                    ? `Dibintangi oleh ${data.starred_by_names}`
+                    : 'Jadilah yang pertama memberi star';
             } catch (error) {
                 console.error("Error toggling star:", error);
-                // Feedback visual ke user — tampilkan teks error sementara
-                textSpan.textContent = 'Error!';
-                setTimeout(() => { textSpan.textContent = prevText; }, 2000);
+                if (typeof showToast === 'function') {
+                    showToast('Gagal memperbarui star', 'Permintaan gagal. Silakan coba lagi.', 'error');
+                }
             } finally {
-                // Selalu aktifkan kembali tombol setelah selesai
                 btn.disabled = false;
             }
         };
