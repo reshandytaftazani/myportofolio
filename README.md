@@ -39,21 +39,6 @@ Berdasarkan batasan tersebut, fungsionalitas dinamis utama yang ingin saya tamba
    - **migrate:** Perintah ini digunakan untuk mengeksekusi instruksi dari file migrasi tersebut agar diterapkan langsung ke dalam *database* sungguhan. Perintah ini yang benar-benar mengubah atau membuat tabel di dalam *database*.
    - **Contoh perubahan:** Misalkan kita memiliki model `Portofolio` dengan field `judul` dan `deskripsi`. Suatu saat, kita ingin menambahkan *field* baru berupa `link_proyek`. Kita menambahkannya di `models.py`. Kita **harus** menjalankan `python manage.py makemigrations` agar Django membuat file instruksi penambahan kolom tersebut. Setelah itu, kita **harus** menjalankan `python manage.py migrate` agar kolom `link_proyek` benar-benar ditambahkan ke dalam tabel di database SQLite/PostgreSQL kita.
 
-### AI Disclosure
-
-Dalam pengerjaan tugas dan eksplorasi proyek ini, saya menggunakan **Antigravity (Gemini AI Coding Assistant)** yang terintegrasi di dalam *code editor* dengan rincian sebagai berikut:
-
-- **Alat yang Digunakan:** Antigravity (powered by Google Gemini), Claude.ai, gemini.google.
-- **Strategi Prompting:** 
-  1. Memberikan *copy-paste* pesan *error* langsung dari terminal atau browser (contoh: *error* CSRF dan *error* Git *reject*) agar AI dapat menganalisis penyebab teknis secara spesifik.
-  2. Memberikan instruksi pertanyaan deskriptif (misal: "apakah nanti setelah saya commit lagi dan redeploy akan reset lagi datanya") untuk memahami alur kerja di sistem *production* PWS.
-  3. Meminta AI untuk menyusun kerangka jawaban reflektif berdasarkan materi yang telah dipelajari di tutorial.
-- **Bagian Spesifik yang Dibantu oleh AI:**
-  1. **Debugging Django:** Menemukan dan memperbaiki error 403 CSRF dengan menambahkan URL PWS ke dalam `CSRF_TRUSTED_ORIGINS` di `settings.py`.
-  2. **Manajemen Git:** Menyelesaikan konflik saat `git push` dengan menggunakan `git pull --rebase` untuk menyinkronkan *repository* lokal dengan GitHub, serta melakukan *force push* ke PWS.
-  3. **Pemahaman Infrastruktur Deployment:** Menjelaskan cara kerja server yang bersifat *ephemeral* (sementara) pada PWS yang menyebabkan data `db.sqlite3` mereset setelah *redeployment*.
-  4. **Bug Dalam Implementasi Kode:** Terdapat bug dimana header tidak berubah warna ketika menjalankan mode dark sehingga meminta bantuan AI untuk menganalisis letak error dari kode tersebut.
-
 ### Tugas 3
 
 1. **Mengapa menggunakan ModelForm dan {% csrf_token %}:**
@@ -69,16 +54,56 @@ Dalam pengerjaan tugas dan eksplorasi proyek ini, saya menggunakan **Antigravity
    - **Alur yang terjadi:** Ketika pengguna atau klien mengakses URL tertentu, Django akan meneruskan *request* ke fungsi *view*. *View* akan mengambil objek data (mengirim *query* ke database) dari Model (misalnya `Portofolio.objects.all()`). Data hasil *query* tersebut kemudian akan dimasukkan ke fungsi serializer untuk dikonversikan ke dalam format data bawaan seperti XML atau JSON. Kemudian, view akan mereturn hasil output serialisasi tadi dibungkus oleh `HttpResponse` (dengan mendeklarasikan `content_type="application/json"`) agar diubah menjadi respon HTTP yang bisa dibaca klien.
    - **Mengapa perlu serialization:** Data hasil pengambilan dari *database* via Django Model (*QuerySet*) adalah tipe objek kompleks milik bahasa Python. Klien (seperti *browser* atau aplikasi eksternal) tidak akan mengerti objek kompleks Python tersebut. Proses *serialization* berfungsi sebagai penterjemah atau jembatan untuk mengonversi data berupa objek Python kompleks tersebut ke dalam tipe data *native* Python sederhana (seperti *dictionary*, *list*, integer, *string*) yang mana selanjutnya dapat dengan mudah direpresentasikan (di-render) menjadi string format JSON biasa.
 
+### Tugas 5
+
+1. **Apa itu debouncing dan mengapa penting pada pencarian AJAX:**
+
+   Debouncing adalah teknik menunda eksekusi fungsi sampai tidak ada pemanggilan baru selama jeda tertentu. Pada fitur pencarian, misalnya dengan jeda 300 milidetik, setiap perubahan input membatalkan timer sebelumnya dan membuat timer baru. Request AJAX baru dikirim ketika pengguna berhenti mengetik selama jeda tersebut. Dengan demikian, saat pengguna mengetik kata `django` dengan cepat, aplikasi cukup mengirim pencarian untuk kata terakhir, bukan satu request untuk setiap huruf.
+
+   Teknik ini mengurangi jumlah request, penggunaan bandwidth, dan beban server, serta menghindari pembaruan hasil yang terlalu sering sehingga pencarian terasa lebih nyaman. Namun, debouncing tidak menjamin urutan respons request yang sudah terkirim. Agar hasil pencarian lama tidak menimpa hasil terbaru, aplikasi dapat membatalkan request sebelumnya menggunakan `AbortController` atau memeriksa apakah respons masih sesuai dengan input terbaru. Referensi: [MDN tentang debounce](https://developer.mozilla.org/en-US/docs/Glossary/Debounce).
+
+2. **Fungsi await ketika menggunakan fetch() dan akibat jika tidak digunakan:**
+
+   `fetch()` mengembalikan sebuah `Promise`. Dalam fungsi `async`, `await fetch(url)` menunda kelanjutan fungsi tersebut sampai Promise selesai, lalu menghasilkan objek `Response` jika berhasil. Proses ini tidak memblokir seluruh browser, sehingga antarmuka tetap dapat merespons interaksi pengguna. Untuk membaca body sebagai JSON, kita juga menggunakan `await response.json()` karena metode tersebut mengembalikan Promise. Contohnya:
+
+   ```javascript
+   async function ambilData(url) {
+     const response = await fetch(url);
+     if (!response.ok) {
+       throw new Error(`HTTP ${response.status}`);
+     }
+     const data = await response.json();
+     return data;
+   }
+   ```
+
+   Jika ditulis `const response = fetch(url)` tanpa `await`, request tetap berjalan, tetapi variabel `response` berisi Promise, bukan objek Response. Kode berikutnya langsung berlanjut, sehingga memanggil `response.json()` akan menghasilkan error karena metode tersebut tidak tersedia pada Promise. Tanpa `await`, kita tetap bisa menangani hasil dengan `.then()` dan kegagalan dengan `.catch()`. Selain itu, `fetch()` tidak otomatis menolak Promise untuk status HTTP seperti 404 atau 500, sehingga `response.ok` perlu diperiksa seperti pada contoh. Referensi: [MDN tentang penggunaan Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch).
+
+3. **Apa itu XSS dan mengapa penampilan data melalui AJAX/JavaScript dapat lebih rentan:**
+
+   XSS (*Cross-Site Scripting*) adalah serangan ketika penyerang menyisipkan kode berbahaya ke halaman web sehingga kode tersebut dijalankan oleh browser pengguna dalam konteks situs itu. Akibatnya, penyerang dapat membaca data yang dapat diakses JavaScript, mengubah tampilan, atau melakukan tindakan menggunakan sesi pengguna.
+
+   Template Django secara default melakukan *autoescaping* pada variabel seperti `{{ nama }}`. Karakter khusus HTML, misalnya `<` dan `>`, diubah menjadi representasi aman sehingga input ditampilkan sebagai teks. Sebaliknya, data JSON yang diterima melalui AJAX tidak otomatis mendapatkan perlindungan template tersebut ketika JavaScript memasukkannya ke DOM. Jika data yang tidak tepercaya dimasukkan melalui `innerHTML`, browser akan menafsirkannya sebagai HTML, dan atribut event berbahaya dapat menjalankan JavaScript. Referensi: [dokumentasi keamanan Django](https://docs.djangoproject.com/en/6.0/topics/security/#cross-site-scripting-xss-protection) dan [MDN tentang risiko innerHTML](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML#security_considerations).
+
+   Jadi, tingkat kerentanannya bergantung pada cara data ditampilkan. Untuk teks biasa, gunakan `textContent`, misalnya `elemen.textContent = data.nama`, agar data diperlakukan sebagai teks. Jika memang perlu menampilkan HTML dari sumber yang tidak tepercaya, gunakan sanitizer HTML yang terawat sebelum memasukkannya ke DOM. Template Django juga tetap dapat rentan jika perlindungannya dilewati menggunakan filter `safe`, `mark_safe`, atau menonaktifkan autoescaping; escaping HTML juga tidak otomatis melindungi semua konteks seperti JavaScript atau URL.
+
 ### AI Disclosure
 
-Dalam pengerjaan tugas dan eksplorasi proyek ini, saya menggunakan **Antigravity (Gemini AI Coding Assistant)** yang terintegrasi di dalam *code editor* dengan rincian sebagai berikut:
+Dalam pengerjaan tugas dan eksplorasi proyek ini, saya menggunakan bantuan AI untuk menganalisis masalah teknis, memahami proses deployment, memperbaiki UI, dan memperbaiki kekurangan dalam penulisan sintaks kode. Rincian penggunaan AI dicatat dalam satu bagian berikut.
 
-- **Alat yang Digunakan:** Antigravity (powered by Google Gemini), Claude.ai, gemini.google.
-- **Strategi Prompting:** 
-  1. Memberikan *copy-paste* pesan *error* langsung dari terminal atau browser (contoh: *error* CSRF dan *error* Git *reject*) agar AI dapat menganalisis penyebab teknis secara spesifik.
-  2. Memberikan instruksi pertanyaan deskriptif (misal: "apakah nanti setelah saya commit lagi dan redeploy akan reset lagi datanya") untuk memahami alur kerja di sistem *production* PWS.
-- **Bagian Spesifik yang Dibantu oleh AI:**
-  1. **Debugging Django:** Menemukan dan memperbaiki error 403 CSRF dengan menambahkan URL PWS ke dalam `CSRF_TRUSTED_ORIGINS` di `settings.py`.
-  2. **Manajemen Git:** Menyelesaikan konflik saat `git push` dengan menggunakan `git pull --rebase` untuk menyinkronkan *repository* lokal dengan GitHub, serta melakukan *force push* ke PWS.
-  3. **Pemahaman Infrastruktur Deployment:** Menjelaskan cara kerja server yang bersifat *ephemeral* (sementara) pada PWS yang menyebabkan data `db.sqlite3` mereset setelah *redeployment*.
-  4. **Bug Dalam Implementasi Kode:** Terdapat bug dimana header tidak berubah warna ketika menjalankan mode dark sehingga meminta bantuan AI untuk menganalisis letak error dari kode tersebut.
+**Alat yang Digunakan:** Antigravity (powered by Google Gemini), Claude.ai, gemini.google, dan OpenAI Codex.
+
+**Strategi Prompting:**
+
+1. Memberikan pesan *error* dari terminal atau browser, seperti error CSRF dan penolakan `git push`, beserta konteks masalah agar AI dapat membantu menganalisis penyebab dan langkah penyelesaiannya. Untuk masalah tampilan, saya menjelaskan perilaku header saat mode gelap diaktifkan.
+2. Mengajukan pertanyaan deskriptif, misalnya apakah data akan terhapus setelah commit dan redeploy, untuk memahami alur kerja sistem *production* PWS dan penyimpanan data pada lingkungan deployment.
+3. Menjelaskan kekurangan pada UI dan memberikan potongan kode yang bermasalah agar AI dapat memberikan saran perbaikan tampilan serta membantu mengidentifikasi kesalahan sintaks.
+
+**Bagian Spesifik yang Dibantu oleh AI:**
+
+1. **Debugging Django:** AI membantu menganalisis error 403 CSRF dan memberikan arahan untuk menambahkan URL PWS ke dalam `CSRF_TRUSTED_ORIGINS` di `settings.py`.
+2. **Manajemen Git:** AI membantu menjelaskan penyelesaian konflik saat `git push`, penggunaan `git pull --rebase` untuk menyinkronkan repository lokal dengan GitHub, serta penggunaan *force push* ke PWS.
+3. **Pemahaman Infrastruktur Deployment:** AI membantu menjelaskan hubungan antara lingkungan deployment, penyimpanan sementara, dan kemungkinan perubahan atau hilangnya data `db.sqlite3` setelah redeployment.
+4. **Analisis Bug Tampilan:** AI membantu menganalisis penyebab header tidak berubah warna saat mode gelap diaktifkan.
+5. **Perbaikan UI:** AI membantu mengevaluasi kekurangan UI dan memberikan saran perbaikan agar tampilan website lebih rapi, konsisten, dan mudah digunakan.
+6. **Perbaikan Sintaks Kode:** AI membantu mengidentifikasi dan memperbaiki kesalahan atau kekurangan dalam penulisan sintaks kode, serta menjelaskan perbaikan yang diperlukan.
