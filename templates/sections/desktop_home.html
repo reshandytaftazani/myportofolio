@@ -1,0 +1,148 @@
+{% load static markdown_extras %}
+<section id="about" class="about-section" data-window-id="about" aria-labelledby="win-title-about">
+{% include 'desktop/titlebar.html' with id='about' title='About' %}
+        <div class="container">
+            <div class="about-content">
+                <div class="about-profile">
+                    <figure class="about-portrait">
+                        <img src="{% static 'img/reshandy.jpeg' %}" width="640" height="800" alt="Photo of {{ owner_name }}" decoding="async">
+                    </figure>
+                    <div class="about-profile-copy">
+                        <header class="about-identity">
+                            <h1>{{ owner_name }}</h1>
+                            <p class="about-subtitle">{{ study_program }} · Universitas Indonesia</p>
+                        </header>
+                        <p class="about-intro">CS student at Universitas Indonesia. Interested in AI/ML and competitive mathematics.</p>
+                        <div class="about-badges">
+                    <span class="about-badge about-badge--medal"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m7 3 5 7 5-7M5 3h4m6 0h4"/><circle cx="12" cy="15" r="6"/><path d="m12 12 1 2 2 .3-1.5 1.5.3 2.2-1.8-1-1.8 1 .3-2.2L9 14.3l2-.3Z"/></svg>National Gold Medalist</span>
+                    <span class="about-badge">AI & Machine Learning</span>
+                    <span class="about-badge">Competitive Mathematics</span>
+                    <span class="about-badge">CS @ Universitas Indonesia</span>
+                        </div>
+                        <div class="about-primary-actions">
+                            <a href="{% url 'main:show_projects' %}" class="button">Lihat Projects<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+                            <a href="{% static 'Reshandy_s_CV-1.pdf' %}" class="button button-secondary" target="_blank" rel="noopener">Unduh CV<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5"/></svg></a>
+                        </div>
+                    </div>
+                </div>
+                <details class="about-bio"><summary>Bio lengkap<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7"/></svg></summary><div class="about-bio-text"><p>
+                    Hello! I'm <strong>{{ owner_name }}</strong>, a <strong>{{ study_program }}</strong> student with a solid foundation in competitive mathematics as a National Gold Medalist. I bring strong analytical and problem-solving skills to the world of technology, driven by a deep curiosity for how things work.
+                </p>
+                <p>
+                    My main focus lies in <strong>Artificial Intelligence</strong> and <strong>Machine Learning</strong>. From participating in Google Cloud programs to developing predictive models for environmental data, I am highly passionate about leveraging my quantitative background to build innovative and scalable software solutions.
+                </p>
+                <p>
+                    Beyond coding, I deeply value leadership and community impact. Having served on the Student Council Executive Board at a highly disciplined semi-military high school, I thrive in collaborative and fast-paced environments. I also actively mentor students as a Volunteer Math Olympiad Tutor, finding joy in sharing knowledge and empowering others to grow.
+                </p></div></details>
+            </div>
+    <!-- SECTION: Featured Projects -->
+    <section id="featured-projects" class="tech-section">
+        <div class="container">
+            <div class="section-header">
+
+                <h2 class="section-title">Featured Projects</h2>
+            </div>
+            <div class="experience-grid project-grid featured-projects-grid">
+                {% for project in featured_projects %}
+                <article class="experience-card">
+                    {% if project.project_image_url %}
+                    <img src="{{ project.project_image_url }}" alt="{{ project.title }}" class="project-image">
+                    {% endif %}
+                    <h3>{{ project.title }}</h3>
+                    <div>
+                        {% for tag in project.tags.all %}
+                        <span>{{ tag.name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% if project.project_url %}
+                    <a href="{{ project.project_url }}" target="_blank" rel="noopener noreferrer" class="button">Lihat Project ↗</a>
+                    {% endif %}
+                </article>
+                {% empty %}
+                <p>Belum ada karya pilihan yang ditampilkan. Jelajahi daftar Projects untuk melihat karya lainnya.</p>
+                {% endfor %}
+            </div>
+            <div>
+                <a href="{% url 'main:show_projects' %}" class="button button-secondary">Lihat Semua Proyek →</a>
+            </div>
+        </div>
+    </section>
+        </div>
+    </section>
+
+    {% with resource=techstack_resource %}
+    <section id="tech-stack" data-window-id="tech-stack" aria-labelledby="win-title-tech-stack" class="tech-section" data-public-resource
+             {% include 'components/resource_attributes.html' %}>
+{% include 'desktop/titlebar.html' with id='tech-stack' title='Tools' %}
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Languages I Use</h2>
+            </div>
+            {% include 'components/resource_controls.html' with show_search=True %}
+            <div class="tech-grid" data-list></div>
+            <noscript>Aktifkan JavaScript untuk memuat data Tools.</noscript>
+        </div>
+    </section>
+    {% endwith %}
+    {% with resource=education_resource %}
+    <section id="education" data-window-id="education" aria-labelledby="win-title-education" class="education-section" data-public-resource
+             {% include 'components/resource_attributes.html' %}>
+{% include 'desktop/titlebar.html' with id='education' title='Education' %}
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Education History</h2>
+            </div>
+            {% include 'components/resource_controls.html' with show_search=True %}
+            <div class="timeline" data-list></div>
+            <noscript>Aktifkan JavaScript untuk memuat data Education.</noscript>
+        </div>
+    </section>
+    {% endwith %}
+
+    <!-- SECTION BARU: Contact -->
+    <section id="contact" data-window-id="contact" aria-labelledby="win-title-contact" class="tech-section">
+{% include 'desktop/titlebar.html' with id='contact' title='Contact' %}
+        <div class="container contact-shell">
+          <div class="contact-layout">
+            <div class="contact-intro">
+                <h2 class="section-title">Contact Me</h2>
+                <p class="contact-greeting">Mari mulai<br><span>percakapan.</span></p>
+                <p class="contact-description">Punya ide, pertanyaan, atau ingin berkenalan? Ceritakan lewat form ini. Senang bisa terhubung dengan Anda.</p>
+                <a class="contact-email" href="mailto:reshandytaftazaniaulya@gmail.com">
+                    <svg width="24" height="21" aria-hidden="true" focusable="false"><use href="#i-mail"/></svg>
+                    <span>Email langsung<span class="contact-email-address">reshandytaftazaniaulya@gmail.com</span></span>
+                </a>
+                <nav class="contact-social" aria-label="Profil sosial">
+                    <a href="https://github.com/reshandytaftazani" target="_blank" rel="noopener noreferrer"><svg width="28" height="25" aria-hidden="true" focusable="false"><use href="#i-github"/></svg><span>GitHub<span class="sr-only"> (tab baru)</span></span></a>
+                    <a href="https://www.linkedin.com/in/reshandy-taftazani-aulya/" target="_blank" rel="noopener noreferrer"><svg width="28" height="25" aria-hidden="true" focusable="false"><use href="#i-linkedin"/></svg><span>LinkedIn<span class="sr-only"> (tab baru)</span></span></a>
+                </nav>
+            </div>
+            <div class="contact-compose">
+                <h3 id="contact-compose-title">Tulis pesan Anda</h3>
+                <form id="contact-form" method="post" action="{% url 'main:show_main' %}" aria-labelledby="contact-compose-title">
+                    {% csrf_token %}
+                    <!-- Honeypot: tersembunyi dari manusia, diisi bot -->
+                    <input type="text" name="website" class="contact-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+                    {% for field in contact_form %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            <p id="{{ field.id_for_label }}_error" class="resource-field-error" data-contact-error role="alert"{% if not field.errors %} hidden{% endif %}>{{ field.errors|join:" " }}</p>
+                        </div>
+                    {% endfor %}
+                    <p data-contact-feedback class="resource-form-feedback" role="alert" hidden></p>
+                    <p data-contact-success class="contact-success" role="status" hidden></p>
+                    <button type="submit" class="button contact-submit">
+                        <span data-contact-submit-label>Kirim Pesan</span>
+                        <svg class="contact-send-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m21 3-7 18-4-7-7-4 18-7ZM10 14 21 3"/></svg>
+                    </button>
+                </form>
+            </div>
+          </div>
+        </div>
+    </section>
+
+    {% if user.is_superuser or is_editor %}
+        {% include 'components/resource_dialog.html' with resource=education_resource %}
+        {% include 'components/resource_dialog.html' with resource=techstack_resource %}
+    {% endif %}

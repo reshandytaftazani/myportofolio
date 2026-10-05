@@ -1,0 +1,80 @@
+{% load static markdown_extras %}
+<section class="experience-section animate-fade-in" id="projects"
+                 data-window-id="projects" aria-labelledby="win-title-projects" data-projects-app
+                 data-resource="projects"
+                 data-resource-label="Projects"
+                 data-detail-url="{{ project_resource.detail_url }}"
+                 data-edit-url="{{ project_resource.edit_url }}"
+                 data-delete-url="{{ project_resource.delete_url }}"
+                 data-can-edit="{% if user.is_superuser or is_editor %}true{% else %}false{% endif %}"
+                 data-can-delete="{{ user.is_superuser|yesno:'true,false' }}"
+                 data-projects-url="{% url 'main:get_projects_json' %}"
+                 data-create-url="{{ project_resource.create_url }}"
+                 data-star-url-template="{% url 'main:toggle_star_project' '00000000-0000-0000-0000-000000000000' %}"
+                 data-delete-url-template="{% url 'main:delete_project' '00000000-0000-0000-0000-000000000000' %}"
+                 data-login-url="{% url 'main:login' %}?next={{ request.get_full_path|urlencode }}&amp;notice=star"
+                 data-is-superuser="{{ user.is_superuser|yesno:'true,false' }}"
+                 data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"
+                 data-initial-category="{{ category_query }}">
+{% include 'desktop/titlebar.html' with id='projects' title='Projects' %}
+            <div class="container projects-shell">
+                <div class="section-header projects-toolbar">
+                    <div>
+
+                        <h2 class="section-title">Projects</h2>
+                    </div>
+                    <form id="project-search-form" class="project-search" method="get" action="{% url 'main:show_projects' %}" role="search" aria-label="Cari proyek">
+                        <input type="hidden" name="category" value="{{ category_query }}">
+                        <div class="project-search-field">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+                            <input type="search" id="search-input" name="title" value="{{ title_query }}" placeholder="Cari berdasarkan nama proyek" class="project-search__input" aria-label="Cari berdasarkan nama proyek">
+                        </div>
+                        <button type="submit" class="button">Cari</button>
+                    </form>
+                    {% if user.is_superuser %}
+                        <button type="button"
+                                class="button resource-button resource-button--primary project-add-button"
+                                data-open-create>
+                            {% include 'components/resource_icon.html' with name='plus' %}
+                            <span>Tambah Proyek</span>
+                        </button>
+                    {% endif %}
+                </div>
+                {% if user.is_superuser %}<a class="server-create" href="{% url 'main:create_project' %}">Tambah Proyek</a>{% endif %}
+                <div class="project-browser">
+                <aside class="project-sidebar" aria-label="Kategori proyek">
+                    <p class="project-filter-heading">Kategori</p>
+                    <div class="project-filters" role="group" aria-label="Filter kategori proyek">
+                    <form method="get" action="{% url 'main:show_projects' %}"><input type="hidden" name="title" value="{{ title_query }}"><button type="submit" name="category" value="all" class="button project-filter-btn{% if category_query == 'all' %} active{% endif %}" data-filter="all" aria-pressed="{% if category_query == 'all' %}true{% else %}false{% endif %}">All</button></form>
+                    {% for cat in categories %}<form method="get" action="{% url 'main:show_projects' %}"><input type="hidden" name="title" value="{{ title_query }}"><button type="submit" name="category" value="{{ cat }}" class="button project-filter-btn{% if category_query == cat %} active{% endif %}" data-filter="{{ cat }}" aria-pressed="{% if category_query == cat %}true{% else %}false{% endif %}">{{ cat }}</button></form>{% endfor %}
+                    </div>
+                </aside>
+                <div class="projects-gallery">
+                <!-- Loading State -->
+                <div id="loading" class="empty-state hide" role="status" aria-live="polite" aria-atomic="true">
+                    <p>Memuat projects...</p>
+                </div>
+
+                <!-- Error State -->
+                <div id="error" class="empty-state hide" role="alert">
+                    <p>Gagal memuat data projects. Silakan coba lagi.</p>
+                    <button type="button" class="button button-secondary" data-projects-retry>Coba lagi</button>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty" class="empty-state{% if projects %} hide{% endif %}">
+                    <h3 data-empty-title>{% if title_query or category_query != 'all' %}Tidak ada proyek yang cocok{% else %}Belum ada proyek{% endif %}</h3>
+                    <p data-empty-description>{% if title_query or category_query != 'all' %}Coba judul lain atau tampilkan semua kategori.{% else %}Karya akan tampil di sini setelah ditambahkan.{% endif %}</p>
+                    <a class="button button-secondary" href="{% url 'main:show_projects' %}" data-projects-reset{% if not title_query and category_query == 'all' %} hidden{% endif %}>Reset pencarian</a>
+                </div>
+
+                <!-- Project Grid -->
+                <div id="grid" class="experience-grid project-grid" data-server-rendered>{% include 'sections/project_cards.html' %}</div>
+                </div>
+                </div>
+            </div>
+        </section>
+
+    {% if user.is_superuser or is_editor %}
+        {% include 'components/resource_dialog.html' with resource=project_resource %}
+    {% endif %}

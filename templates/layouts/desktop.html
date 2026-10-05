@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block meta %}
+<link rel="stylesheet" href="{% static 'css/desktop-wallpaper.css' %}">
+<link rel="stylesheet" href="{% static 'css/experience.css' %}">
+<link rel="stylesheet" href="{% static 'css/education.css' %}?v=1">
+  <link rel="stylesheet" href="{% static 'css/tech-stack.css' %}?v=8">
+<link rel="stylesheet" href="{% static 'css/projects.css' %}?v=2">
+<link rel="stylesheet" href="{% static 'css/about.css' %}?v=1">
+<link rel="stylesheet" href="{% static 'css/contact.css' %}?v=1">
+{% include 'desktop/skill_assets.html' %}
+<link rel="stylesheet" href="{% static 'css/desktop-header.css' %}?v=3">
+<link rel="stylesheet" href="{% static 'css/desktop-dock.css' %}">
+{% endblock %}
+{% block body_class %}desktop-page{% if request.path != '/' %} desktop-document{% endif %}{% endblock %}
+{% block header %}{% include 'desktop/icons.svg.html' %}{% include 'desktop/menubar.html' %}{% endblock %}
+{% block content %}
+{% include 'desktop/wallpaper.html' %}
+<div class="desktop-workspace" data-initial-window="{{ initial_window|default:'about' }}">
+  <div class="desktop-scene">
+    {% include 'desktop/introduction.html' %}
+    <div class="desktop-widgets">
+      <div class="desktop-time-widgets">{% include 'desktop/widgets/clock.html' %}{% include 'desktop/widgets/calendar.html' %}</div>
+      {% include 'desktop/widgets/profile.html' %}
+    </div>
+    {% include 'desktop/desktop_icons.html' %}
+    <p class="desktop-caption">A little space for my work.</p>
+  </div>
+  <div class="desktop-windows">
+    {% include 'sections/desktop_home.html' %}
+    {% include 'sections/desktop_projects.html' %}
+    {% include 'sections/desktop_skills.html' with resource=skills_resource %}
+    {% include 'sections/desktop_experience.html' with resource=experience_resource %}
+  </div>
+  <div class="window-snap-preview" aria-hidden="true" hidden></div>
+</div>
+{% include 'desktop/dock.html' %}
+<p class="sr-only" data-window-announcement role="status" aria-live="polite"></p>
+{% endblock %}
+{% block footer %}<footer class="desktop-footer">{{ owner_name }} · Universitas Indonesia</footer>{% endblock %}
+{% block extra_scripts %}
+<script src="{% static 'js/contact.js' %}?v=3"></script>
+<script src="{% static 'js/public-resources.js' %}?v=6"></script>
+<script src="{% static 'js/projects.js' %}?v=6"></script>
+<script src="{% static 'js/desktop/windows.js' %}"></script>
+<script src="{% static 'js/desktop/icons.js' %}"></script>
+<script src="{% static 'js/desktop/clock.js' %}"></script>
+<script src="{% static 'js/desktop/boot.js' %}"></script>
+<script src="{% static 'js/desktop/header.js' %}"></script>
+<script src="{% static 'js/desktop/wallpaper.js' %}"></script>
+<script src="{% static 'js/desktop/dock.js' %}"></script>
+{% endblock %}

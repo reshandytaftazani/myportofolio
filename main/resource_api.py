@@ -97,10 +97,11 @@ def resource_context(resource, *, admin=False):
         'detail_url': reverse('main:manage_resource_detail', args=[resource, '__pk__']),
         'edit_url': reverse('main:manage_resource_edit', args=[resource, '__pk__']),
         'delete_url': reverse('main:manage_resource_delete', args=[resource, '__pk__']),
+        'star_url': reverse('main:toggle_star_resource', args=[resource, '__pk__']),
     }
 
 
-def serialize_resource(resource, obj):
+def serialize_resource(resource, obj, user=None):
     # Only the explicitly declared portfolio fields leave the server.
     fields = {name: getattr(obj, name) for name in RESOURCES[resource]['form'].Meta.fields
               if name != 'tags'}
@@ -110,12 +111,16 @@ def serialize_resource(resource, obj):
         fields['description_html'] = markdown_format(obj.description)
     if resource == 'projects':
         fields['tags'] = [tag.pk for tag in obj.tags.all()]
+    starred_users = list(obj.starred_by.all())
+    fields['star_count'] = len(starred_users)
+    fields['is_starred'] = bool(user and user.is_authenticated and
+                                any(starred.pk == user.pk for starred in starred_users))
     return {'pk': str(obj.pk), 'fields': fields}
 
 
 def resource_queryset(request, resource):
     spec = RESOURCES[resource]
-    queryset = spec['model'].objects.order_by(*spec['order'])
+    queryset = spec['model'].objects.prefetch_related('starred_by').order_by(*spec['order'])
     query = request.GET.get('q', '').strip()
     if query:
         predicate = Q()
@@ -128,7 +133,7 @@ def resource_queryset(request, resource):
 
 
 def public_resource_list(request, resource):
-    return JsonResponse([serialize_resource(resource, obj)
+    return JsonResponse([serialize_resource(resource, obj, request.user)
                          for obj in resource_queryset(request, resource)], safe=False)
 
 
@@ -164,7 +169,7 @@ def manage_resource_detail(request, resource, pk):
     if obj is None:
         return resource_error()
     return JsonResponse({
-        **serialize_resource(resource, obj),
+        **serialize_resource(resource, obj, request.user),
         'form_html': render_to_string('components/resource_form_fields.html',
                                      {'form': resource_form(resource, instance=obj),
                                       'can_create_tags': request.user.is_superuser}),
@@ -186,13 +191,33 @@ def save_resource(request, resource, *, pk=None):
     obj = form.save()
     return JsonResponse({'message': 'Data berhasil diperbarui.' if pk is not None
                                   else 'Data berhasil ditambahkan.',
-                         'item': serialize_resource(resource, obj)},
+                         'item': serialize_resource(resource, obj, request.user)},
                         status=200 if pk is not None else 201)
 
 
 @require_POST
 def manage_resource_create(request, resource):
     return save_resource(request, resource)
+
+
+@require_POST
+def toggle_star_resource(request, resource, pk):
+    denied = require_access(request, 'star', json_response=True)
+    if denied:
+        return denied
+    if resource not in RESOURCES:
+        return resource_error()
+    # Serialize concurrent toggles for the same record.
+    with transaction.atomic():
+        try:
+            obj = RESOURCES[resource]['model'].objects.select_for_update().get(pk=pk)
+        except (RESOURCES[resource]['model'].DoesNotExist, ValidationError, ValueError):
+            return resource_error()
+        if obj.starred_by.filter(pk=request.user.pk).exists():
+            obj.starred_by.remove(request.user)
+        else:
+            obj.starred_by.add(request.user)
+        return JsonResponse({'item': serialize_resource(resource, obj, request.user)})
 
 
 @require_POST

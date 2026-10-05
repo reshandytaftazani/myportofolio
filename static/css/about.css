@@ -1,0 +1,188 @@
+/* The profile uses the window's available width, including snap and maximize. */
+.desktop-page #about > .container {
+  container: about / inline-size;
+  padding: 32px;
+}
+.desktop-page #about .about-content {
+  max-width: 68rem;
+  margin-inline: auto;
+  text-align: left;
+}
+#about .about-profile {
+  display: grid;
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1.45fr);
+  align-items: center;
+  gap: 40px;
+  padding-block: 16px 32px;
+}
+#about .about-profile-copy { min-width: 0; }
+#about .about-portrait {
+  margin: 0;
+  padding: 12px;
+  background: var(--desk-clock);
+  border-radius: 16px;
+  box-shadow: var(--desk-widget-shadow);
+  transform: rotate(-2deg);
+  transition: transform 300ms cubic-bezier(.16, 1, .3, 1);
+}
+#about .about-portrait img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  object-position: center 45%;
+  border-radius: 8px;
+}
+/* The photograph settles into its frame when the visitor explores the profile. */
+@media (hover: hover) and (pointer: fine) {
+  #about .about-portrait:hover { transform: rotate(0deg); }
+}
+#about .about-identity { display: block; margin: 0; }
+.desktop-page #about .about-identity h1 {
+  margin: 0;
+  color: var(--desk-name);
+  font: 700 clamp(2rem, 4.8cqi, 3.5rem)/1.08 var(--font-display);
+  letter-spacing: -.03em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+#about .about-identity .about-subtitle {
+  margin: 12px 0 0;
+  font: 500 1rem/1.5 var(--font-ui);
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+.desktop-page #about .about-intro {
+  max-width: 52ch;
+  margin: 24px 0 0;
+  color: var(--ink);
+  font: 400 1rem/1.7 var(--font-ui);
+  text-wrap: pretty;
+}
+.desktop-page #about .about-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: start;
+  gap: 8px;
+  margin: 20px 0 0;
+}
+.desktop-page #about .about-badge {
+  padding: 6px 12px;
+  color: var(--ink);
+  background: var(--desk-clock);
+  border: 0;
+  font: 500 .8125rem/1.5 var(--font-ui);
+  transform: none;
+  transition: none;
+}
+.desktop-page #about .about-badge--medal {
+  background: var(--desk-calendar);
+  color: var(--desk-calendar-ink);
+  font-weight: 650;
+}
+#about .about-badge--medal svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+#about .about-primary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0 0;
+}
+#about .about-primary-actions .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px 20px;
+  margin: 0;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--surface);
+  font: 600 .875rem/1.5 var(--font-ui);
+  text-decoration: none;
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--accent) 18%, transparent);
+  transform: none;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+#about .about-primary-actions .button:hover { background: var(--accent-dark); }
+#about .about-primary-actions .button-secondary {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: none;
+  border: 1px solid var(--line);
+}
+#about .about-primary-actions .button-secondary:hover {
+  background: var(--desk-clock);
+  border-color: var(--accent);
+}
+#about .about-primary-actions svg, #about .about-bio summary svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+#about svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+#about .about-bio { margin: 0; border-block: 1px solid var(--line); }
+#about .about-bio summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 56px;
+  padding: 12px 0;
+  font: 600 .875rem/1.5 var(--font-ui);
+  list-style: none;
+  color: var(--accent);
+}
+#about .about-bio summary::-webkit-details-marker { display: none; }
+#about .about-bio summary:hover { color: var(--accent-dark); }
+#about .about-bio[open] summary svg { transform: rotate(90deg); }
+#about .about-bio-text {
+  max-width: 68ch;
+  margin-inline: auto;
+  padding: 8px 0 28px;
+  font: 400 1rem/1.75 var(--font-ui);
+  color: var(--ink);
+}
+#about .about-bio-text p + p { margin-top: 20px; }
+.desktop-page #about #featured-projects {
+  max-width: 68rem;
+  margin-inline: auto;
+  padding-top: 32px;
+  border-top: 0;
+}
+#about #featured-projects > .container { width: 100%; max-width: none; }
+.desktop-page #about #featured-projects .section-title {
+  font: 600 1.5rem/1.3 var(--font-display);
+  letter-spacing: -.02em;
+}
+@container about (max-width: 38rem) {
+  #about .about-profile { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-block: 8px 28px; }
+  #about .about-portrait { width: min(60%, 15rem); margin-inline: auto; padding: 8px; }
+  .desktop-page #about .about-identity h1 { font-size: clamp(2rem, 7cqi, 2.5rem); }
+  #about .about-primary-actions .button { flex: 1 1 auto; }
+}
+@container about (max-width: 26rem) {
+  #about .about-profile { grid-template-columns: 80px minmax(0, 1fr); gap: 20px; }
+  #about .about-profile-copy { display: contents; }
+  #about .about-portrait { width: 100%; padding: 6px; }
+  #about .about-identity { grid-column: 2; }
+  .desktop-page #about .about-identity h1 { font-size: clamp(1.5rem, 8cqi, 1.75rem); }
+  #about .about-identity .about-subtitle { font-size: .875rem; margin-top: 8px; }
+  #about .about-profile .about-intro,
+  #about .about-profile .about-badges,
+  #about .about-profile .about-primary-actions { grid-column: 1 / -1; margin: 0; }
+}
+@media (max-width: 900px) {
+  .desktop-page #about > .container { padding: 24px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #about .about-portrait, #about .about-portrait:hover { transform: none; transition: none; }
+}
+@media (forced-colors: active) {
+  #about .about-portrait, #about .about-badge, #about .about-primary-actions .button { outline: 1px solid CanvasText; }
+}

@@ -5,29 +5,41 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
-        <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
         <meta name="description" content="{% block meta_description %}Portfolio of {{ owner_name }} - Computer Science student at Universitas Indonesia.{% endblock %}" />
         <meta property="og:title" content="{% block og_title %}{{ owner_name }} - Portfolio{% endblock %}" />
         <meta property="og:description" content="{% block og_description %}Portfolio of {{ owner_name }} — CS student at Universitas Indonesia with expertise in AI and Machine Learning.{% endblock %}" />
         <meta property="og:type" content="website" />
+        <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/og-desktop.jpg' %}" />
+        <meta property="og:image:alt" content="Desktop portfolio of {{ owner_name }}" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/og-desktop.jpg' %}" />
         <meta property="og:url" content="{{ request.build_absolute_uri }}" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="{% block twitter_title %}{{ owner_name }} - Portfolio{% endblock %}" />
         <meta name="twitter:description" content="{% block twitter_description %}Portfolio of {{ owner_name }} — CS student at Universitas Indonesia.{% endblock %}" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-        <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-        <link rel="stylesheet" href="/static/css/style.css?v=12">
-        <link rel="stylesheet" href="{% static 'css/resources.css' %}?v=2">
+        <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+        <link rel="stylesheet" href="{% static 'css/shared.css' %}">
         <script src="{% static 'js/ajax.js' %}"></script>
-        <script src="{% static 'js/toast.js' %}?v=2"></script>
-        <script src="{% static 'js/resources.js' %}?v=3"></script>
+        <script src="{% static 'js/toast.js' %}?v=3"></script>
+        <script src="{% static 'js/resources.js' %}?v=5"></script>
+        <link rel="stylesheet" href="{% static 'css/base.css' %}">
+        <link rel="stylesheet" href="{% static 'css/resources.css' %}?v=4">
+        <link rel="stylesheet" href="{% static 'css/desktop.css' %}">
+        <link rel="stylesheet" href="{% static 'css/window.css' %}">
+        <link rel="stylesheet" href="{% static 'css/menubar-dock.css' %}">
+        <link rel="stylesheet" href="{% static 'css/system.css' %}">
+        <link rel="stylesheet" href="{% static 'css/desktop-bolder.css' %}">
+        <script src="{% static 'js/theme.js' %}"></script>
+        <script src="{% static 'js/assets.js' %}"></script>
         {% block meta %}{% endblock meta %}
         <meta name="color-scheme" content="light dark">
         <title>{% block title %}{{ owner_name }} - Portfolio{% endblock title %}</title>
     </head>
 
-    <body>
+    <body class="{% block body_class %}{% endblock %}">
+    <a class="skip-link" href="#main-content">Lewati navigasi</a>
+    {% block header %}
     <header class="site-header">
         <div class="container">
             {% if request.resolver_match.url_name == 'dashboard' %}
@@ -38,12 +50,12 @@
 
             <div class="header-right">
                 <nav id="nav-links">
-                    <a href="{% url 'main:show_main' %}#about" style="--i: 1;">About</a>
-                    <a href="{% url 'main:show_experience' %}" style="--i: 2;">Experience</a>
-                    <a href="{% url 'main:show_skills' %}" style="--i: 3;">Skills</a>
-                    <a href="{% url 'main:show_projects' %}" style="--i: 4;">Projects</a>
-                    <a href="{% url 'main:show_main' %}#tech-stack" style="--i: 5;">Tools</a>
-                    <a href="{% url 'main:show_main' %}#education" style="--i: 6;">Education</a>
+                    <a href="{% url 'main:show_main' %}#about">About</a>
+                    <a href="{% url 'main:show_experience' %}">Experience</a>
+                    <a href="{% url 'main:show_skills' %}">Skills</a>
+                    <a href="{% url 'main:show_projects' %}">Projects</a>
+                    <a href="{% url 'main:show_main' %}#tech-stack">Tools</a>
+                    <a href="{% url 'main:show_main' %}#education">Education</a>
                     
                     <div class="nav-divider"></div>
                     
@@ -91,31 +103,25 @@
         </div>
         <div class="nav-overlay" id="nav-overlay"></div>
     </header>
+    {% endblock header %}
 
-    <main>
+    <script src="{% static 'js/navigation.js' %}"></script>
+    <main id="main-content" tabindex="-1">
         {% if messages %}
-            <div class="messages-container" style="position: fixed; top: 90px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px;">
+            <div class="messages-container" role="status">
                 {% for message in messages %}
-                    <div class="message alert {{ message.tags }}" style="background: var(--paper, #fff); color: var(--ink); border: 1px solid var(--accent); padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); animation: fadeInUp 0.3s ease forwards;">
+                    <div class="message alert {{ message.tags }}">
                         {{ message }}
                     </div>
                 {% endfor %}
             </div>
-            <script>
-                setTimeout(() => {
-                    const msgs = document.querySelectorAll('.messages-container .message');
-                    msgs.forEach(msg => {
-                        msg.style.opacity = '0';
-                        msg.style.transition = 'opacity 0.3s ease';
-                        setTimeout(() => msg.remove(), 300);
-                    });
-                }, 4000);
-            </script>
+
         {% endif %}
 
         {% block content %} {% endblock content %}
     </main>
 
+    {% block footer %}
     <footer class="site-footer">
         <div class="container footer-grid">
             <p class="footer-copy">&copy; 2026 {{ owner_name }}. Universitas Indonesia.</p>
@@ -135,113 +141,9 @@
             </div>
         </div>
     </footer>
-
-    <!-- Burger Menu and Dark Mode JS -->
-    <script>
-        const burgerBtn = document.getElementById('burger-btn');
-        const navLinks = document.getElementById('nav-links');
-        const navOverlay = document.getElementById('nav-overlay');
-        const menuItems = navLinks.querySelectorAll('a');
-
-        function toggleMenu() {
-            if(navLinks) navLinks.classList.toggle('nav-active');
-            if(burgerBtn) burgerBtn.classList.toggle('toggle');
-            if(navOverlay) navOverlay.classList.toggle('active');
-        }
-
-        if(burgerBtn) {
-            burgerBtn.addEventListener('click', () => {
-                navLinks.classList.toggle('nav-active');
-                burgerBtn.classList.toggle('toggle');
-                
-                if (navOverlay) {
-                    navOverlay.classList.toggle('active');
-                }
-            });
-        }
-
-        if(menuItems) {
-            menuItems.forEach(item => {
-                item.addEventListener('click', () => {
-                    if (navLinks.classList.contains('nav-active')) {
-                        toggleMenu();
-                    }
-                });
-            });
-        }
-
-        // Active Navigation & Scrollspy
-        function updateNav() {
-            const currentPath = window.location.pathname;
-            const scrollY = window.scrollY;
-            
-            let activeId = null;
-            const sections = document.querySelectorAll("section[id]");
-
-            sections.forEach(sec => {
-                const top = sec.offsetTop - 150;
-                const bottom = top + sec.offsetHeight;
-                if (scrollY >= top && scrollY < bottom) {
-                    activeId = sec.id;
-                }
-            });
-
-            menuItems.forEach(link => {
-                link.classList.remove('active');
-                if (link.closest('.user-dropdown-content')) return;
-                const url = new URL(link.href, window.location.origin);
-                
-                if (url.pathname === currentPath) {
-                    if (url.hash) {
-                        if (activeId === url.hash.substring(1)) {
-                            link.classList.add('active');
-                        }
-                    } else {
-                        if (currentPath === '/' && activeId) {
-                            // Do not highlight a root link if a specific section is active
-                        } else {
-                            link.classList.add('active');
-                        }
-                    }
-                }
-            });
-        }
-        
-        window.addEventListener('scroll', updateNav);
-        window.addEventListener('load', updateNav);
-        updateNav();
-
-        // Dark Mode
-        const themeToggleCheckbox = document.getElementById('theme-toggle-checkbox');
-    
-        const currentTheme = localStorage.getItem('theme');
-        if (currentTheme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            if(themeToggleCheckbox) themeToggleCheckbox.checked = true;
-        }
-
-        if(themeToggleCheckbox) {
-            themeToggleCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                    localStorage.setItem('theme', 'dark');
-                } else {
-                    document.documentElement.removeAttribute('data-theme');
-                    localStorage.setItem('theme', 'light');
-                }
-            });
-        }
-    </script>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>
-        window.AOS?.init({
-            once: true,
-            offset: 50,
-            duration: 600,
-            easing: 'ease-out-cubic',
-        });
-    </script>
+    {% endblock footer %}
 
     {% include 'components/toast.html' %}
+    {% block extra_scripts %}{% endblock %}
     </body>
 </html>

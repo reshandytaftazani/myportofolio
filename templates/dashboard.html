@@ -1,17 +1,19 @@
-{% extends 'base.html' %}
+{% extends 'layouts/system.html' %}
 {% load static %}
 {% block title %}Dashboard - {{ owner_name }}{% endblock %}
-{% block content %}
+{% block body_class %}system-page management-page{% endblock %}
+{% block meta %}<link rel="stylesheet" href="{% static 'css/management.css' %}">{% endblock %}
+{% block system_content %}
 <section class="experience-section" data-dashboard-app>
     <div class="container">
-        <h1>Management Dashboard</h1>
+        <header class="management-heading"><h1>Management Dashboard</h1><p>Kelola konten portofolio Anda.</p></header>
         <div class="dashboard-tabs" role="tablist" aria-label="Kelola konten">
             {% for resource in resources %}
             <button type="button" class="button button-secondary" role="tab"
                     id="dashboard-tab-{{ resource.name }}" data-dashboard-tab="{{ resource.name }}"
                     aria-controls="dashboard-panel-{{ resource.name }}"
                     aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
-                    tabindex="{% if forloop.first %}0{% else %}-1{% endif %}">{{ resource.label }}</button>
+                    tabindex="{% if forloop.first %}0{% else %}-1{% endif %}"><svg class="dashboard-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3Z"/></svg><span>{{ resource.label }}</span></button>
             {% endfor %}
         </div>
         {% for resource in resources %}
@@ -21,8 +23,9 @@
              {% include 'components/resource_attributes.html' %}>
             <h2>{{ resource.label }}</h2>
             {% include 'components/resource_controls.html' with show_search=True %}
-            <div class="dashboard-table-wrap" data-list hidden>
+            <div class="dashboard-table-wrap" data-list hidden tabindex="0" role="region" aria-label="Tabel {{ resource.label }}">
                 <table class="dashboard-table">
+                    <caption class="sr-only">Daftar {{ resource.label }} dan tindakan pengelolaan</caption>
                     <thead><tr>
                         {% for field, label in resource.columns %}<th scope="col" data-column="{{ field }}">{{ label }}</th>{% endfor %}
                         <th scope="col">Actions</th>

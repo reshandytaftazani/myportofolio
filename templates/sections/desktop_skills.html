@@ -1,0 +1,15 @@
+{% load static markdown_extras %}
+<section id="skills" class="skills-section animate-fade-in" data-window-id="skills" aria-labelledby="win-title-skills" data-public-resource
+         {% include 'components/resource_attributes.html' %}>
+{% include 'desktop/titlebar.html' with id='skills' title='Skills' %}
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">My Skills</h2>
+        </div>
+        {% include 'components/resource_controls.html' with show_search=True %}
+        <div class="skills-tabs-container" data-list></div>
+        <noscript>Aktifkan JavaScript untuk memuat data Skills.</noscript>
+
+    </div>
+</section>
+{% if user.is_superuser or is_editor %}{% include 'components/resource_dialog.html' %}{% endif %}

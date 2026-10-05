@@ -17,13 +17,13 @@ from main.forms import ExperienceForm, SkillForm, EducationForm, ProjectForm, Te
 from django_ratelimit.decorators import ratelimit
 from main.access import is_editor, require_access
 from main.resource_api import public_resource_list, resource_context, RESOURCES
+from main.presentation import desktop_context, projects_for_request, public_items
 
 logger = logging.getLogger('main')
 
 @ratelimit(key='ip', rate='5/m', method='POST', block=True)
+@ensure_csrf_cookie
 def show_main(request):
-    featured_projects = Project.objects.filter(is_featured=True).prefetch_related('tags')[:3]
-
     if request.method == "POST":
         # Honeypot check â€” jika field "website" terisi, kemungkinan bot
         if request.POST.get('website'):
@@ -68,35 +68,36 @@ def show_main(request):
         form = ContactMessageForm()
 
     editor = is_editor(request.user)
-    context = {
+    context = desktop_context(request)
+    context.update({
         "bio": (
             "CS student at Universitas Indonesia."
         ),
-        'education_resource': resource_context('education'),
-        'techstack_resource': resource_context('techstack'),
         'contact_form': form,
+        'initial_window': 'contact' if form.is_bound and form.errors else 'about',
         'is_editor': editor,
-        'featured_projects': featured_projects,
-    }
+    })
     return render(request, "index.html", context)
 
 
 @ensure_csrf_cookie
 def show_experience(request):
     editor = is_editor(request.user)
-    context = {
-        "resource": resource_context('experience'),
+    context = desktop_context(request)
+    context.update({
+        "resource": context['experience_resource'],
         "is_editor": editor,
-    }
+    })
     return render(request, "experience.html", context)
 
 @ensure_csrf_cookie
 def show_skills(request):
     editor = is_editor(request.user)
-    context = {
-        "resource": resource_context('skills'),
+    context = desktop_context(request)
+    context.update({
+        "resource": context['skills_resource'],
         "is_editor": editor,
-    }
+    })
     return render(request, "skills.html", context)
 
 @login_required(login_url='/login/')
@@ -163,24 +164,12 @@ def create_education(request):
 
 @ensure_csrf_cookie
 def show_projects(request):
-    title_query = request.GET.get("title", "").strip()
-    categories = (
-        Project.objects.order_by()
-        .values_list("category", flat=True)
-        .exclude(category="")
-        .distinct()
-        .order_by("category")
-    )
     editor = is_editor(request.user)
-
-    context = {
-        "title_query": title_query,
-        "category_query": request.GET.get("category", "all").strip() or "all",
-        "categories": categories,
+    context = desktop_context(request)
+    context.update({
         "is_editor": editor,
         "form": ProjectForm(),
-        "project_resource": resource_context('projects'),
-    }
+    })
     return render(request, "project.html", context)
 
 @login_required(login_url='/login/')
@@ -199,14 +188,7 @@ def create_project(request):
     return render(request, "projects_form.html", context)
 
 def get_projects_json(request):
-    title_query = request.GET.get("title", "").strip()
-    category = request.GET.get("category", "").strip()
-    projects = Project.objects.prefetch_related('tags', 'starred_by').all()
-
-    if title_query:
-        projects = projects.filter(title__icontains=title_query)
-    if category and category.lower() != "all":
-        projects = projects.filter(category=category)
+    projects = projects_for_request(request)
 
     # Konstruksi data JSON secara manual agar bisa menyisipkan logika Star
     data = []
@@ -293,6 +275,8 @@ def register(request):
     return render(request, "register.html", context)
 
 def login_user(request):
+    if request.method == 'GET' and request.GET.get('notice') == 'star':
+        messages.info(request, "Silakan login terlebih dahulu untuk memberi star.")
     form = AuthenticationForm(request, data=request.POST or None)
     next_url = request.POST.get("next", request.GET.get("next", "")).strip()
     if not url_has_allowed_host_and_scheme(
@@ -304,9 +288,13 @@ def login_user(request):
 
     if request.method == "POST" and form.is_valid():
         login(request, form.get_user())
+        messages.success(request, "Login berhasil. Selamat datang kembali!")
         response = redirect(next_url or "main:show_main")
         response.set_cookie('last_login', datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         return response
+
+    if request.method == "POST":
+        messages.error(request, "Login gagal. Periksa username dan password Anda.")
 
     context = {
         "form": form,
@@ -316,6 +304,7 @@ def login_user(request):
 
 def logout_user(request):
     logout(request)
+    messages.success(request, "Logout berhasil. Anda telah keluar dari akun.")
     response = redirect('main:show_main')
     response.delete_cookie('last_login')
     return response

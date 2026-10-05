@@ -54,3 +54,26 @@ function showToast(title, message, type = 'normal', duration = 3000) {
       toastTimer = setTimeout(() => toastComponent.hidePopover(), 300);
   }, duration);
 }
+
+// Django messages survive redirects. Read escaped DOM text rather than placing
+// server text in executable JavaScript, and retain the banner without JS/popover.
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.querySelector('.messages-container');
+  const toast = document.getElementById('toast-component');
+  if (!container || !toast || typeof toast.showPopover !== 'function') return;
+  const messages = [...container.querySelectorAll('.message')].map(element => ({
+      text: element.textContent.trim(),
+      type: element.classList.contains('error') ? 'error'
+          : element.classList.contains('success') ? 'success' : 'normal',
+  })).filter(message => message.text);
+  if (!messages.length) return;
+  container.hidden = true;
+  messages.forEach((message, index) => {
+      const display = () => showToast(
+          message.type === 'error' ? 'Gagal' : message.type === 'success' ? 'Berhasil' : 'Informasi',
+          message.text, message.type,
+      );
+      if (index === 0) display();
+      else setTimeout(display, index * 3400);
+  });
+});

@@ -1,0 +1,9 @@
+<header class="window-titlebar" data-window-handle>
+  <div class="window-controls">
+    <button type="button" class="traffic-light traffic-light--close" data-window-action="close" aria-label="Tutup {{ title }}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m5 5 6 6m0-6-6 6"/></svg></button>
+    <button type="button" class="traffic-light traffic-light--minimize" data-window-action="minimize" aria-label="Minimalkan {{ title }}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8h8"/></svg></button>
+    <button type="button" class="traffic-light traffic-light--maximize" data-window-action="maximize" aria-label="Perbesar {{ title }}" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4h8v8H4Z"/></svg></button>
+  </div>
+  <h2 id="win-title-{{ id }}" tabindex="-1">{{ title }}</h2>
+  <a class="window-back" href="{% url 'main:show_main' %}">Kembali</a>
+</header>

@@ -1,0 +1,32 @@
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/skills.css' %}">
+<script>
+    window.MathJax = {
+        loader: { load: ['ui/safe'] },
+        startup: { typeset: false },
+        options: {
+            safeOptions: {
+                allow: { URLs: 'safe', classes: 'none', cssIDs: 'none', styles: 'none' },
+                safeProtocols: { http: true, https: true, file: false, javascript: false, data: false },
+            },
+        },
+    };
+    // The first Skills window owns these optional renderers; the landing stays light.
+    document.addEventListener('desktop:open', function loadSkillAssets(event) {
+        if (event.target.dataset.windowId !== 'skills') return;
+        document.removeEventListener('desktop:open', loadSkillAssets, true);
+        const style = document.createElement('link');
+        style.rel = 'stylesheet';
+        style.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css';
+        document.head.append(style);
+        for (const [id, src] of [
+            ['MathJax-script', 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'],
+            ['highlight-script', 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js'],
+        ]) {
+            const script = document.createElement('script');
+            script.id = id; script.src = src; script.async = true;
+            document.head.append(script);
+        }
+    }, true);
+</script>

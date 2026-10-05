@@ -1,266 +1,124 @@
-/* tambahan untuk skills */
-.skill-card .experience-category {
-    display: inline-block;
-    padding: 4px 10px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    background-color: #333; 
-    color: #fff;
-    border-radius: 20px;
-    margin-bottom: 12px;
+/* A compact explorer inside the existing desktop window. */
+#skills {
+  --skill-code-bg: #1c2635;
+  --skill-code-bar: #28374b;
+  --skill-code-ink: #e4edf8;
+  --skill-code-muted: #c0d0e3;
 }
-
-.skills-grid .empty-state, .empty-state-box {
-    grid-column: 1 / -1; 
-    text-align: center;
-    color: #666;
-    padding: 3rem 2rem;
-    font-style: italic;
-    border: 2px dashed #eaeaea;
-    border-radius: 12px;
-    background-color: #fafafa;
-    margin: 1rem 0;
+#skills > .container { container: skill-window / inline-size; padding: 16px 20px 20px; }
+#skills .section-header { margin-bottom: 12px; }
+#skills .section-title { margin: 0; color: var(--ink); font: 600 18px/1.4 var(--font-display); letter-spacing: -0.015em; }
+#skills .skills-tabs-container { max-width: none; margin: 0; overflow: visible; border: 0; border-radius: 0; background: transparent; color: var(--ink); box-shadow: none; }
+#skills .tabs-header {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(156px, 176px));
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 0 0 16px;
+  overflow: visible;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  cursor: auto;
 }
-
-
-.skills-section {
-    padding: 6rem 0;
-    background-color: #fcfbfa; 
-    border-top: 1px solid var(--line);
+#skills .tab-btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 52px;
+  max-width: none;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-muted);
+  font: 500 12px/1.4 var(--font-ui);
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  user-select: none;
 }
-
-
-.skills-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2rem;
+#skills .tab-btn > svg { width: 28px; height: 25px; flex: 0 0 28px; filter: none; }
+#skills .skill-tab-label { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; min-width: 0; max-height: 2.8em; padding: 0; overflow: hidden; border-radius: 0; background: transparent; }
+#skills .tab-btn:hover { background: var(--paper); color: var(--ink); }
+#skills .tab-btn.active { border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); color: var(--ink); font-weight: 500; box-shadow: none; }
+#skills .tab-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#skills .tabs-content { min-width: 0; }
+#skills .tab-panel, #skills .tab-panel.active { display: block; min-width: 0; padding: 0; animation: none; }
+#skills .tab-panel[hidden] { display: none !important; }
+#skills .skill-details { min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--ink); box-shadow: none; overflow-wrap: anywhere; }
+#skills .skill-intro { padding: 0; border-radius: 0; background: transparent; color: var(--ink); }
+#skills .skill-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 8px; }
+#skills .skill-heading h3 { flex: 1 1 200px; min-width: 0; margin: 0; color: var(--ink); font: 600 20px/1.35 var(--font-display); letter-spacing: -0.02em; text-wrap: pretty; overflow-wrap: anywhere; }
+#skills .skill-heading .experience-category { flex: 0 1 auto; max-width: 100%; margin: 0; padding: 3px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink-muted); font: 500 11px/1.5 var(--font-ui); letter-spacing: 0; text-transform: none; overflow-wrap: anywhere; }
+#skills .markdown-content { max-width: 68ch; color: var(--ink-muted); font-size: 13px; line-height: 1.75; overflow-wrap: anywhere; }
+#skills .markdown-content :is(p, ul, ol, blockquote) + :is(p, ul, ol, blockquote) { margin-top: 12px; }
+#skills .markdown-content :is(ul, ol) { padding-left: 20px; }
+#skills .markdown-content li + li { margin-top: 4px; }
+#skills .markdown-content strong { color: var(--ink); }
+#skills .markdown-content :is(h1, h2, h3, h4, h5, h6) { margin: 20px 0 8px; color: var(--ink); font: 600 15px/1.5 var(--font-display); }
+#skills .markdown-content a { color: var(--accent); text-underline-offset: 3px; }
+#skills .markdown-content :not(pre) > code { padding: 2px 4px; border-radius: 4px; background: var(--paper); color: var(--ink); font-size: .9em; }
+#skills .ide-window { width: 100%; max-width: 100%; margin-top: 16px; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--skill-code-bg); box-shadow: none; }
+#skills .ide-header { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 8px 12px; background: var(--skill-code-bar); color: var(--skill-code-muted); }
+#skills .ide-header > svg { flex: 0 0 16px; width: 16px; height: 16px; }
+#skills .ide-title { flex: 1; min-width: 0; margin: 0; color: var(--skill-code-ink); font: 500 11px/1.5 var(--font-ui); overflow-wrap: anywhere; text-align: left; }
+#skills .ide-language { flex: 0 0 auto; color: var(--skill-code-muted); font: 500 10px/1.5 var(--font-ui); }
+#skills .server-code, #skills .vscode-mode pre, #skills .overleaf-editor pre, #skills .markdown-content pre {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: 320px;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  background: var(--skill-code-bg);
+  color: var(--skill-code-ink);
+  font: 12px/1.65 var(--font-mono);
+  tab-size: 4;
+  scrollbar-width: thin;
+  scrollbar-color: #72859e var(--skill-code-bg);
 }
-
-.skill-card {
-    background-color: #ffffff;
-    padding: 3rem 2rem;
-    border-radius: 12px;
-    text-align: center;
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.04);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+#skills .server-code, #skills .markdown-content pre { margin-top: 16px; border-radius: 12px; }
+#skills pre code, #skills pre code.hljs { padding: 0; background: transparent; font: inherit; white-space: pre; }
+#skills pre .hljs-comment, #skills pre .hljs-quote { color: #96b486; }
+#skills pre .hljs-keyword, #skills pre .hljs-selector-tag { color: #7abbff; }
+#skills pre .hljs-string { color: #edb399; }
+#skills pre .hljs-number, #skills pre .hljs-literal { color: #bbd49c; }
+#skills pre::selection, #skills pre ::selection { background: #416999; color: #fff; }
+#skills pre::-webkit-scrollbar { width: 8px; height: 8px; }
+#skills pre::-webkit-scrollbar-track { background: var(--skill-code-bg); }
+#skills pre::-webkit-scrollbar-thumb { border: 2px solid var(--skill-code-bg); background: #72859e; border-radius: 6px; }
+#skills .overleaf-mode { min-width: 0; }
+#skills .overleaf-pdf { min-width: 0; padding: 12px; overflow-x: auto; background: var(--paper); scrollbar-width: thin; scrollbar-color: var(--line) var(--paper); }
+#skills .preview-label { margin: 0 0 8px; color: var(--ink-muted); font: 500 11px/1.5 var(--font-ui); }
+#skills .source-label { margin: 0; padding: 12px 16px 0; color: var(--skill-code-muted); font: 500 11px/1.5 var(--font-ui); }
+#skills .pdf-paper { width: 100%; max-width: 100%; min-width: 0; padding: 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); font-size: 14px; line-height: 1.6; scrollbar-width: thin; scrollbar-color: var(--line) var(--surface); }
+#skills .pdf-paper mjx-container[display='true'] { margin: 8px 0; }
+#skills :is(pre, .pdf-paper):focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+#skills :is(.resource-actions, .server-management) { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+#skills .skills-tabs-container > .skill-details { padding: 16px 0; }
+#skills .skills-tabs-container > .skill-details + .skill-details { border-top: 1px solid var(--line); }
+#skills [data-error], #skills [data-empty] { margin: 12px 0 0; }
+#skills .skills-tabs-container > p { margin: 0; padding-block: 16px; color: var(--ink-muted); }
+@container skill-window (max-width: 480px) {
+  #skills .tabs-header { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #skills .skill-heading { align-items: flex-start; }
+  #skills .skill-heading h3 { flex-basis: 100%; }
+  #skills .server-code, #skills .vscode-mode pre, #skills .overleaf-editor pre { max-height: 280px; }
 }
-
-.skill-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+@container skill-window (max-width: 300px) {
+  #skills .tabs-header { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  #skills .tab-btn { min-height: 44px; }
+  #skills .skill-heading h3 { font-size: 18px; }
+  #skills .ide-language { display: none; }
 }
-
-.icon-box {
-    width: 64px;
-    height: 64px;
-    background-color: #f3f0ff;
-    color: #6366f1;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1.5rem auto;
-}
-
-.icon-box svg {
-    width: 28px;
-    height: 28px;
-}
-
-.skill-card h3 {
-    font-size: 1.15rem;
-    color: var(--ink);
-    margin-bottom: 1rem;
-}
-
-.skill-card p {
-    font-size: 0.95rem;
-    color: var(--text-muted);
-    line-height: 1.7;
-}
-
-/* ======Tambahan======= */
-/* Struktur Dasar Jendela IDE */
-.ide-window {
-    border-radius: 8px;
-    overflow: hidden;
-    margin-top: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    border: 1px solid #333;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.ide-header {
-    background-color: #2d2d2d;
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-}
-.ide-buttons { display: flex; gap: 6px; }
-.ide-buttons span { width: 12px; height: 12px; border-radius: 50%; }
-.btn-close { background-color: #ff5f56; }
-.btn-minimize { background-color: #ffbd2e; }
-.btn-maximize { background-color: #27c93f; }
-
-.ide-title {
-    flex-grow: 1;
-    text-align: center;
-    color: #cccccc;
-    font-size: 0.75rem;
-    margin-left: -40px;
-    font-family: sans-serif;
-}
-
-.vscode-mode pre {
-    margin: 0;
-    padding: 15px;
-    background-color: #1e1e1e;
-    color: #d4d4d4;
-    font-family: 'Consolas', monospace;
-    font-size: 0.85rem;
-    overflow-x: auto;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.overleaf-mode { display: flex; flex-direction: column; }
-.overleaf-editor pre {
-    margin: 0;
-    padding: 15px;
-    background-color: #272822;
-    color: #f8f8f2;
-    font-family: 'Consolas', monospace;
-    font-size: 0.85rem;
-    overflow-x: auto;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-.overleaf-pdf {
-    background-color: #525659;
-    padding: 15px;
-    display: flex;
-    justify-content: center;
-}
-.pdf-paper {
-    background-color: #ffffff;
-    color: #000000;
-    padding: 10px 20px;
-    border-radius: 2px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    width: 100%;
-    overflow-x: auto;
-}
-
-/* Tambahan */
-.skills-tabs-container {
-    max-width: 900px;
-    margin: 0 auto;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    border: 1px solid #eaeaea;
-    overflow: hidden;
-}
-
-.tabs-header {
-    display: flex;
-    background: #f7f7f7;
-    padding: 12px;
-    gap: 10px;
-    overflow-x: auto;
-    cursor: grab;
-    scrollbar-width: none;
-}
-.tabs-header::-webkit-scrollbar {
-    display: none;
-}
-.tabs-header:active {
-    cursor: grabbing;
-}
-
-.tab-btn {
-    background: transparent;
-    border: none;
-    border-radius: 30px;
-    outline: none;
-    cursor: pointer;
-    padding: 10px 24px;
-    font-size: 0.95rem;
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 500;
-    color: #666;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-.tab-btn:hover {
-    background-color: #eaeaea;
-}
-
-.tab-btn.active {
-    background-color: var(--accent);
-    color: #ffffff;
-    font-weight: 700;
-    box-shadow: 0 4px 12px rgba(217, 93, 57, 0.3);
-}
-
-.tab-panel {
-    display: none;
-    padding: 30px;
-    animation: fadeEffect 0.4s;
-}
-
-@media (max-width: 768px) {
-    .tab-panel {
-        padding: 15px;
-    }
-}
-
-.tab-panel.active {
-    display: block;
-}
-
-@keyframes fadeEffect {
-    from {opacity: 0; transform: translateY(5px);}
-    to {opacity: 1; transform: translateY(0);}
-}
-
-/* --- DARK MODE UNTUK TABS --- */
-[data-theme="dark"] .skills-tabs-container {
-    background: #1e1e1e;
-    border-color: #333333;
-}
-[data-theme="dark"] .tabs-header {
-    background: #121212;
-    border-color: #333333;
-}
-[data-theme="dark"] .tab-btn {
-    border-color: #333333;
-    color: #a3a3a3;
-}
-[data-theme="dark"] .tab-btn:hover {
-    background-color: #2a2a2a;
-}
-[data-theme="dark"] .tab-btn.active {
-    background-color: var(--accent);
-    color: #ffffff;
-    box-shadow: 0 4px 15px rgba(255, 127, 89, 0.4);
-}
-[data-theme="dark"] .tab-panel {
-    color: #faf6f0;
-}
-[data-theme="dark"] .ide-window {
-    border-color: #444444;
-}
-[data-theme="dark"] .empty-state-box {
-    background-color: #1e1e1e;
-    border-color: #444;
-    color: #a3a3a3;
+@media (max-width: 900px) { #skills > .container { padding: 16px; } }
+@media (prefers-reduced-motion: no-preference) {
+  #skills .tab-btn { transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast); }
 }

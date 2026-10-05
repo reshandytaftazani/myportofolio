@@ -1,0 +1,5 @@
+{% load static %}
+<nav class="desktop-apps" aria-label="Buka bagian portfolio" aria-describedby="icon-keyboard-help"><p id="icon-keyboard-help" class="sr-only">Enter membuka bagian. Tombol panah memilih ikon, Alt dan panah memindahkan ikon di desktop. Menu Window menyediakan Rapikan ikon.</p><ul data-icon-grid>
+  {% for app in desktop_apps %}<li data-icon-id="{{ app.id }}"><a href="{{ app.url }}" class="desktop-icon" data-app-id="{{ app.id }}"><svg width="64" height="56" aria-hidden="true"><use href="#i-{{ app.icon }}"/>{% if app.icon == 'folder' %}<use href="#i-folder-mark-{{ app.id }}"/>{% endif %}</svg><span>{{ app.title }}</span></a></li>{% endfor %}
+  <li data-icon-id="cv"><a href="{% static 'Reshandy_s_CV-1.pdf' %}" class="desktop-icon" target="_blank" rel="noopener"><svg width="64" height="56" aria-hidden="true"><use href="#i-file"/></svg><span>CV.pdf</span></a></li>
+</ul></nav>

@@ -1,0 +1,24 @@
+{% for project in projects %}
+<article class="experience-card project-card">
+  <div class="project-media">
+    {% if project.project_image_url|slice:':8' == 'https://' or project.project_image_url|slice:':7' == 'http://' %}
+      <img src="{{ project.project_image_url }}" alt="Gambar {{ project.title }}" class="project-image" loading="lazy" decoding="async" width="800" height="500">
+    {% else %}
+      <div class="project-media-placeholder"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 6-6 4 4 3-3 5 5"/></svg><span>Pratinjau belum tersedia</span></div>
+    {% endif %}
+  </div>
+  <div class="project-card-body">
+  <div class="project-card-heading">
+    <h2 class="project-card-title">{{ project.title }}</h2>
+    <span class="experience-category project-category">{{ project.category }}</span>
+  </div>
+  {% if project.tags.all %}<p class="project-technologies">{% for tag in project.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+  <p class="experience-description">{{ project.description }}</p>
+  <div class="project-card-actions"><div class="project-actions">
+    {% if project.project_url|slice:':8' == 'https://' or project.project_url|slice:':7' == 'http://' %}<a href="{{ project.project_url }}" class="button project-link" target="_blank" rel="noopener noreferrer">Lihat Project <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>{% endif %}
+    {% include 'components/project_star.html' %}
+  </div></div>
+  </div>
+  {% if user.is_superuser or is_editor %}<div class="server-management"><a href="{% url 'main:edit_project' project.id %}">Edit</a>{% if user.is_superuser %}<form method="post" action="{% url 'main:delete_project' project.id %}">{% csrf_token %}<button type="submit">Hapus</button></form>{% endif %}</div>{% endif %}
+</article>
+{% endfor %}

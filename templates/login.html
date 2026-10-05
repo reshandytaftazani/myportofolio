@@ -1,34 +1,29 @@
-{% extends "base.html" %}
-{% block meta %}
-    <title>Login - {{ owner_name }}</title>
-{% endblock meta %}
-{% block content %}
-    <main>
-        <section class="experience-section">
-            <div class="container">
-                <h1>Login</h1>
-                {% for message in messages %}
-                    <p class="form-message">{{ message }}</p>
-                {% endfor %}
+{% extends "layouts/system.html" %}
+{% load static %}
+{% block title %}Login - {{ owner_name }}{% endblock title %}
+{% block body_class %}system-page login-page{% endblock %}
+{% block meta %}<link rel="stylesheet" href="{% static 'css/management.css' %}">{% endblock %}
+{% block system_window_class %}login-window{% endblock %}
+{% block system_content %}
+
+        <section class="login-screen" aria-labelledby="login-heading">
+            <div class="login-content">
+                <div class="login-avatar" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="10" width="12" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 15v2"/></svg>
+                </div>
+                <h1 id="login-heading">Login</h1>
+                <p class="login-description">Masuk untuk melanjutkan ke portofolio.</p>
                 <form method="post" action="{% url 'main:login' %}" class="project-form">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ next_url }}">
-                    {% for field in form %}
-                        <div class="form-group">
-                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                            {{ field }}
-                            {% for error in field.errors %}
-                                <p class="form-error">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endfor %}
+                    {% for field in form %}{% include 'components/server_field.html' %}{% endfor %}
                     {% for error in form.non_field_errors %}
-                        <p class="form-error">{{ error }}</p>
+                        <p class="form-error" role="alert">{{ error }}</p>
                     {% endfor %}
-                    <button type="submit" class="button">Login</button>
+                    <button type="submit" class="button login-submit"><span>Login</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button>
                 </form>
-                <p>Belum punya akun? <a href="{% url 'main:register' %}">Daftar di sini</a>.</p>
+                <p class="login-register">Belum punya akun? <a href="{% url 'main:register' %}">Daftar di sini</a>.</p>
             </div>
         </section>
-    </main>
-{% endblock content %}
+
+{% endblock system_content %}

@@ -1,0 +1,32 @@
+.desktop-menubar { display: flex; align-items: center; gap: 24px; min-height: 42px; position: fixed; top: 0; left: 0; right: 0; padding: 0 24px; font-size: 12px; z-index: var(--z-menubar); background: var(--surface-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--line); }
+.desktop-menubar a { color: var(--ink); text-decoration: none; }
+.desktop-menubar nav a { padding-block: 10px; }
+.desktop-brand { font-weight: 700; font-size: 14px; }
+.desktop-menu-links { display: flex; gap: 18px; }
+.desktop-menu-links a:hover { color: var(--accent); }
+.desktop-menubar-end { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+.desktop-theme { display: flex; align-items: center; background: none; border: 0; color: var(--ink); cursor: pointer; padding: 5px; }
+.menubar-clock { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.desktop-menubar .user-btn { font-size: 12px; background: none; color: var(--ink); padding: 6px; }
+.desktop-menubar .user-btn { max-width: 12ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.desktop-menubar .user-dropdown-content { top: 100%; }
+.desktop-page:not([data-desktop-ready]) .desktop-window-menu { display: none; }
+.desktop-page:not([data-navigation-ready]) .desktop-menubar { position: static; flex-wrap: wrap; }
+.desktop-page:not([data-navigation-ready]) .desktop-menubar-end { flex-wrap: wrap; max-width: 100%; margin-left: 0; }
+.desktop-page:not([data-navigation-ready]) .user-dropdown { flex-wrap: wrap; max-width: 100%; }
+.desktop-page:not([data-navigation-ready]) .user-dropdown-content { min-width: 0; max-width: 100%; }
+.desktop-window-menu { position: relative; }
+.desktop-window-menu summary { cursor: pointer; }
+.desktop-menu-panel { position: absolute; min-width: 200px; top: 28px; padding: 8px; border-radius: 8px; background: var(--surface); box-shadow: 0 10px 30px rgb(0 0 0 / .16); }
+.desktop-menu-panel button { display: block; width: 100%; text-align: left; padding: 10px; background: none; color: var(--ink); border: 0; cursor: pointer; }
+.desktop-menu-panel button:hover { background: var(--paper); }
+@media (max-width: 1199px) { .desktop-menu-links { gap: 12px; } .menubar-clock { display: none; } }
+@media (max-width: 900px) {
+  .desktop-menubar { padding: 10px 16px; gap: 12px; }
+  .desktop-menu-links { display: none; }
+  .desktop-window-menu { margin-right: auto; }
+  .desktop-menubar-end { gap: 8px; }
+  .desktop-menubar-end > a, .desktop-theme, .desktop-window-menu summary, .desktop-menubar .user-btn { min-height: 44px; display: inline-flex; align-items: center; }
+  .desktop-theme { min-width: 44px; justify-content: center; }
+  .desktop-menubar { padding-block: 4px; }
+}

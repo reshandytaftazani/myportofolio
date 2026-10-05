@@ -1,0 +1,5 @@
+{% load static %}
+<aside class="desktop-profile" aria-label="Profil">
+  <img src="{% static 'img/reshandy-320.jpg' %}" width="64" height="64" alt="{{ owner_name }}">
+  <div><strong>{{ owner_name }}</strong><p>{{ study_program }}<br>Universitas Indonesia</p><p class="profile-focus">AI/ML &amp; Competitive Mathematics</p><div class="profile-actions"><a href="{% url 'main:show_projects' %}">Lihat Projects</a><a href="{% static 'Reshandy_s_CV-1.pdf' %}" target="_blank" rel="noopener">CV.pdf</a></div><div class="profile-social"><a href="https://github.com/reshandytaftazani" target="_blank" rel="noopener noreferrer">GitHub</a><a href="https://www.linkedin.com/in/reshandy-taftazani-aulya/" target="_blank" rel="noopener noreferrer">LinkedIn</a></div></div>
+</aside>

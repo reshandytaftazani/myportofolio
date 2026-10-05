@@ -3,6 +3,7 @@
     const ajax = window.PortfolioAjax;
     if (!form || !ajax) return;
     const feedback = form.querySelector('[data-contact-feedback]');
+    const success = form.querySelector('[data-contact-success]');
     form.querySelectorAll('.form-group [name]').forEach(field => {
         const error = field.closest('.form-group').querySelector('[data-contact-error]');
         if (!error) return;
@@ -36,6 +37,7 @@
     }
 
     form.addEventListener('input', event => {
+        if (success) success.hidden = true;
         clearField(event.target);
         if (!form.querySelector('[aria-invalid]')) feedback.hidden = true;
     });
@@ -43,11 +45,13 @@
         event.preventDefault();
         const button = form.querySelector('[type=submit]');
         if (button.disabled) return;
-        const label = button.textContent;
+        const buttonLabel = button.querySelector('[data-contact-submit-label]') || button;
+        const label = buttonLabel.textContent;
         form.querySelectorAll('.form-group [name]').forEach(clearField);
         feedback.hidden = true;
+        if (success) success.hidden = true;
         form.setAttribute('aria-busy', 'true');
-        button.disabled = true; button.textContent = 'Mengirim...';
+        button.disabled = true; buttonLabel.textContent = 'Mengirim...';
         try {
             const { response, data } = await ajax.fetchJson(form.action, {
                 method: 'POST',
@@ -56,6 +60,10 @@
             });
             if (response.ok && data?.status === 'success') {
                 window.showToast('Pesan terkirim', data.message, 'success'); form.reset();
+                if (success) {
+                    success.textContent = 'Pesan terkirim. Terima kasih sudah menghubungi saya!';
+                    success.hidden = false;
+                }
             } else {
                 const message = ajax.validationMessages(data?.errors).join(' ') || data?.message
                     || (response.status === 403 ? 'Permintaan ditolak. Muat ulang halaman lalu coba lagi.' : 'Terjadi kesalahan. Coba lagi.');
@@ -67,7 +75,7 @@
             showErrors(null, message);
             window.showToast('Gagal mengirim pesan', message, 'error');
         } finally {
-            button.disabled = false; button.textContent = label;
+            button.disabled = false; buttonLabel.textContent = label;
             form.setAttribute('aria-busy', 'false');
             if (document.activeElement === document.body) button.focus();
         }

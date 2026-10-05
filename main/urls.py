@@ -36,6 +36,7 @@ from main.views import (
 app_name = 'main'
 
 urlpatterns = [
+    path('api/<slug:resource>/<str:pk>/star/', resource_api.toggle_star_resource, name='toggle_star_resource'),
     path('api/manage/tags/', resource_api.manage_tag_list, name='manage_tag_list'),
     path('api/manage/tags/create/', resource_api.manage_tag_create, name='manage_tag_create'),
     path('api/manage/<slug:resource>/', resource_api.manage_resource_list, name='manage_resource_list'),

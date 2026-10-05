@@ -56,7 +56,9 @@ class MainTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "index.html")
+        # Portfolio lists are empty shells populated from their JSON endpoints.
         self.assertNotContains(response, self.experience.title)
+        self.assertContains(response, 'data-window-id="experience"', count=1)
         self.assertContains(response, f'href="{reverse("main:show_experience")}"')
 
     def test_nonexistent_page_returns_404(self):

@@ -1,0 +1,10 @@
+{% load static %}
+<section class="desktop-introduction" aria-label="Perkenalan">
+  <h1>{{ owner_name_short }}<span>{{ owner_name|cut:owner_name_short }}</span></h1>
+  <p class="desktop-introduction-focus"><span>AI/ML</span> &amp; Competitive Mathematics</p>
+  <p class="desktop-introduction-description">CS student at Universitas Indonesia. Interested in AI/ML and competitive mathematics.</p>
+  <div class="desktop-introduction-actions">
+    <a href="{% url 'main:show_projects' %}" class="button">Lihat Projects <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+    <a href="{% static 'Reshandy_s_CV-1.pdf' %}" class="desktop-cv-link" target="_blank" rel="noopener">Unduh CV <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
+  </div>
+</section>

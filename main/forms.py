@@ -12,6 +12,17 @@ class PortfolioForm(ModelForm):
     http_url_fields = ()
     markdown_fields = ()
 
+    def clean_text_field(self, name):
+        value = self.cleaned_data.get(name) or ''
+        if name in self.markdown_fields:
+            from main.templatetags.markdown_extras import markdown_format
+            if value and not strip_tags(markdown_format(value)).strip():
+                raise ValidationError('Deskripsi harus memuat teks yang dapat ditampilkan.')
+        value = strip_tags(value).strip()
+        if self.fields[name].required and not value:
+            raise ValidationError('Field ini tidak boleh kosong setelah sanitasi HTML.')
+        return value
+
     def clean(self):
         cleaned = super().clean()
         for name in self.plain_text_fields:
@@ -39,6 +50,15 @@ class ExperienceForm(PortfolioForm):
     plain_text_fields = ('title', 'company')
     http_url_fields = ('thumbnail',)
     markdown_fields = ('description',)
+
+    def clean_title(self):
+        return self.clean_text_field('title')
+
+    def clean_company(self):
+        return self.clean_text_field('company')
+
+    def clean_description(self):
+        return self.clean_text_field('description')
     class Meta:
         model = Experience
         fields = [
@@ -101,6 +121,15 @@ class ExperienceForm(PortfolioForm):
 class SkillForm(PortfolioForm):
     plain_text_fields = ('title', 'level')
     markdown_fields = ('description',)
+
+    def clean_title(self):
+        return self.clean_text_field('title')
+
+    def clean_level(self):
+        return self.clean_text_field('level')
+
+    def clean_description(self):
+        return self.clean_text_field('description')
     class Meta:
         model = Skill
         fields = [
@@ -146,6 +175,15 @@ class SkillForm(PortfolioForm):
 
 class EducationForm(PortfolioForm):
     plain_text_fields = ('school_name', 'period', 'detail')
+
+    def clean_school_name(self):
+        return self.clean_text_field('school_name')
+
+    def clean_period(self):
+        return self.clean_text_field('period')
+
+    def clean_detail(self):
+        return self.clean_text_field('detail')
     class Meta:
         model = Education
         fields = [
@@ -277,6 +315,12 @@ class ProjectForm(PortfolioForm):
 class TechStackForm(PortfolioForm):
     plain_text_fields = ('name', 'filename')
     http_url_fields = ('icon_url',)
+
+    def clean_name(self):
+        return self.clean_text_field('name')
+
+    def clean_filename(self):
+        return self.clean_text_field('filename')
     class Meta:
         model = TechStack
         fields = [
@@ -312,7 +356,7 @@ class ContactMessageForm(PortfolioForm):
             "message": "Pesan Anda",
         }
         widgets = {
-            "name": TextInput(attrs={"placeholder": "John Doe", "class": "form-control"}),
-            "email": TextInput(attrs={"placeholder": "john@example.com", "type": "email", "class": "form-control"}),
+            "name": TextInput(attrs={"placeholder": "Nama Anda", "autocomplete": "name", "class": "form-control"}),
+            "email": TextInput(attrs={"placeholder": "anda@example.com", "type": "email", "autocomplete": "email", "class": "form-control"}),
             "message": Textarea(attrs={"placeholder": "Tuliskan pesan Anda di sini...", "rows": 4, "class": "form-control"}),
         }

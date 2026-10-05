@@ -42,6 +42,7 @@
             edit: 'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L9 17l-4 1 1-4Z',
             delete: 'M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6',
             check: 'm20 6-11 12-5-5',
+            star: 'm12 3 2.8 5.7 6.3.9-4.5 4.4 1.1 6.2-5.7-3-5.7 3 1.1-6.2-4.5-4.4 6.3-.9Z',
         };
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('class', 'resource-icon');
@@ -64,6 +65,46 @@
         const label = item.fields.title || item.fields.school_name || item.fields.name;
         group.setAttribute('role', 'group');
         group.setAttribute('aria-label', `Kelola ${label}`);
+        if (root.hasAttribute('data-public-resource')) {
+            const count = node('span', 'resource-star-count', String(item.fields.star_count || 0));
+            count.setAttribute('aria-live', 'polite');
+            const star = node(root.dataset.canStar === 'true' ? 'button' : 'a',
+                'button resource-action resource-star');
+            const starLabel = node('span', '', 'Star');
+            star.append(icon('star'), starLabel, count);
+            const update = fields => {
+                count.textContent = String(fields.star_count);
+                star.setAttribute('aria-label', `Star ${label}: ${fields.star_count}`);
+                if (star.tagName === 'BUTTON') {
+                    star.setAttribute('aria-pressed', String(fields.is_starred));
+                    starLabel.textContent = fields.is_starred ? 'Batalkan star' : 'Star';
+                }
+            };
+            update(item.fields);
+            if (star.tagName === 'BUTTON') {
+                star.type = 'button';
+                star.addEventListener('click', async () => {
+                    if (star.disabled) return;
+                    star.disabled = true;
+                    try {
+                        const { response, data } = await ajax.fetchJson(
+                            root.dataset.starUrl.replace('__pk__', encodeURIComponent(item.pk)), {
+                                method: 'POST',
+                                headers: { 'X-CSRFToken': ajax.getCsrfToken() },
+                            });
+                        if (!response.ok || !data?.item) throw new Error(message(data, 'Gagal memperbarui star. Coba lagi.'));
+                        update(data.item.fields);
+                        notify('Berhasil', data.item.fields.is_starred
+                            ? 'Star berhasil diberikan.' : 'Star berhasil dibatalkan.', 'success');
+                    } catch (error) { notify('Gagal memberi star', error.message); }
+                    finally { star.disabled = false; }
+                });
+            } else {
+                star.href = `/login/?next=${encodeURIComponent(location.pathname + location.search + location.hash)}&notice=star`;
+                starLabel.textContent = 'Login untuk star';
+            }
+            group.append(star);
+        }
         for (const [action, text, allowed] of [
             ['edit', 'Edit', root.dataset.canEdit === 'true'],
             ['delete', 'Hapus', root.dataset.canDelete === 'true'],
@@ -526,12 +567,15 @@
         let controller;
         let sequence = 0;
         let loaded = false;
+        let inFlight = false;
+        const serverRendered = content.hasAttribute('data-server-rendered');
+        let hasContent = serverRendered && Boolean(content.querySelector('article'));
 
         function state(value) {
             if (loading) loading.hidden = value !== 'loading';
             if (empty) empty.hidden = value !== 'empty';
             if (errorState) errorState.hidden = value !== 'error';
-            content.hidden = value !== 'list';
+            content.hidden = value !== 'list' && !((value === 'loading' || value === 'error') && hasContent);
             // Keep the loading announcement outside the region marked busy.
             content.setAttribute('aria-busy', String(value === 'loading'));
         }
@@ -541,6 +585,7 @@
             delayed.cancel();
             invalidate();
             const current = sequence;
+            inFlight = true;
             const request = new AbortController();
             controller = request;
             state('loading');
@@ -551,12 +596,13 @@
                 if (current !== sequence) return;
                 if (!response.ok || !Array.isArray(data)) throw new Error('Invalid list response');
                 render(data, content);
+                hasContent = data.length > 0;
                 loaded = true;
                 state(data.length ? 'list' : 'empty');
                 window.AOS?.refreshHard();
             } catch (error) {
                 if (error.name !== 'AbortError' && current === sequence) state('error');
-            }
+            } finally { if (current === sequence) inFlight = false; }
         }
         const delayed = debounce(load);
         search?.addEventListener('input', () => { invalidate(); state('loading'); delayed(); });
@@ -571,8 +617,9 @@
             target?.focus({ preventScroll: true });
         });
         bindManagement(root, load);
+        root.setAttribute('data-resource-ready', '');
         if (autoLoad) load();
-        return { load, activate() { if (!loaded) load(); } };
+        return { load, activate() { if (!loaded && !inFlight) load(); } };
     }
 
     window.PortfolioResources = Object.freeze({ node, httpUrl, debounce, actions, bindManagement, list });

@@ -1,0 +1,31 @@
+{% load static %}
+<nav class="desktop-dock" aria-label="Dock">
+  {% for app in desktop_apps %}
+  <a href="{{ app.url }}" data-dock-id="{{ app.id }}" aria-label="{{ app.title }}" aria-controls="{{ app.id }}">
+    <span class="dock-icon"><svg width="48" height="48" aria-hidden="true" focusable="false"><use href="#i-dock-{{ app.id }}"/></svg></span>
+    <span class="dock-label" aria-hidden="true">{{ app.title }}</span>
+    <span class="dock-indicator" aria-hidden="true"></span>
+  </a>
+  {% endfor %}
+  <span class="dock-divider" aria-hidden="true"></span>
+  <a href="https://github.com/reshandytaftazani" data-dock-link="github" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+    <span class="dock-icon"><svg width="48" height="48" aria-hidden="true" focusable="false"><use href="#i-dock-github"/></svg></span>
+    <span class="dock-label" aria-hidden="true">GitHub</span>
+    <span class="dock-indicator" aria-hidden="true"></span>
+  </a>
+  <a href="https://www.linkedin.com/in/reshandy-taftazani-aulya/" data-dock-link="linkedin" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+    <span class="dock-icon"><svg width="48" height="48" aria-hidden="true" focusable="false"><use href="#i-dock-linkedin"/></svg></span>
+    <span class="dock-label" aria-hidden="true">LinkedIn</span>
+    <span class="dock-indicator" aria-hidden="true"></span>
+  </a>
+  <a href="mailto:reshandytaftazaniaulya@gmail.com" data-dock-link="email" aria-label="Email">
+    <span class="dock-icon"><svg width="48" height="48" aria-hidden="true" focusable="false"><use href="#i-dock-contact"/></svg></span>
+    <span class="dock-label" aria-hidden="true">Email</span>
+    <span class="dock-indicator" aria-hidden="true"></span>
+  </a>
+  <a href="{% static 'Reshandy_s_CV-1.pdf' %}" data-dock-link="cv" target="_blank" rel="noopener" aria-label="Unduh CV">
+    <span class="dock-icon"><svg width="48" height="48" aria-hidden="true" focusable="false"><use href="#i-dock-cv"/></svg></span>
+    <span class="dock-label" aria-hidden="true">CV.pdf</span>
+    <span class="dock-indicator" aria-hidden="true"></span>
+  </a>
+</nav>

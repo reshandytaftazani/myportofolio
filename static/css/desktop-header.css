@@ -1,0 +1,241 @@
+/* Experience surface: a calm menu bar above the owner's introduction. */
+.desktop-page {
+  --header-height: 60px;
+  --header-inset: clamp(16px, 2.2vw, 32px);
+  --header-gap: clamp(8px, 1.5vw, 24px);
+  --header-control-gap: 8px;
+  --header-nav-size: .8125rem;
+  --intro-body-size: 1rem;
+  --intro-action-size: .875rem;
+  --header-clear-surface: color-mix(in srgb, var(--desk-bg) 92%, var(--surface));
+  --header-glass-surface: color-mix(in srgb, var(--surface) 82%, transparent);
+}
+.desktop-page .desktop-menubar {
+  min-height: var(--header-height);
+  padding: env(safe-area-inset-top) max(var(--header-inset), env(safe-area-inset-right)) 0 max(var(--header-inset), env(safe-area-inset-left));
+  gap: var(--header-gap);
+  font-size: var(--header-nav-size);
+  background: var(--header-clear-surface);
+  border-bottom-color: color-mix(in srgb, var(--line) 65%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.desktop-page .desktop-menubar[data-header-scrolled] {
+  background: var(--header-glass-surface);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  box-shadow: 0 8px 24px rgb(15 35 60 / .08);
+}
+.desktop-page .desktop-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--header-control-gap);
+  min-height: 44px;
+  flex-shrink: 0;
+  font: 700 1rem/1.2 var(--font-display);
+  letter-spacing: -.025em;
+}
+.desktop-page .desktop-brand-symbol { flex-shrink: 0; }
+.desktop-page .desktop-menu-links { gap: 4px; flex: 0 0 auto; }
+.desktop-page .desktop-menu-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 12px;
+  position: relative;
+  isolation: isolate;
+  white-space: nowrap;
+  font-weight: 500;
+}
+/* The notched silhouette borrows its shape from the desktop's folder tabs. */
+.desktop-page .desktop-menu-links a::before {
+  content: '';
+  position: absolute;
+  inset: 6px 2px;
+  z-index: -1;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  clip-path: polygon(0 0, 40% 0, 48% 5px, 100% 5px, 100% 100%, 0 100%);
+  opacity: 0;
+  transform: translateY(3px);
+}
+.desktop-page .desktop-menu-links a::after {
+  content: '';
+  position: absolute;
+  inset: auto 12px 6px;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.desktop-page .desktop-menu-links a:is(:hover, :focus-visible, [aria-current]) { color: var(--accent); }
+.desktop-page .desktop-menu-links a:is(:hover, :focus-visible)::before { opacity: 1; transform: none; }
+.desktop-page .desktop-menu-links a:is(:hover, :focus-visible, [aria-current])::after { transform: scaleX(1); }
+.desktop-page .desktop-window-menu { flex-shrink: 0; }
+.desktop-page .desktop-window-menu summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--header-control-gap);
+  min-height: 44px;
+  padding-inline: 12px;
+  list-style: none;
+  border-radius: 8px;
+  font-weight: 500;
+}
+.desktop-page .desktop-window-menu summary::-webkit-details-marker { display: none; }
+.desktop-page .desktop-window-menu summary::marker { content: ''; }
+.desktop-page .desktop-window-menu summary:hover,
+.desktop-page .desktop-window-menu[open] summary { background: color-mix(in srgb, var(--accent) 9%, transparent); color: var(--accent); }
+.desktop-page .desktop-window-menu[open] summary svg { transform: rotate(180deg); }
+.desktop-page .desktop-menu-label-compact,
+.desktop-page .desktop-compact-links { display: none; }
+.desktop-page .desktop-menu-panel {
+  top: calc(100% + 8px);
+  left: 0;
+  width: 240px;
+  max-width: calc(100vw - 32px);
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgb(15 35 60 / .16);
+}
+.desktop-page .desktop-menu-panel button { min-height: 44px; padding: 12px; border-radius: 8px; font-size: var(--header-nav-size); }
+.desktop-page .desktop-menubar-end { gap: var(--header-control-gap); flex: 0 0 auto; min-width: 0; }
+.desktop-page .desktop-theme,
+.desktop-page .desktop-menubar-end > a,
+.desktop-page .desktop-menubar .user-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: var(--header-nav-size);
+  border-radius: 8px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.desktop-page .desktop-theme { width: 44px; padding: 0; flex-shrink: 0; }
+.desktop-page .desktop-menubar-end > a { border: 1px solid var(--line); background: var(--surface); font-weight: 500; }
+.desktop-page .desktop-menubar .user-btn { position: relative; isolation: isolate; min-width: 44px; max-width: none; overflow: visible; gap: 8px; padding: 6px 8px; border: 0; background: transparent; font-weight: 500; box-shadow: none; }
+.desktop-page .desktop-menubar .user-btn::before { content: ''; position: absolute; inset: 4px 0; z-index: -1; border-radius: 10px; background: color-mix(in srgb, var(--accent) 9%, transparent); opacity: 0; }
+.desktop-page .desktop-account-avatar { display: inline-grid; place-items: center; flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--accent); font: 600 .8125rem/1 var(--font-display); }
+.desktop-page .desktop-account-label { line-height: 1.2; }
+.desktop-page .desktop-account-identity { display: flex; align-items: center; gap: 10px; padding: 12px 8px 16px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
+.desktop-page .desktop-account-identity .desktop-account-avatar { width: 32px; height: 32px; }
+.desktop-page .desktop-account-identity strong { min-width: 0; overflow-wrap: anywhere; color: var(--ink); font-size: .875rem; font-weight: 600; line-height: 1.45; }
+.desktop-page .desktop-account-chevron { flex: 0 0 auto; }
+.desktop-page .user-dropdown.open .desktop-account-chevron { transform: rotate(180deg); }
+.desktop-page .desktop-theme:is(:hover, :focus-visible),
+.desktop-page .desktop-menubar-end > a:is(:hover, :focus-visible) { color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); box-shadow: none; }
+.desktop-page .desktop-menubar .user-btn:is(:hover, :focus-visible),
+.desktop-page .desktop-menubar .user-btn[aria-expanded="true"] { color: var(--accent); background: transparent; box-shadow: none; }
+.desktop-page .desktop-menubar .user-btn:is(:hover, :focus-visible, [aria-expanded="true"])::before { opacity: 1; }
+.desktop-page .desktop-menubar :is(a, button, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Anchor the account panel to the safe right edge, rather than its center. */
+.desktop-page[data-navigation-ready] .desktop-menubar .user-dropdown .user-dropdown-content {
+  left: auto;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 264px;
+  min-width: 0;
+  max-width: calc(100vw - 2 * var(--header-inset));
+  margin: 0;
+  padding: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--surface);
+  backdrop-filter: none;
+  box-shadow: 0 12px 32px rgb(15 35 60 / .16);
+  transform: translateY(-4px);
+}
+.desktop-page[data-navigation-ready] .desktop-menubar .user-dropdown.open .user-dropdown-content { transform: none; }
+.desktop-page .desktop-menubar .user-dropdown-content a { min-height: 44px; padding: 12px; gap: 10px; border-radius: 8px; font-size: var(--header-nav-size); font-weight: 500; }
+.desktop-page .desktop-menubar .user-dropdown-content a svg { flex-shrink: 0; color: var(--ink-muted); }
+.desktop-page .desktop-menubar .user-dropdown-content a:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--accent) 9%, var(--surface)); color: var(--accent); transform: none; }
+.desktop-page .menubar-clock { padding-left: 16px; margin-left: 8px; border-left: 1px solid var(--line); color: var(--ink-muted); font-size: .75rem; }
+.desktop-page .desktop-introduction { min-width: 0; }
+.desktop-page .desktop-introduction h1 {
+  font-size: clamp(2.75rem, 4.7vw, 4.75rem);
+  line-height: 1.08;
+  letter-spacing: -.035em;
+  overflow-wrap: break-word;
+}
+.desktop-page .desktop-introduction-focus { font-size: clamp(1.125rem, 1.5vw, 1.375rem); line-height: 1.45; margin-top: 28px; }
+.desktop-page .desktop-introduction-description { font-size: var(--intro-body-size); line-height: 1.625; max-width: 48ch; margin-top: 12px; }
+.desktop-page .desktop-introduction-actions { gap: 24px; margin-top: 28px; }
+.desktop-page .desktop-introduction-actions .button { gap: 16px; padding: 14px 24px; min-height: 48px; font-size: var(--intro-action-size); }
+.desktop-page .desktop-cv-link { font-size: var(--intro-action-size); }
+.desktop-page .desktop-workspace { padding-top: calc(var(--header-height) + env(safe-area-inset-top) + 32px); }
+.desktop-page .desktop-widgets { gap: 24px; }
+.desktop-page .desktop-time-widgets { gap: 16px; }
+@media (max-width: 1360px) { .desktop-page .menubar-clock { display: none; } }
+@media (max-width: 1100px) {
+  .desktop-page .desktop-menu-links,
+  .desktop-page .desktop-menu-label-wide { display: none; }
+  .desktop-page .desktop-menu-label-compact { display: inline; }
+  .desktop-page .desktop-compact-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding-bottom: 8px; }
+  .desktop-page .desktop-compact-links a { display: flex; align-items: center; gap: 8px; padding: 12px 8px; min-height: 44px; border-radius: 8px; font-weight: 500; }
+  .desktop-page .desktop-compact-links a svg { flex-shrink: 0; }
+  .desktop-page .desktop-compact-links a:is(:hover, :focus-visible, [aria-current]) { color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, transparent); }
+  .desktop-page .desktop-menu-utilities { padding-top: 8px; border-top: 1px solid var(--line); }
+  .desktop-page .desktop-window-menu { margin-right: auto; }
+  .desktop-page .desktop-menu-panel { width: 288px; }
+}
+@media (min-width: 901px) and (max-width: 1199px) {
+  .desktop-page .desktop-introduction { left: 216px; right: 240px; }
+  .desktop-page .desktop-introduction h1 { font-size: clamp(2.625rem, 4.4vw, 3.5rem); }
+}
+@media (max-width: 900px) {
+  .desktop-page { --header-gap: 12px; }
+  .desktop-page .desktop-menubar { gap: var(--header-gap); }
+  .desktop-page .desktop-scene { flex-direction: column; gap: 32px; }
+  .desktop-page .desktop-introduction { order: 0; width: 100%; max-width: 620px; }
+  .desktop-page .desktop-introduction h1 { font-size: clamp(2.5rem, 8.5vw, 4rem); }
+  .desktop-page .desktop-introduction-focus { font-size: 1.125rem; margin-top: 24px; }
+  .desktop-page .desktop-introduction-actions { gap: 20px; margin-top: 24px; }
+  .desktop-page .desktop-workspace { padding-top: calc(var(--header-height) + env(safe-area-inset-top) + 40px); }
+  .desktop-page[data-desktop-ready] .window-titlebar { top: calc(var(--header-height) + env(safe-area-inset-top) + 8px); }
+  .desktop-page .desktop-menu-panel { position: fixed; top: calc(var(--header-height) + env(safe-area-inset-top) + 8px); left: var(--header-inset); }
+}
+@media (max-width: 360px) {
+  .desktop-page { --header-gap: 8px; }
+  .desktop-page .desktop-brand-symbol { display: none; }
+  .desktop-page .desktop-introduction h1 { font-size: 2.375rem; }
+}
+@media (max-width: 400px) {
+  .desktop-page { --header-gap: 8px; }
+  .desktop-page .desktop-window-menu summary { padding-inline: 8px; }
+  .desktop-page .desktop-menubar .user-btn { padding-inline: 8px; }
+  .desktop-page .desktop-account-label { display: none; }
+}
+/* The server-rendered page and native disclosure remain usable without scripts. */
+.desktop-page:not([data-navigation-ready]) .desktop-menubar { position: static; }
+.desktop-page:not([data-navigation-ready]) .desktop-menu-panel { position: static; margin-block: 8px; }
+.desktop-page:not([data-desktop-ready]) .desktop-window-menu { display: block; }
+.desktop-page:not([data-desktop-ready]) .desktop-menu-utilities { display: none; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .desktop-page .desktop-menubar[data-header-scrolled] { background: var(--surface); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .desktop-page .desktop-menubar { transition: background-color 240ms var(--ease-out), box-shadow 240ms var(--ease-out); }
+  .desktop-page .desktop-menu-links a::before { transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out); }
+  .desktop-page .desktop-menu-links a::after { transition: transform 220ms var(--ease-out); }
+  .desktop-page .desktop-window-menu summary svg { transition: transform 180ms var(--ease-out); }
+  .desktop-page .desktop-menubar :is(a, button, summary) { transition: color 180ms var(--ease-out), background-color 180ms var(--ease-out), border-color 180ms var(--ease-out); }
+  .desktop-page .desktop-account-chevron { transition: transform 180ms var(--ease-out); }
+  .desktop-page .desktop-menubar .user-btn::before { transition: opacity 180ms var(--ease-out); }
+  .desktop-page[data-navigation-ready] .desktop-menubar .user-dropdown .user-dropdown-content { transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out), visibility 0s linear 160ms; }
+  .desktop-page[data-navigation-ready] .desktop-menubar .user-dropdown.open .user-dropdown-content { transition-delay: 0s; }
+  .desktop-page[data-navigation-ready] .desktop-window-menu[open] .desktop-menu-panel { animation: header-menu-reveal 160ms var(--ease-out); }
+}
+@keyframes header-menu-reveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desktop-page .desktop-menu-links a::before { transform: none; }
+}
+@media (forced-colors: active) {
+  .desktop-page .desktop-menubar { background: Canvas; border-bottom-color: CanvasText; }
+  .desktop-page .desktop-menu-links a[aria-current] { text-decoration: underline; }
+}

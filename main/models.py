@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Experience(models.Model):
+    starred_by = models.ManyToManyField(User, related_name='starred_experiences', blank=True)
     EXPERIENCE_CHOICES = [
         ('internship', 'Internship'),
         ('research', 'Research'),
@@ -31,6 +32,7 @@ class Experience(models.Model):
         return self.ended_at is None
 
 class Skill(models.Model):
+    starred_by = models.ManyToManyField(User, related_name='starred_skills', blank=True)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=255)
     description = models.TextField()
@@ -42,6 +44,7 @@ class Skill(models.Model):
         return self.title
 
 class Education(models.Model):
+    starred_by = models.ManyToManyField(User, related_name='starred_educations', blank=True)
     school_name = models.CharField(max_length=255)
     period = models.CharField(max_length=50) 
     detail = models.CharField(max_length=255)
@@ -77,6 +80,7 @@ class Project(models.Model):
         return self.title
 
 class TechStack(models.Model):
+    starred_by = models.ManyToManyField(User, related_name='starred_techstacks', blank=True)
     name = models.CharField(max_length=50, help_text="Nama bahasa (contoh: Python)")
     icon_url = models.URLField(help_text="URL ikon devicon (SVG/PNG)")
     filename = models.CharField(max_length=50, help_text="Nama file untuk Mac UI (contoh: script.py)")

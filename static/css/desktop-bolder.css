@@ -1,0 +1,163 @@
+/* The existing desktop, with the owner's identity at the center of the scene. */
+.desktop-page {
+  --desk-bg: #edf3fa;
+  --paper-rgb: 237, 243, 250;
+  --surface: #fbfdff;
+  --surface-glass: rgb(251 253 255 / .88);
+  --ink: #172b44;
+  --ink-muted: #52647a;
+  --line: #d3dfea;
+  --accent: #165bd8;
+  --accent-dark: #104aad;
+  --desk-name: #1b5798;
+  --desk-clock: #dbeaff;
+  --desk-calendar: #fff0d4;
+  --desk-calendar-ink: #70451b;
+  --desk-widget-shadow: 0 12px 28px rgb(34 66 105 / .10), 0 3px 6px rgb(34 66 105 / .04);
+  --shadow-window: 0 24px 64px rgb(24 50 82 / .20);
+}
+html[data-theme='dark'] .desktop-page {
+  --desk-bg: #152235;
+  --paper-rgb: 21, 34, 53;
+  --surface: #233348;
+  --surface-glass: rgb(35 51 72 / .92);
+  --ink: #f1f6ff;
+  --ink-muted: #b6c7dc;
+  --line: #43556e;
+  --accent: #9ac2ff;
+  --accent-dark: #c0d9ff;
+  --desk-name: #a5ceff;
+  --desk-clock: #2b4462;
+  --desk-calendar: #443827;
+  --desk-calendar-ink: #ffdaa5;
+  --desk-widget-shadow: 0 12px 28px rgb(4 12 24 / .23), 0 3px 6px rgb(4 12 24 / .12);
+  --shadow-window: 0 24px 64px rgb(4 12 24 / .36);
+}
+.desktop-page .desktop-scene { align-items: start; }
+.desktop-page .desktop-widgets { justify-items: start; gap: 26px; }
+.desktop-time-widgets { display: flex; gap: 18px; }
+.desktop-page .desktop-clock-widget,
+.desktop-calendar-widget { width: 148px; min-height: 180px; padding: 14px; border-radius: 16px; background: var(--surface); box-shadow: var(--desk-widget-shadow); }
+.desktop-page .desktop-clock-widget { gap: 0; background: var(--desk-clock); }
+.desktop-page .desktop-clock-widget svg { width: 112px; height: 112px; }
+.desktop-page .desktop-clock-widget time { font: 600 18px/1.5 var(--font-display); }
+.desktop-page .desktop-clock-widget > span { font-size: 11px; }
+.desktop-calendar-widget { color: var(--desk-calendar-ink); background: var(--desk-calendar); }
+.desktop-calendar-widget > span { display: block; color: var(--desk-calendar-ink); font-size: 10px; font-weight: 700; }
+.desktop-calendar-widget > time { display: block; font: 600 32px/1.1 var(--font-display); margin-top: 2px; }
+.desktop-calendar-widget > p { color: var(--desk-calendar-ink); font-size: 10px; margin: 3px 0 8px; }
+.desktop-calendar-week, .desktop-calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 3px 0; font-size: 8px; font-variant-numeric: tabular-nums; line-height: 1.65; }
+.desktop-calendar-week { color: var(--desk-calendar-ink); margin-bottom: 3px; }
+.desktop-calendar-days span { border-radius: 50%; }
+.desktop-calendar-days .calendar-today { background: var(--desk-calendar-ink); color: var(--desk-calendar); font-weight: 700; }
+.desktop-page .desktop-profile { display: block; width: 238px; padding: 12px; box-shadow: var(--desk-widget-shadow); }
+.desktop-page .desktop-profile img { width: 214px; height: 214px; border-radius: 12px; object-position: center 45%; }
+.desktop-page .desktop-profile > div { padding: 12px 4px 4px; }
+.desktop-page .desktop-profile strong { font-family: var(--font-display); font-size: 14px; }
+.desktop-page .desktop-profile .profile-focus { margin: 10px 0; }
+.desktop-page .desktop-profile .profile-actions { display: none; }
+.desktop-page .desktop-profile .profile-social { margin-top: 10px; gap: 16px; }
+.desktop-introduction { text-align: center; }
+.desktop-introduction h1 { font: 700 clamp(2.75rem, 4.6vw, 4.5rem)/1.04 var(--font-display); letter-spacing: -.04em; text-wrap: balance; max-width: 14ch; margin-inline: auto; }
+.desktop-introduction h1 > span { display: block; color: var(--desk-name); }
+.desktop-introduction-focus { font: 500 clamp(1rem, 1.7vw, 1.5rem)/1.4 var(--font-display); margin-top: 24px; text-wrap: balance; }
+.desktop-introduction-focus > span { color: var(--desk-name); font-weight: 700; }
+.desktop-introduction-description { color: var(--ink-muted); font-size: 15px; line-height: 1.8; max-width: 49ch; margin: 16px auto 0; text-wrap: pretty; }
+.desktop-introduction-actions { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 26px; margin-top: 28px; }
+.desktop-introduction-actions .button { display: inline-flex; align-items: center; gap: 14px; padding: 13px 22px; margin: 0; font-size: 13px; border-radius: 12px; box-shadow: 0 6px 14px rgb(22 91 216 / .18); }
+.desktop-cv-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13px; font-weight: 600; color: var(--ink); text-decoration: none; }
+.desktop-cv-link:hover { color: var(--accent); text-decoration: underline; }
+.desktop-page .desktop-icon { font-size: 12px; gap: 7px; }
+.desktop-page .desktop-icon span { background: transparent; border-radius: 6px; padding: 1px 6px; font-weight: 600; }
+.desktop-page .desktop-icon svg { filter: drop-shadow(0 5px 3px rgb(29 66 110 / .14)); }
+.desktop-page .desktop-icon:hover,
+.desktop-page .desktop-icon:focus-visible { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.desktop-page .desktop-caption { left: 36px; right: auto; font-size: 12px; }
+.desktop-page .desktop-menubar .desktop-brand { color: var(--desk-name); }
+.desktop-page .desktop-theme { border-radius: 8px; }
+.desktop-page .desktop-theme:hover { background: var(--paper); }
+.desktop-page .window-titlebar { background: color-mix(in srgb, var(--surface) 70%, var(--desk-clock)); }
+.desktop-page .window-titlebar h2 { color: var(--desk-name); }
+.desktop-page .desktop-windows [data-window-id][data-window-active] { box-shadow: var(--shadow-window); }
+.desktop-page .section-title { font-family: var(--font-display); font-weight: 600; }
+.desktop-page .about-badge { background: color-mix(in srgb, var(--desk-clock) 50%, var(--surface)); border-color: transparent; }
+.desktop-page .desktop-menu-links a[aria-current] { color: var(--accent); }
+.desktop-page .about-identity h1 { font-size: clamp(1.75rem, 3vw, 2.75rem); text-wrap: balance; }
+.desktop-page .about-identity img { width: 128px; height: 144px; }
+.desktop-page .about-intro { font-family: var(--font-display); font-size: 21px; line-height: 1.5; }
+.desktop-page .about-badges { margin: 24px 0 18px; }
+.desktop-page #featured-projects { margin-top: 28px; padding-top: 28px; border-top: 1px solid var(--line); }
+.desktop-page #featured-projects .experience-card { padding: 0 0 22px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+.desktop-page #featured-projects .project-image { height: 220px; border-radius: 12px; }
+.desktop-page #featured-projects .experience-card h3 { font-size: 1.5rem; }
+.desktop-page #featured-projects .experience-card > div { display: flex; flex-wrap: wrap; gap: 8px; color: var(--ink-muted); font-size: 12px; }
+.desktop-page #featured-projects .experience-card > div span + span::before { content: '/'; margin-right: 8px; }
+@media (min-width: 901px) {
+  .desktop-page .desktop-workspace { padding-top: 88px; }
+  .desktop-page .desktop-apps { margin-left: auto; }
+  .desktop-introduction { position: absolute; top: clamp(280px, 43dvh, 480px); left: 350px; right: 260px; transform: translateY(-25%); }
+  .desktop-page:has([data-window-active]) .desktop-introduction { visibility: hidden; }
+  .desktop-page:has(#about[data-window-active]) .desktop-profile { visibility: visible; }
+  .desktop-page .desktop-profile { transform: rotate(-2deg); transform-origin: 50% 20%; }
+  .desktop-page .desktop-windows [data-window-id] { --win-width: min(800px, calc(100vw - 480px)); }
+  .desktop-page [data-window-id][data-maximized] { width: calc(100% - 32px); }
+}
+@media (min-width: 901px) and (max-width: 1199px) {
+  .desktop-page .desktop-workspace { padding-inline: 24px; }
+  .desktop-calendar-widget { display: none; }
+  .desktop-page .desktop-profile { width: 180px; }
+  .desktop-page .desktop-profile img { width: 156px; height: 168px; }
+  .desktop-introduction { left: 220px; right: 235px; }
+  .desktop-introduction h1 { font-size: clamp(2.6rem, 4.7vw, 3.5rem); }
+  .desktop-introduction-actions { gap: 16px; }
+  .desktop-page .desktop-caption { display: none; }
+}
+@media (min-width: 901px) and (max-height: 760px) {
+  .desktop-page .desktop-workspace { padding-top: 66px; }
+  .desktop-page .desktop-widgets { gap: 16px; }
+  .desktop-page .desktop-profile img { height: 144px; }
+  .desktop-page .desktop-profile .profile-focus { display: none; }
+  .desktop-introduction { top: 38dvh; }
+  .desktop-page .desktop-caption { display: none; }
+}
+@media (max-width: 900px) {
+  .desktop-page .desktop-workspace { padding: 88px 20px 108px; }
+  .desktop-page .desktop-scene { flex-direction: column; align-items: center; gap: 30px; }
+  .desktop-introduction { order: -1; max-width: 620px; }
+  .desktop-introduction h1 { font-size: clamp(2.6rem, 7.7vw, 4rem); line-height: 1.06; }
+  .desktop-introduction-focus { font-size: 17px; margin-top: 20px; }
+  .desktop-introduction-description { font-size: 14px; margin-top: 12px; }
+  .desktop-introduction-actions { margin-top: 22px; gap: 22px; }
+  .desktop-time-widgets { display: none; }
+  .desktop-page .desktop-widgets { width: 100%; justify-items: center; }
+  .desktop-page .desktop-profile { display: flex; align-items: center; width: min(100%, 620px); padding: 14px; gap: 16px; }
+  .desktop-page .desktop-profile img { width: 80px; height: 96px; flex-shrink: 0; }
+  .desktop-page .desktop-profile > div { padding: 0; min-width: 0; }
+  .desktop-page .desktop-profile strong, .desktop-page .desktop-profile .profile-focus { display: none; }
+  .desktop-page .desktop-profile p { font-size: 12px; margin-top: 0; }
+  .desktop-page .desktop-profile .profile-social { margin-top: 4px; }
+  .desktop-page .desktop-profile .profile-social a { min-height: 44px; }
+  .desktop-page .desktop-apps { max-width: 620px; }
+  .desktop-page .desktop-apps ul { grid-template-rows: repeat(2, 96px); }
+  .desktop-page .desktop-caption { position: static; margin-top: -10px; }
+  .desktop-page .about-identity img { width: 72px; height: 80px; }
+  .desktop-page .about-identity h1 { font-size: 25px; }
+  .desktop-page .about-intro { font-size: 18px; }
+  .desktop-page #featured-projects .project-image { height: 190px; }
+  .desktop-page .desktop-footer { text-align: center; padding: 0 20px 110px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-desktop-ready] .desktop-introduction { animation: desktop-introduction-reveal 650ms var(--ease-out) both; }
+  @keyframes desktop-introduction-reveal { from { clip-path: inset(0 0 100%); } to { clip-path: inset(0); } }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .desktop-page .desktop-icon svg { transition: transform var(--dur-base) var(--ease-out), filter var(--dur-base) var(--ease-out); }
+  .desktop-page .desktop-icon:hover svg { transform: translateY(-4px) rotate(-3deg); filter: drop-shadow(0 8px 5px rgb(29 66 110 / .20)); }
+  .desktop-introduction-actions .button { transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast); }
+  .desktop-introduction-actions .button svg { transition: transform var(--dur-fast) var(--ease-out); }
+  .desktop-introduction-actions .button:hover { transform: translateY(-2px); box-shadow: 0 9px 20px rgb(22 91 216 / .24); }
+  .desktop-introduction-actions .button:hover svg { transform: translateX(3px); }
+  .desktop-introduction-actions .button:active { transform: translateY(0); }
+  .desktop-page .desktop-profile { transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out); }
+  .desktop-page .desktop-profile:hover { transform: rotate(0); box-shadow: 0 16px 36px rgb(34 66 105 / .15); }
+}

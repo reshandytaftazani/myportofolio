@@ -59,6 +59,28 @@ class LoginRedirectTests(TestCase):
         response = self.client.post(reverse("main:login"), self.credentials)
         self.assertRedirects(response, reverse("main:show_main"), fetch_redirect_response=False)
 
+    def test_star_login_notice_preserves_return_destination(self):
+        response = self.client.get(reverse('main:login'), {'notice': 'star', 'next': '/#education'})
+        self.assertContains(response, 'Silakan login terlebih dahulu untuk memberi star.')
+        self.assertEqual(self.hidden_fields(response)['next'], '/#education')
+        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertNotContains(self.client.get(reverse('main:login')), 'Silakan login terlebih dahulu untuk memberi star.')
+
+    def test_auth_notifications_survive_redirect_and_are_consumed_once(self):
+        response = self.client.post(reverse('main:login'), self.credentials, follow=True)
+        self.assertContains(response, 'Login berhasil. Selamat datang kembali!')
+        self.assertNotContains(self.client.get('/'), 'Login berhasil. Selamat datang kembali!')
+        response = self.client.get(reverse('main:logout'), follow=True)
+        self.assertContains(response, 'Logout berhasil. Anda telah keluar dari akun.')
+        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertNotContains(self.client.get('/'), 'Logout berhasil. Anda telah keluar dari akun.')
+
+    def test_failed_login_supplies_error_notification_and_keeps_form_errors(self):
+        response = self.client.post(reverse('main:login'), {**self.credentials, 'password': 'wrong'})
+        self.assertContains(response, 'Login gagal. Periksa username dan password Anda.')
+        self.assertTrue(response.context['form'].errors)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
     def test_direct_post_can_use_destination_from_query_string(self):
         response = self.client.post(
             reverse("main:login") + "?next=/projects/", self.credentials,

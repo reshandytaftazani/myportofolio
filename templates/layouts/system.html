@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block body_class %}system-page{% endblock %}
+{% block content %}
+<div class="system-window {% block system_window_class %}{% endblock %}">
+  <header class="system-titlebar"><span class="system-window-mark" aria-hidden="true"></span><span>{{ owner_name_short }} · Portfolio</span><a href="{% url 'main:show_main' %}">Beranda</a></header>
+  {% block system_content %}{% endblock %}
+</div>
+{% endblock %}

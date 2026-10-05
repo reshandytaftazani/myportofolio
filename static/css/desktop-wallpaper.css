@@ -1,0 +1,68 @@
+/* One quiet mathematical field behind the existing desktop. */
+.desktop-page {
+  --desk-bg: #f0f3f6;
+  --paper-rgb: 240, 243, 246;
+  --desk-contour: #507aa1;
+  --desk-widget-shadow: 0 8px 24px rgb(34 66 105 / .07);
+}
+html[data-theme='dark'] .desktop-page {
+  --desk-bg: #182536;
+  --paper-rgb: 24, 37, 54;
+  --desk-contour: #7598ba;
+  --desk-widget-shadow: 0 8px 24px rgb(4 12 24 / .18);
+}
+.desktop-wallpaper {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: .22;
+  transition: opacity 240ms var(--ease-out);
+}
+.desktop-wallpaper svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  stroke: var(--desk-contour);
+  stroke-width: 1;
+}
+.desktop-wallpaper path { vector-effect: non-scaling-stroke; }
+.desktop-workspace, .desktop-footer { position: relative; }
+.desktop-page:has([data-window-active]) .desktop-wallpaper { opacity: .07; }
+.desktop-page .desktop-icon svg {
+  filter: drop-shadow(0 2px 2px rgb(29 66 110 / .10));
+}
+.desktop-page .desktop-icon:active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.desktop-page .desktop-theme:focus-visible { outline-offset: 2px; }
+.desktop-page .desktop-cv-link {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: .3em;
+  transition: text-decoration-color 140ms;
+}
+.desktop-page .desktop-cv-link:hover,
+.desktop-page .desktop-cv-link:focus-visible { text-decoration-color: currentColor; }
+@media (max-width: 900px) {
+  .desktop-wallpaper { opacity: .16; }
+  .desktop-wallpaper svg { width: 180%; margin-left: -65%; }
+  .desktop-page[data-mobile-window] .desktop-wallpaper { opacity: 0; }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .desktop-page .desktop-icon:hover svg,
+  .desktop-page .desktop-icon:focus-visible svg {
+    transform: translateY(-2px);
+    filter: drop-shadow(0 3px 2px rgb(29 66 110 / .12));
+  }
+  .desktop-page .desktop-icon:active svg {
+    transform: translateY(0) scale(.96);
+    transition-duration: 100ms;
+  }
+  .desktop-page .desktop-introduction-actions .button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgb(22 91 216 / .14);
+  }
+  .desktop-page .desktop-introduction-actions .button:active { transform: translateY(0); }
+  .desktop-page .desktop-profile:hover { box-shadow: var(--desk-widget-shadow); }
+}

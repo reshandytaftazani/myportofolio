@@ -10,9 +10,16 @@
             tbody.replaceChildren();
             for (const item of items) {
                 const row = ui.node('tr');
-                for (const field of columns) {
+                for (const [index, field] of columns.entries()) {
                     const value = item.fields[field];
-                    row.append(ui.node('td', '', typeof value === 'boolean' ? (value ? 'Ya' : 'Tidak') : value));
+                    const cell = ui.node(index === 0 ? 'th' : 'td', index === 0 ? 'dashboard-cell-primary' : 'dashboard-cell-secondary');
+                    if (index === 0) cell.scope = 'row';
+                    if (typeof value === 'boolean') {
+                        cell.append(ui.node('span', `dashboard-status${value ? ' dashboard-status--yes' : ''}`, value ? 'Ya' : 'Tidak'));
+                    } else {
+                        cell.textContent = value === null || value === undefined || value === '' ? '—' : value;
+                    }
+                    row.append(cell);
                 }
                 const actions = ui.node('td');
                 actions.append(ui.actions(root, item));
@@ -22,6 +29,10 @@
         }, { autoLoad: false }));
     });
     const tabs = [...app.querySelectorAll('[data-dashboard-tab]')];
+    const vertical = matchMedia('(min-width: 901px)');
+    const tablist = app.querySelector('[role="tablist"]');
+    const orientation = () => tablist?.setAttribute('aria-orientation', vertical.matches ? 'vertical' : 'horizontal');
+    orientation(); vertical.addEventListener('change', orientation);
     function activate(tab) {
         tabs.forEach(button => {
             const active = button === tab;
@@ -37,6 +48,8 @@
             let next;
             if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
             if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
+            if (vertical.matches && event.key === 'ArrowDown') next = (index + 1) % tabs.length;
+            if (vertical.matches && event.key === 'ArrowUp') next = (index + tabs.length - 1) % tabs.length;
             if (event.key === 'Home') next = 0;
             if (event.key === 'End') next = tabs.length - 1;
             if (next === undefined) return;

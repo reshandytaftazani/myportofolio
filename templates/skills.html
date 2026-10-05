@@ -1,36 +1,3 @@
-{% extends 'base.html' %}
+{% extends 'layouts/desktop.html' %}
 {% load static %}
 {% block title %}{{ owner_name }} - Skills{% endblock %}
-{% block meta %}
-<link rel="stylesheet" href="{% static 'css/skills.css' %}">
-<script>
-    window.MathJax = {
-        loader: { load: ['ui/safe'] },
-        startup: { typeset: false },
-        options: {
-            safeOptions: {
-                allow: { URLs: 'safe', classes: 'none', cssIDs: 'none', styles: 'none' },
-                safeProtocols: { http: true, https: true, file: false, javascript: false, data: false },
-            },
-        },
-    };
-</script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
-<script id="highlight-script" defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-{% endblock %}
-{% block content %}
-<section id="skills" class="skills-section animate-fade-in" data-public-resource
-         {% include 'components/resource_attributes.html' %}>
-    <div class="container">
-        <div class="section-header">
-            <p class="section-subtitle">Skills</p><h2 class="section-title">My Skills</h2>
-        </div>
-        {% include 'components/resource_controls.html' %}
-        <div class="skills-tabs-container" data-list hidden></div>
-        <noscript>Aktifkan JavaScript untuk memuat Skills.</noscript>
-    </div>
-</section>
-{% if user.is_superuser or is_editor %}{% include 'components/resource_dialog.html' %}{% endif %}
-<script src="{% static 'js/public-resources.js' %}"></script>
-{% endblock %}

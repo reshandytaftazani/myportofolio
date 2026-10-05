@@ -1,0 +1,15 @@
+{% load static markdown_extras %}
+<section class="experience-section animate-fade-in" id="experience" data-window-id="experience" aria-labelledby="win-title-experience" data-public-resource
+         {% include 'components/resource_attributes.html' %}>
+{% include 'desktop/titlebar.html' with id='experience' title='Experience' %}
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Experience</h2>
+        </div>
+        {% include 'components/resource_controls.html' with show_search=True %}
+        <div class="timeline-container" data-list></div>
+        <noscript>Aktifkan JavaScript untuk memuat data Experience.</noscript>
+
+    </div>
+</section>
+{% if user.is_superuser or is_editor %}{% include 'components/resource_dialog.html' %}{% endif %}

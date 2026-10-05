@@ -1,0 +1,101 @@
+/* Operate surfaces: the desktop's window, neutral chrome and blue selection. */
+:is(.login-page, .management-page) {
+  --management-selection: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  --management-primary-ink: #fff;
+}
+html[data-theme='dark'] :is(.login-page, .management-page) { --management-primary-ink: var(--desk-bg); }
+:is(.login-page, .management-page) .system-titlebar { min-height: 48px; padding: 12px 20px; }
+:is(.login-page, .management-page) .button { font-size: .875rem; font-weight: 600; min-height: 44px; }
+:is(.login-page, .management-page) .button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* A compact lock-screen window, centered in the space below the menu bar. */
+.login-page { min-height: 100dvh; display: flex; flex-direction: column; }
+.login-page main { flex: 1; min-height: 0; display: grid; place-items: center; padding: 40px 16px; }
+.login-page .messages-container { width: min(440px, 100%); }
+.login-page .login-window { width: min(440px, 100%); max-width: 440px; margin: 0; }
+.login-screen { padding: 32px; }
+.login-content { width: 100%; }
+.login-avatar { display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 18px; background: var(--management-selection); color: var(--accent); }
+.login-avatar svg { width: 32px; height: 32px; }
+.login-page .system-window h1 { margin: 0 0 8px; text-align: center; font-family: var(--font-display); font-size: 1.75rem; font-weight: 600; line-height: 1.2; letter-spacing: -.03em; }
+.login-description { text-align: center; color: var(--ink-muted); font-size: .875rem; line-height: 1.6; }
+.login-page .project-form { margin-top: 28px; }
+.login-page .form-group { margin-bottom: 20px; }
+.login-page .form-group label { font-size: .8125rem; font-weight: 600; margin-bottom: 8px; }
+.login-page .project-form input:not([type='hidden']) { min-height: 48px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: color-mix(in srgb, var(--surface) 94%, var(--accent)); color: var(--ink); font-size: 1rem; transition: border-color 160ms var(--ease-out), background-color 160ms var(--ease-out); }
+.login-page .project-form input:hover { border-color: var(--ink-muted); }
+.login-page .project-form input:focus { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: 3px; background: var(--surface); }
+.login-page .form-error { color: var(--resource-danger); line-height: 1.5; margin-bottom: 12px; }
+.login-page .project-form input[aria-invalid='true'] { border-color: var(--resource-danger); }
+.login-page .login-submit { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 48px; margin-top: 8px; background: var(--accent); color: var(--management-primary-ink); transition: background-color 160ms var(--ease-out); }
+.login-submit svg { width: 18px; height: 18px; }
+.login-page .login-submit:hover { background: var(--accent-dark); }
+.login-page .login-submit:active { background: color-mix(in srgb, var(--accent) 85%, var(--ink)); }
+.login-register { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); text-align: center; color: var(--ink-muted); font-size: .8125rem; line-height: 1.6; }
+.login-register a { color: var(--accent); font-weight: 600; }
+
+/* A single workspace: quiet navigation and a stable, scannable data region. */
+.management-page .system-window { max-width: 1184px; margin: 48px auto; }
+.management-page .system-window .experience-section { padding: 0; }
+.management-page [data-dashboard-app] > .container { width: 100%; max-width: none; padding: 0; grid-template-columns: 200px minmax(0, 1fr); gap: 0; align-items: stretch; }
+.management-heading { grid-column: 1 / -1; padding: 28px 28px 24px; border-bottom: 1px solid var(--line); }
+.management-page .management-heading h1 { margin: 0 0 8px; font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; line-height: 1.3; letter-spacing: -.025em; }
+.management-heading p { color: var(--ink-muted); font-size: .875rem; line-height: 1.5; }
+.management-page .dashboard-tabs { margin: 0; padding: 16px 12px; gap: 4px; border-radius: 0; border-right: 1px solid var(--line); background: color-mix(in srgb, var(--paper) 65%, var(--surface)); }
+.management-page .dashboard-tabs .button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 10px 12px; background: transparent; color: var(--ink-muted); border: 1px solid transparent; border-radius: 8px; font-size: .875rem; font-weight: 500; text-align: left; transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out); }
+.dashboard-nav-icon { width: 18px; height: 18px; flex: 0 0 auto; }
+.management-page .dashboard-tabs .button:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.management-page .dashboard-tabs .button[aria-selected='true'] { background: var(--management-selection); color: var(--accent); font-weight: 600; }
+.management-page .dashboard-panel { min-width: 0; padding: 24px 28px 32px; background: var(--surface); border: 0; border-radius: 0; min-height: 360px; }
+.management-page .dashboard-panel h2 { font-family: var(--font-ui); font-size: 1.25rem; line-height: 1.4; font-weight: 600; letter-spacing: -.015em; margin: 0 0 20px; }
+.management-page .resource-controls { gap: 12px; margin-bottom: 24px; }
+.management-page .project-search { gap: 8px; max-width: 520px; }
+.management-page .project-search__input { min-height: 44px; padding: 10px 12px; font-size: 1rem; background: color-mix(in srgb, var(--surface) 94%, var(--accent)); border-color: var(--line); border-radius: 8px; }
+.management-page .project-search__input:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
+.management-page .project-search .button { background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 16px; }
+.management-page .project-search .button:hover { background: var(--paper); border-color: var(--ink-muted); }
+.management-page [data-open-create] { margin-left: auto; padding: 10px 16px; border-radius: 8px; background: var(--accent); color: var(--management-primary-ink); box-shadow: none; }
+.management-page [data-open-create]:hover:not(:disabled) { background: var(--accent-dark); box-shadow: none; transform: none; }
+.management-page .dashboard-table-wrap { max-width: 100%; border: 1px solid var(--line); border-radius: 10px; }
+.management-page .dashboard-table { table-layout: auto; min-width: 540px; font-size: .875rem; line-height: 1.5; }
+.management-page .dashboard-table thead { background: color-mix(in srgb, var(--paper) 65%, var(--surface)); }
+.management-page .dashboard-table thead th { padding: 12px 16px; font-size: .75rem; font-weight: 600; color: var(--ink-muted); white-space: nowrap; }
+.management-page .dashboard-table tbody :is(th, td) { padding: 12px 16px; vertical-align: middle; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.management-page .dashboard-table .dashboard-cell-primary { font-size: .9375rem; font-weight: 600; color: var(--ink); min-width: 150px; max-width: 360px; }
+.management-page .dashboard-cell-secondary { color: var(--ink-muted); max-width: 280px; }
+.management-page .dashboard-table tr:last-child :is(th, td) { border-bottom: 0; }
+.management-page .dashboard-table tbody tr:hover, .management-page .dashboard-table tbody tr:focus-within { background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
+.management-page .dashboard-table :is(th, td):last-child { width: 1%; white-space: nowrap; }
+.management-page .dashboard-table .resource-actions { gap: 4px; }
+.management-page .dashboard-table .resource-action { min-width: 44px; min-height: 44px; padding: 8px; border: 1px solid transparent; border-radius: 6px; font-size: .8125rem; font-weight: 500; }
+.management-page .dashboard-table .resource-action--delete { color: var(--ink-muted); }
+.management-page .dashboard-table .resource-action--delete:hover { color: var(--resource-danger); }
+.dashboard-status { display: inline-flex; padding: 2px 8px; border-radius: 6px; background: var(--paper); color: var(--ink-muted); font-size: .75rem; font-weight: 500; }
+.dashboard-status--yes { background: var(--management-selection); color: var(--accent); }
+.management-page :is([data-empty], [data-error]) { padding: 28px 20px; color: var(--ink-muted); font-size: .875rem; line-height: 1.6; }
+.management-page [data-loading] { padding: 20px 0; color: var(--ink-muted); }
+.management-page noscript { grid-column: 1 / -1; padding: 20px; }
+
+@media (max-width: 1240px) { .management-page .system-window { margin-inline: 24px; } }
+@media (max-width: 900px) {
+  .management-page .system-window { margin: 32px 12px; }
+  .management-page [data-dashboard-app] > .container { display: block; }
+  .management-heading { padding: 24px 20px 20px; }
+  .management-page .dashboard-tabs { flex-direction: row; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px 12px; overflow-x: auto; }
+  .management-page .dashboard-tabs .button { width: auto; flex: 0 0 auto; }
+  .management-page .dashboard-panel { padding: 24px 20px; }
+}
+@media (max-width: 600px) {
+  .login-screen { padding: 28px 24px; }
+  .login-page main { padding-inline: 12px; }
+  .login-page .system-titlebar { gap: 8px; font-size: .6875rem; padding-inline: 16px; }
+  .management-page .management-heading h1 { font-size: 1.25rem; }
+  .management-page .dashboard-panel { padding: 20px 16px 24px; }
+  .management-page .resource-controls { gap: 12px; }
+  .management-page .project-search { flex-direction: row; max-width: none; }
+  .management-page .project-search .button { width: auto; }
+  .management-page [data-open-create] { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-page .project-form input, .login-page .login-submit, .management-page .dashboard-tabs .button { transition: none; }
+}

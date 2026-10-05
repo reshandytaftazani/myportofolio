@@ -1,14 +1,16 @@
+{% if user.is_authenticated %}
 <form method="post" action="{% url 'main:toggle_star_project' project.id %}" class="star-form">
   {% csrf_token %}
   <button type="submit"
-    class="button button-star{% if user in project.starred_by.all %} is-starred{% endif %}"
+    class="button resource-action resource-star"
+    aria-pressed="{% if user in project.starred_by.all %}true{% else %}false{% endif %}"
     title="{% if project.starred_by.all %}
       Dibintangi oleh {{ project.starred_by.all|join:', ' }}
     {% else %}
       Jadilah yang pertama memberi star
     {% endif %}">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+    <svg class="resource-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="m12 3 2.8 5.7 6.3.9-4.5 4.4 1.1 6.2-5.7-3-5.7 3 1.1-6.2-4.5-4.4 6.3-.9Z"/>
     </svg>
     <span class="star-label">
       {% if user in project.starred_by.all %}
@@ -17,6 +19,13 @@
         Star
       {% endif %}
     </span>
-    <span class="star-count">{{ project.starred_by.count }}</span>
+    <span class="star-count resource-star-count" aria-live="polite">{{ project.starred_by.count }}</span>
   </button>
 </form>
+{% else %}
+<a class="button resource-action resource-star" href="{% url 'main:login' %}?next={{ request.get_full_path|urlencode }}&amp;notice=star">
+  <svg class="resource-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.3.9-4.5 4.4 1.1 6.2-5.7-3-5.7 3 1.1-6.2-4.5-4.4 6.3-.9Z"/></svg>
+  <span>Login untuk star</span>
+  <span class="star-count resource-star-count">{{ project.starred_by.count }}</span>
+</a>
+{% endif %}

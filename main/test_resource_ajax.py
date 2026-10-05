@@ -75,6 +75,54 @@ class ResourceAjaxTests(TestCase):
         tools = self.client.get(reverse('main:get_tech_stack_json')).json()
         self.assertEqual([item['fields']['order'] for item in tools], [0, 1])
 
+    def test_resource_stars_permissions_csrf_and_user_specific_json(self):
+        client = Client(enforce_csrf_checks=True)
+        for name in ('experience', 'skills', 'education', 'techstack'):
+            obj = self.objects[name]
+            url = reverse('main:toggle_star_resource', args=[name, obj.pk])
+            client.logout()
+            client.get('/')
+            token = client.cookies['csrftoken'].value
+            self.assertEqual(client.post(url, HTTP_X_CSRFTOKEN=token).status_code, 403)
+            self.assertEqual(obj.starred_by.count(), 0)
+            for user in (self.regular, self.editor, self.owner):
+                client.force_login(user)
+                client.get('/')
+                token = client.cookies['csrftoken'].value
+                self.assertEqual(client.get(url).status_code, 405)
+                self.assertEqual(client.post(url).status_code, 403)
+                response = client.post(url, HTTP_X_CSRFTOKEN=token)
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(response.json()['item']['fields']['is_starred'])
+                fields = client.get(reverse('main:' + RESOURCES[name]['public_view'])).json()[0]['fields']
+                self.assertEqual(fields['star_count'], 1)
+                self.assertTrue(fields['is_starred'])
+                anonymous = self.client.get(reverse('main:' + RESOURCES[name]['public_view'])).json()[0]['fields']
+                self.assertEqual(anonymous['star_count'], 1)
+                self.assertFalse(anonymous['is_starred'])
+                self.assertFalse(client.post(url, HTTP_X_CSRFTOKEN=token).json()['item']['fields']['is_starred'])
+                self.assertEqual(obj.starred_by.count(), 0)
+            self.assertEqual(client.post(reverse('main:toggle_star_resource', args=[name, 'invalid']),
+                                         HTTP_X_CSRFTOKEN=token).status_code, 404)
+
+    def test_ajax_shell_and_field_sanitization(self):
+        response = self.client.get('/')
+        for kind in ('experience', 'skills', 'education', 'techstack'):
+            self.assertNotIn(kind + '_items', response.context)
+        self.assertNotContains(response, 'data-list data-server-rendered')
+        self.client.force_login(self.owner)
+        attack = '<img src="x" onerror="alert(\'XSS!\')">'
+        for name, spec in RESOURCES.items():
+            if name == 'projects':
+                continue
+            for field in (*spec['form'].plain_text_fields, *spec['form'].markdown_fields):
+                with self.subTest(resource=name, field=field):
+                    payload = {**self.payloads[name], field: 'Safe ' + attack}
+                    response = self.client.post(self.url('create', name), payload)
+                    self.assertEqual(response.status_code, 201, response.content)
+                    saved = spec['model'].objects.get(pk=response.json()['item']['pk'])
+                    self.assertEqual(getattr(saved, field), 'Safe')
+
     def test_management_role_matrix_and_denials_never_mutate_data(self):
         for user in (None, self.regular, self.editor):
             self.client.logout()
@@ -206,7 +254,7 @@ class ResourceAjaxTests(TestCase):
                 self.client.force_login(user)
             for page in ('show_experience', 'show_skills', 'show_main'):
                 response = self.client.get(reverse('main:' + page))
-                self.assertNotContains(response, 'data-search-input')
+                self.assertContains(response, 'data-search-input', count=4)
                 self.assertEqual(b'data-open-create' in response.content, user == self.owner)
                 self.assertEqual(b'class="resource-dialog"' in response.content, user in (self.owner, self.editor))
             self.assertContains(self.client.get(reverse('main:show_projects')), 'id="search-input"')
