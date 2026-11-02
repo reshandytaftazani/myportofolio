@@ -1,0 +1,32 @@
+name: Push to PWS
+
+on:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Push to PWS
+        env:
+          PWS_URL: ${{ secrets.PWS_URL }}
+        run: |
+          if [ -z "$PWS_URL" ]; then
+            echo "Error: PWS_URL secret is not set in GitHub repository secrets."
+            echo "Please add PWS_URL to GitHub Secrets with format: https://<username>:<password>@pws.cs.ui.ac.id/<username>/<project>"
+            exit 1
+          fi
+          git push "$PWS_URL" HEAD:refs/heads/master --force
