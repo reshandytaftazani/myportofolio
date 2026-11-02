@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from main.models import Project
+from main.models import Experience, Project
 
 
 class ProjectAPITest(APITestCase):
@@ -137,3 +137,112 @@ class ProjectAPITest(APITestCase):
             self.list_url, self.payload, format="json", HTTP_X_CSRFTOKEN=token,
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+
+class EditorRoleAPITest(APITestCase):
+    def setUp(self):
+        self.owner = User.objects.create_superuser(
+            username="editor_test_owner", password="test-password", email="owner@example.com",
+        )
+        self.visitor_user = User.objects.create_user(
+            username="regular_visitor", password="test-password",
+        )
+        self.editor = User.objects.create_user(
+            username="editor_member", password="test-password",
+        )
+        editor_group, _ = Group.objects.get_or_create(name="Editor")
+        self.editor.groups.add(editor_group)
+
+        self.experience = Experience.objects.create(
+            title="Software Engineering Intern",
+            company="TechCorp",
+            description="Developing web services.",
+            category="internship",
+        )
+        self.list_url = reverse("api:experience-list")
+        self.detail_url = reverse("api:experience-detail", args=[self.experience.id])
+        self.star_url = reverse("api:experience-star", args=[self.experience.id])
+        self.payload = {
+            "title": "Junior Python Developer",
+            "company": "StartupX",
+            "description": "Backend API development.",
+            "category": "full-time",
+        }
+
+    def test_visitor_role_can_read_only(self):
+        # 1. Anonymous visitor
+        self.client.force_authenticate(user=None)
+        self.assertEqual(self.client.get(self.list_url).status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.get(self.detail_url).status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.options(self.detail_url).status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.post(self.list_url, self.payload, format="json").status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.put(self.detail_url, self.payload, format="json").status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.patch(self.detail_url, {"title": "Changed"}, format="json").status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.delete(self.detail_url).status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.post(self.star_url).status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_regular_user_role_can_read_and_star_only(self):
+        # 2. Regular authenticated user
+        self.client.force_authenticate(user=self.visitor_user)
+        self.assertEqual(self.client.get(self.list_url).status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.get(self.detail_url).status_code, status.HTTP_200_OK)
+        # Star endpoint works for authenticated user
+        star_resp = self.client.post(self.star_url)
+        self.assertEqual(star_resp.status_code, status.HTTP_200_OK)
+        self.assertTrue(star_resp.data["is_starred"])
+        self.assertEqual(star_resp.data["star_count"], 1)
+        # Writing / deleting is forbidden
+        self.assertEqual(self.client.post(self.list_url, self.payload, format="json").status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.put(self.detail_url, self.payload, format="json").status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.patch(self.detail_url, {"title": "Changed"}, format="json").status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.delete(self.detail_url).status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_editor_role_can_patch_and_put_but_cannot_create_or_delete(self):
+        # 3. Editor group user: can read, star, PUT/PATCH, but NOT create/delete
+        self.client.force_authenticate(user=self.editor)
+        self.assertEqual(self.client.get(self.list_url).status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.get(self.detail_url).status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.post(self.star_url).status_code, status.HTTP_200_OK)
+
+        # PATCH is permitted for Editor
+        patch_resp = self.client.patch(self.detail_url, {"title": "Patched by Editor"}, format="json")
+        self.assertEqual(patch_resp.status_code, status.HTTP_200_OK)
+        self.experience.refresh_from_db()
+        self.assertEqual(self.experience.title, "Patched by Editor")
+
+        # PUT is permitted for Editor
+        put_payload = {
+            "title": "Full Update by Editor",
+            "company": "Editor Corp",
+            "description": "Updated description.",
+            "category": "freelance",
+        }
+        put_resp = self.client.put(self.detail_url, put_payload, format="json")
+        self.assertEqual(put_resp.status_code, status.HTTP_200_OK)
+        self.experience.refresh_from_db()
+        self.assertEqual(self.experience.title, "Full Update by Editor")
+        self.assertEqual(self.experience.company, "Editor Corp")
+
+        # POST (create) is FORBIDDEN for Editor
+        post_resp = self.client.post(self.list_url, self.payload, format="json")
+        self.assertEqual(post_resp.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Experience.objects.count(), 1)
+
+        # DELETE is FORBIDDEN for Editor
+        del_resp = self.client.delete(self.detail_url)
+        self.assertEqual(del_resp.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(Experience.objects.filter(pk=self.experience.id).exists())
+
+    def test_owner_role_can_create_and_delete(self):
+        # 4. Superuser / Owner: full access
+        self.client.force_authenticate(user=self.owner)
+        # Create
+        create_resp = self.client.post(self.list_url, self.payload, format="json")
+        self.assertEqual(create_resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Experience.objects.count(), 2)
+
+        # Delete
+        delete_resp = self.client.delete(self.detail_url)
+        self.assertEqual(delete_resp.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Experience.objects.filter(pk=self.experience.id).exists())
+
