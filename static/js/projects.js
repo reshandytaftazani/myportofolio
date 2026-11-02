@@ -58,8 +58,8 @@
     }
 
     function buildProjectCard(item) {
-        const project = item.fields;
-        const projectId = item.pk;
+        const project = item.fields || item;
+        const projectId = item.pk || item.id;
         const article = document.createElement('article');
         article.className = 'experience-card project-card';
 
@@ -105,7 +105,8 @@
                 </div>
             </div>
             </div>`;
-        article.append(resources.actions(app, item));
+        const itemObj = item.fields ? item : { pk: projectId, fields: project };
+        article.append(resources.actions(app, itemObj));
         return article;
     }
 
@@ -236,7 +237,7 @@
 
             button.setAttribute('aria-pressed', String(Boolean(data.is_starred)));
             label.textContent = data.is_starred ? 'Unstar' : 'Star';
-            count.textContent = data.count;
+            count.textContent = data.star_count !== undefined ? data.star_count : data.count;
             button.title = data.starred_by_names
                 ? `Dibintangi oleh ${data.starred_by_names}`
                 : 'Jadilah yang pertama memberi star';
@@ -252,7 +253,7 @@
 
     resources.bindManagement(app, item => {
         searchProjects.cancel();
-        addCategoryFilter(item?.fields.category);
+        addCategoryFilter(item?.fields?.category || item?.category);
         fetchProjects();
     });
 
@@ -265,5 +266,32 @@
         setActiveCategory(query.get('category') || 'all');
         activated = true;
     });
+    async function writeProject(url, method = 'POST', payload) {
+        const response = await fetch(url, {
+            method,
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRFToken': ajax.getCsrfToken(),
+            },
+            body: payload === undefined ? undefined : JSON.stringify(payload),
+        });
+        if (response.status === 204) return null;
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            const messages = Object.values(data).flat().filter(value => typeof value === 'string');
+            throw new Error(messages.join(' ') || `Request failed (HTTP ${response.status}).`);
+        }
+        return data;
+    }
+
+    function projectEndpoint(pattern, id) {
+        return pattern.replace(projectIdPlaceholder, id);
+    }
+
+    window.writeProject = writeProject;
+    window.projectEndpoint = projectEndpoint;
+    window.fetchProjects = fetchProjects;
+
     if (!document.body.classList.contains('desktop-page')) fetchProjects();
 })();

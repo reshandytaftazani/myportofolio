@@ -1,4 +1,5 @@
 {% load static markdown_extras %}
+{% csrf_token %}
 <section class="experience-section animate-fade-in" id="projects"
                  data-window-id="projects" aria-labelledby="win-title-projects" data-projects-app
                  data-resource="projects"
@@ -8,10 +9,10 @@
                  data-delete-url="{{ project_resource.delete_url }}"
                  data-can-edit="{% if user.is_superuser or is_editor %}true{% else %}false{% endif %}"
                  data-can-delete="{{ user.is_superuser|yesno:'true,false' }}"
-                 data-projects-url="{% url 'main:get_projects_json' %}"
+                 data-projects-url="{% url 'api:project-list' %}"
                  data-create-url="{{ project_resource.create_url }}"
-                 data-star-url-template="{% url 'main:toggle_star_project' '00000000-0000-0000-0000-000000000000' %}"
-                 data-delete-url-template="{% url 'main:delete_project' '00000000-0000-0000-0000-000000000000' %}"
+                 data-star-url-template="{% url 'api:project-star' '00000000-0000-0000-0000-000000000000' %}"
+                 data-delete-url-template="{% url 'api:project-detail' '00000000-0000-0000-0000-000000000000' %}"
                  data-login-url="{% url 'main:login' %}?next={{ request.get_full_path|urlencode }}&amp;notice=star"
                  data-is-superuser="{{ user.is_superuser|yesno:'true,false' }}"
                  data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"
