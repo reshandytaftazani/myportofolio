@@ -1,3 +1,6 @@
+"""Serializers for Portfolio REST API models."""
+
+from typing import Any, Optional
 from django.utils.html import strip_tags
 from rest_framework import serializers
 
@@ -5,6 +8,8 @@ from main.models import Experience, Project
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    """Serializer for Project model supporting tags, computed stars, and HTML sanitization."""
+
     star_count = serializers.SerializerMethodField()
     is_starred = serializers.SerializerMethodField()
     starred_by_names = serializers.SerializerMethodField()
@@ -27,43 +32,52 @@ class ProjectSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id"]
 
-    def validate_title(self, value):
+    def validate_title(self, value: str) -> str:
+        """Sanitize and validate project title."""
         value = strip_tags(value).strip()
         if not value:
             raise serializers.ValidationError("Title cannot be empty.")
         return value
 
-    def validate_description(self, value):
+    def validate_description(self, value: str) -> str:
+        """Sanitize project description by stripping HTML tags."""
         return strip_tags(value)
 
-    def validate_tech_stack(self, value):
+    def validate_tech_stack(self, value: str) -> str:
+        """Sanitize tech stack string."""
         return strip_tags(value)
 
-    def get_star_count(self, obj):
+    def get_star_count(self, obj: Project) -> int:
+        """Return total number of users who starred this project."""
         return obj.starred_by.count()
 
-    def get_is_starred(self, obj):
+    def get_is_starred(self, obj: Project) -> bool:
+        """Determine whether current authenticated user has starred this project."""
         request = self.context.get("request")
         if request is None or not request.user.is_authenticated:
             return False
         return request.user in obj.starred_by.all()
 
-    def get_starred_by_names(self, obj):
+    def get_starred_by_names(self, obj: Project) -> str:
+        """Return comma-separated usernames who starred this project without exposing sensitive data."""
         return ", ".join(user.username for user in obj.starred_by.all())
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict[str, Any]) -> Project:
+        """Create a new project instance, mapping tech_stack to category if needed."""
         tech = validated_data.pop("tech_stack", None)
         if tech and not validated_data.get("category"):
             validated_data["category"] = tech
         return super().create(validated_data)
 
-    def update(self, instance, validated_data):
+    def update(self, instance: Project, validated_data: dict[str, Any]) -> Project:
+        """Update an existing project instance, mapping tech_stack to category if needed."""
         tech = validated_data.pop("tech_stack", None)
         if tech and not validated_data.get("category"):
             validated_data["category"] = tech
         return super().update(instance, validated_data)
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: Project) -> dict[str, Any]:
+        """Format serialized dictionary, ensuring tech_stack is populated from tags or category."""
         ret = super().to_representation(instance)
         if not ret.get("tech_stack"):
             tags_str = ", ".join(tag.name for tag in instance.tags.all())
@@ -72,6 +86,8 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class ExperienceSerializer(serializers.ModelSerializer):
+    """Serializer for Experience model with explicit fields, RBAC safety, and date validation."""
+
     star_count = serializers.SerializerMethodField()
     is_starred = serializers.SerializerMethodField()
     starred_by_names = serializers.SerializerMethodField()
@@ -97,29 +113,56 @@ class ExperienceSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "is_ongoing", "category_display"]
 
-    def validate_title(self, value):
+    def validate_title(self, value: str) -> str:
+        """Sanitize and validate that experience title is not empty after stripping HTML."""
         value = strip_tags(value).strip()
         if not value:
             raise serializers.ValidationError("Title cannot be empty.")
         return value
 
-    def validate_description(self, value):
-        return strip_tags(value)
-
-    def validate_company(self, value):
+    def validate_company(self, value: Optional[str]) -> Optional[str]:
+        """Sanitize company name by stripping HTML tags."""
         if value:
             return strip_tags(value).strip()
         return value
 
-    def get_star_count(self, obj):
+    def validate_description(self, value: str) -> str:
+        """Sanitize description by stripping HTML tags."""
+        value = strip_tags(value).strip()
+        if not value:
+            raise serializers.ValidationError("Description cannot be empty.")
+        return value
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        """Validate relational date logic: ended_at must be >= started_at."""
+        started_at = (
+            attrs.get("started_at")
+            if "started_at" in attrs
+            else getattr(self.instance, "started_at", None)
+        )
+        ended_at = (
+            attrs.get("ended_at")
+            if "ended_at" in attrs
+            else getattr(self.instance, "ended_at", None)
+        )
+
+        if started_at and ended_at and ended_at < started_at:
+            raise serializers.ValidationError(
+                {"ended_at": "Ended date cannot be earlier than started date."}
+            )
+        return attrs
+
+    def get_star_count(self, obj: Experience) -> int:
+        """Return total number of users who starred this experience."""
         return obj.starred_by.count()
 
-    def get_is_starred(self, obj):
+    def get_is_starred(self, obj: Experience) -> bool:
+        """Determine whether current authenticated user has starred this experience."""
         request = self.context.get("request")
         if request is None or not request.user.is_authenticated:
             return False
         return request.user in obj.starred_by.all()
 
-    def get_starred_by_names(self, obj):
+    def get_starred_by_names(self, obj: Experience) -> str:
+        """Return comma-separated usernames who starred this experience without exposing sensitive data."""
         return ", ".join(user.username for user in obj.starred_by.all())
-
