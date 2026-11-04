@@ -31,10 +31,38 @@
     const deleteError = deleteDialog?.querySelector('[data-delete-error]');
 
     let activeCategory = config.initialCategory || 'all';
-    let activeRequest = null;
+    let searchAbortController = null;
+    let currentExperiences = [];
     let activated = false;
     let hasContent = Boolean(grid?.querySelector('.timeline-card, .exp-timeline-item'));
     const experienceIdPlaceholder = '00000000-0000-0000-0000-000000000000';
+
+    function updateMetrics(items = currentExperiences) {
+        const list = Array.isArray(items) ? items : [];
+        const total = list.length;
+        let ongoing = 0;
+        let completed = 0;
+        let stars = 0;
+
+        for (const item of list) {
+            if (item.is_ongoing) {
+                ongoing += 1;
+            } else {
+                completed += 1;
+            }
+            stars += (Number(item.star_count) || 0);
+        }
+
+        const totalEl = document.getElementById('metric-total-roles');
+        const ongoingEl = document.getElementById('metric-ongoing-roles');
+        const completedEl = document.getElementById('metric-completed-roles');
+        const starsEl = document.getElementById('metric-total-stars');
+
+        if (totalEl) totalEl.textContent = String(total);
+        if (ongoingEl) ongoingEl.textContent = String(ongoing);
+        if (completedEl) completedEl.textContent = String(completed);
+        if (starsEl) starsEl.textContent = String(stars);
+    }
 
     let modalOpener = null;
     let deleteOpener = null;
@@ -287,9 +315,11 @@
     }
 
     async function fetchExperiences(title = searchInput?.value.trim() || '', category = activeCategory) {
-        activeRequest?.abort();
-        activeRequest = new AbortController();
-        const request = activeRequest;
+        if (searchAbortController) {
+            searchAbortController.abort();
+        }
+        searchAbortController = new AbortController();
+        const request = searchAbortController;
 
         displaySection({ loading: true });
 
@@ -309,11 +339,11 @@
                 signal: request.signal,
             });
 
-            if (request !== activeRequest || request.signal.aborted) return;
+            if (request !== searchAbortController || request.signal.aborted) return;
             if (!response.ok) throw new Error(`Experience request failed (${response.status})`);
 
             const data = await response.json();
-            if (request !== activeRequest || request.signal.aborted) return;
+            if (request !== searchAbortController || request.signal.aborted) return;
             if (!Array.isArray(data)) throw new Error('Data format invalid, expected an array.');
 
             const canonical = new URL('/experience/', window.location.origin);
@@ -329,6 +359,9 @@
             hasContent = data.length > 0;
 
             if (!data.length) {
+                currentExperiences = [];
+                updateMetrics(currentExperiences);
+
                 const filtered = Boolean(title || (category && category.toLowerCase() !== 'all'));
                 const heading = emptyState?.querySelector('[data-empty-title]');
                 const description = emptyState?.querySelector('[data-empty-description]');
@@ -346,13 +379,15 @@
                 return;
             }
 
+            currentExperiences = data.map(adaptExperience);
             data.forEach(item => {
                 const card = buildExperienceCard(item);
                 grid.appendChild(card);
             });
+            updateMetrics(currentExperiences);
             displaySection({ grid: true });
         } catch (error) {
-            if (error.name === 'AbortError' || request !== activeRequest) return;
+            if (error.name === 'AbortError' || request !== searchAbortController) return;
             console.error('Error loading experiences:', error);
             displaySection({ error: true });
         }
@@ -377,18 +412,26 @@
     const searchExperiences = debounce(() => fetchExperiences(), 300);
 
     searchInput?.addEventListener('input', () => {
-        activeRequest?.abort();
+        if (searchAbortController) {
+            searchAbortController.abort();
+        }
         searchExperiences();
     });
 
     searchForm?.addEventListener('submit', event => {
         event.preventDefault();
         searchExperiences.cancel();
+        if (searchAbortController) {
+            searchAbortController.abort();
+        }
         fetchExperiences();
     });
 
     app.querySelector('[data-experience-retry]')?.addEventListener('click', async () => {
         searchExperiences.cancel();
+        if (searchAbortController) {
+            searchAbortController.abort();
+        }
         await fetchExperiences();
         if (errorState?.classList.contains('hide')) {
             searchInput?.focus({ preventScroll: true });
@@ -397,6 +440,10 @@
 
     app.querySelector('[data-experience-reset]')?.addEventListener('click', event => {
         event.preventDefault();
+        searchExperiences.cancel();
+        if (searchAbortController) {
+            searchAbortController.abort();
+        }
         if (searchInput) searchInput.value = '';
         setActiveCategory('all');
         searchInput?.focus({ preventScroll: true });
@@ -404,6 +451,9 @@
 
     function setActiveCategory(category) {
         searchExperiences.cancel();
+        if (searchAbortController) {
+            searchAbortController.abort();
+        }
         activeCategory = category || 'all';
         const field = searchForm?.querySelector('[name="category"]');
         if (field) field.value = activeCategory;
@@ -424,7 +474,7 @@
         }
     });
 
-    // Star toggle handling (both form submit and button click delegation)
+    // Star toggle handling (Optimistic UI Update with Auto-Rollback)
     grid?.addEventListener('submit', async event => {
         const form = event.target.closest('[data-experience-star-form], .star-form');
         if (!form) return;
@@ -441,8 +491,40 @@
         const button = form.querySelector('button[type="submit"], [data-action="star"]');
         const label = button?.querySelector('.star-label');
         const count = button?.querySelector('.star-count');
-        if (!button || button.disabled) return;
-        button.disabled = true;
+        if (!button || button.dataset.starBusy === 'true') return;
+
+        // Find corresponding experience item in memory
+        const expId = button.dataset.id || form.closest('.exp-timeline-item, .timeline-card')?.dataset.id;
+        const expItem = currentExperiences.find(item => String(item.id) === String(expId));
+
+        // 1. Snapshot previous UI & state for rollback
+        const prevIsStarred = button.getAttribute('aria-pressed') === 'true';
+        const prevCountText = count ? count.textContent : '0';
+        const prevCount = parseInt(prevCountText, 10) || 0;
+        const prevLabel = label ? label.textContent : (prevIsStarred ? 'Unstar' : 'Star');
+        const prevTitle = button.title || '';
+        const prevItemStarred = expItem ? expItem.is_starred : prevIsStarred;
+        const prevItemCount = expItem ? expItem.star_count : prevCount;
+
+        // 2. Compute optimistic target state (0ms instant response)
+        const nextIsStarred = !prevIsStarred;
+        const nextCount = Math.max(0, prevCount + (nextIsStarred ? 1 : -1));
+
+        // Lock button interaction during in-flight request
+        button.dataset.starBusy = 'true';
+
+        // 3. Immediately apply Optimistic UI update
+        button.setAttribute('aria-pressed', String(nextIsStarred));
+        if (label) label.textContent = nextIsStarred ? 'Unstar' : 'Star';
+        if (count) count.textContent = String(nextCount);
+        button.title = nextIsStarred ? 'Anda membintangi pengalaman ini' : 'Beri star untuk pengalaman ini';
+
+        // Update in-memory state and live summary metrics bar
+        if (expItem) {
+            expItem.is_starred = nextIsStarred;
+            expItem.star_count = nextCount;
+        }
+        updateMetrics(currentExperiences);
 
         try {
             const csrfToken = ajax.getCsrfToken(form) || ajax.getCsrfToken();
@@ -466,24 +548,49 @@
                 throw new Error(`Star request failed (${response.status})`);
             }
 
-            const isStarred = Boolean(data.is_starred);
-            button.setAttribute('aria-pressed', String(isStarred));
-            if (label) label.textContent = isStarred ? 'Unstar' : 'Star';
-            if (count) count.textContent = data.star_count !== undefined ? data.star_count : (data.count || 0);
+            // 4. Server confirmed: synchronize with authoritative server values
+            const serverIsStarred = Boolean(data.is_starred);
+            const serverCount = data.star_count !== undefined ? data.star_count : (data.count || nextCount);
+
+            button.setAttribute('aria-pressed', String(serverIsStarred));
+            if (label) label.textContent = serverIsStarred ? 'Unstar' : 'Star';
+            if (count) count.textContent = String(serverCount);
             button.title = data.starred_by_names
                 ? `Dibintangi oleh ${data.starred_by_names}`
                 : 'Jadilah yang pertama memberi star';
 
+            if (expItem) {
+                expItem.is_starred = serverIsStarred;
+                expItem.star_count = serverCount;
+                if (data.starred_by_names !== undefined) {
+                    expItem.starred_by_names = data.starred_by_names;
+                }
+            }
+            updateMetrics(currentExperiences);
+
             showToast(
                 'Berhasil',
-                isStarred ? 'Star berhasil diberikan.' : 'Star berhasil dibatalkan.',
+                serverIsStarred ? 'Star berhasil diberikan.' : 'Star berhasil dibatalkan.',
                 'success'
             );
         } catch (error) {
-            console.error('Error toggling star on experience:', error);
-            showToast('Gagal memperbarui star', 'Permintaan gagal. Silakan coba lagi.', 'error');
+            console.error('Error toggling star on experience (rolling back):', error);
+
+            // 5. AUTO-ROLLBACK: Revert immediately to original snapshot values
+            button.setAttribute('aria-pressed', String(prevIsStarred));
+            if (label) label.textContent = prevLabel;
+            if (count) count.textContent = String(prevCount);
+            button.title = prevTitle;
+
+            if (expItem) {
+                expItem.is_starred = prevItemStarred;
+                expItem.star_count = prevItemCount;
+            }
+            updateMetrics(currentExperiences);
+
+            showToast('Gagal memperbarui star', 'Permintaan gagal. Perubahan dibatalkan.', 'error');
         } finally {
-            button.disabled = false;
+            button.dataset.starBusy = 'false';
         }
     });
 
@@ -999,6 +1106,7 @@
     window.writeExperience = writeExperience;
     window.experienceEndpoint = experienceEndpoint;
     window.fetchExperiences = fetchExperiences;
+    window.updateExperienceMetrics = updateMetrics;
 
     if (app.classList.contains('is-open') || !document.body.classList.contains('desktop-page')) {
         activated = true;
