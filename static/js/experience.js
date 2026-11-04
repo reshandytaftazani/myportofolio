@@ -616,6 +616,15 @@
         });
         form?.querySelectorAll('[aria-invalid]').forEach(el => {
             el.removeAttribute('aria-invalid');
+            const describedBy = (el.getAttribute('aria-describedby') || '')
+                .split(/\s+/)
+                .filter(id => !id.endsWith('-error'))
+                .join(' ');
+            if (describedBy) {
+                el.setAttribute('aria-describedby', describedBy);
+            } else {
+                el.removeAttribute('aria-describedby');
+            }
         });
     }
 
@@ -632,6 +641,13 @@
                 inlineError.textContent = messageText;
                 inlineError.hidden = false;
                 field.setAttribute('aria-invalid', 'true');
+                if (inlineError.id) {
+                    const existing = (field.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+                    if (!existing.includes(inlineError.id)) {
+                        existing.push(inlineError.id);
+                    }
+                    field.setAttribute('aria-describedby', existing.join(' '));
+                }
                 if (!firstInvalidField) firstInvalidField = field;
             } else {
                 generalErrors.push(`${key}: ${messageText}`);
@@ -657,6 +673,13 @@
         }
         if (field) {
             field.setAttribute('aria-invalid', 'true');
+            if (inlineError && inlineError.id) {
+                const existing = (field.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+                if (!existing.includes(inlineError.id)) {
+                    existing.push(inlineError.id);
+                }
+                field.setAttribute('aria-describedby', existing.join(' '));
+            }
             field.focus({ preventScroll: true });
         }
     }
@@ -828,6 +851,15 @@
             inlineError.textContent = '';
             inlineError.hidden = true;
         }
+        const describedBy = (field.getAttribute('aria-describedby') || '')
+            .split(/\s+/)
+            .filter(id => !id.endsWith('-error'))
+            .join(' ');
+        if (describedBy) {
+            field.setAttribute('aria-describedby', describedBy);
+        } else {
+            field.removeAttribute('aria-describedby');
+        }
         if (!form.querySelector('[aria-invalid]')) {
             resetModalErrors();
         }
@@ -916,7 +948,7 @@
                     const msg = Array.isArray(val) ? val.join(' ') : String(val);
                     messages.push(`${key}: ${msg}`);
                 }
-                showToast('Validasi Gagal', messages.join(' | ') || 'Mohon periksa kolom yang ditandai.', 'error');
+                showToast('Gagal menyimpan', messages.join(' | ') || 'Mohon periksa kolom yang ditandai.', 'error');
                 return;
             }
 
