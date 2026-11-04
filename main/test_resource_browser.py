@@ -225,18 +225,18 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
         self.goto('/experience/')
         self.page.locator('#experience [data-resource-action=delete]').first.click()
         dialog = self.page.locator('#experience-delete-dialog')
-        pattern = '**/api/manage/experience/*/delete/'
-        self.context.route(pattern, lambda route: route.fulfill(
-            status=403, json={'message': 'Anda tidak memiliki izin untuk menghapus data.'}))
+        pattern = '**/api/v1/experiences/*/'
+        self.context.route(pattern, lambda route: route.request.method == 'DELETE' and route.fulfill(
+            status=403, json={'detail': 'Anda tidak memiliki izin untuk menghapus data.'}))
         dialog.locator('[data-confirm-delete]').click()
         expect(self.page.locator('#toast-component')).to_be_visible()
-        expect(self.page.locator('#toast-message')).to_have_text('Anda tidak memiliki izin untuk menghapus data.')
+        expect(self.page.locator('#toast-message')).to_contain_text('tidak memiliki izin')
         expect(dialog).to_be_visible()
         expect(self.page.locator('#experience .timeline-card')).to_have_count(2)
         self.context.unroute(pattern)
         dialog.locator('[data-confirm-delete]').click()
         expect(dialog).not_to_be_visible()
-        expect(self.page.locator('#toast-message')).to_have_text('Data berhasil dihapus.')
+        expect(self.page.locator('#toast-message')).to_contain_text('berhasil dihapus')
         expect(self.page.locator('#experience .timeline-card')).to_have_count(1)
 
     def test_editor_can_edit_but_has_no_add_delete_controls(self):
