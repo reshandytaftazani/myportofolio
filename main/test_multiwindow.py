@@ -153,7 +153,7 @@ class MultipleWindowBrowserTests(StaticLiveServerTestCase):
         self.page.set_viewport_size({'width':1440, 'height':900})
         self.open('about'); self.open('projects')
         # Keep other apps responsive while a resource request fails.
-        self.context.route('**/api/projects/**', lambda route: route.abort())
+        self.context.route('**/api/**projects/**', lambda route: route.abort())
         self.page.locator('#search-input').fill('offline')
         expect(self.page.locator('#projects #error')).to_be_visible()
         expect(self.page.locator('#grid article')).to_have_count(1)
