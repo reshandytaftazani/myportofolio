@@ -403,16 +403,16 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
 
     def test_projects_keyboard_retry_preserves_search_category_and_loading_status(self):
         from playwright.sync_api import expect
-        self.context.route('**/api/projects/**', lambda route: route.fulfill(
+        self.context.route('**/api/**projects/**', lambda route: route.fulfill(
             status=503, content_type='text/html', body='<h1>Unavailable</h1>'))
         self.goto('/projects/?title=Port&category=Web')
         expect(self.page.locator('#error')).to_be_visible()
         expect(self.page.locator('#error')).to_have_attribute('role', 'alert')
-        self.context.unroute('**/api/projects/**')
+        self.context.unroute('**/api/**projects/**')
         self.page.evaluate('''() => {
             const original = window.fetch;
             window.fetch = (url, options) => {
-                if (new URL(url, location.origin).pathname !== '/api/projects/') return original(url, options);
+                if (!new URL(url, location.origin).pathname.includes('/projects/')) return original(url, options);
                 return new Promise(resolve => {
                     window.releaseProjects = () => resolve(original(url, options));
                 });
