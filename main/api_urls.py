@@ -21,4 +21,9 @@ urlpatterns = [
     path("skills/", api_views.skill_list, name="skill-list"),
     path("skills/<uuid:skill_id>/", api_views.skill_detail, name="skill-detail"),
     path("skills/<uuid:skill_id>/star/", api_views.skill_star, name="skill-star"),
+
+    # Education Endpoints (Sub-tahap 6.3 Skor 4.0)
+    path("education/", api_views.education_list, name="education-list"),
+    path("education/<int:education_id>/", api_views.education_detail, name="education-detail"),
+    path("education/<int:education_id>/star/", api_views.education_star, name="education-star"),
 ]

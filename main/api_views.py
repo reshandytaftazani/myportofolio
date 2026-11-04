@@ -15,12 +15,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from main.models import Experience, Project, Skill
+from main.models import Education, Experience, Project, Skill
 from main.permissions import (
     IsPortfolioOwnerOrReadOnly,
     IsPortfolioOwnerOrEditorOrReadOnly,
 )
 from main.serializers import (
+    EducationSerializer,
     ExperienceSerializer,
     ProjectSerializer,
     SkillSerializer,
@@ -395,4 +396,128 @@ def skill_star(request: Request, skill_id: uuid.UUID) -> Response:
         else:
             skill.starred_by.add(request.user)
         serializer = SkillSerializer(skill, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET", "HEAD", "POST"])
+@authentication_classes([SessionAuthentication])
+@permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
+def education_list(request: Request) -> Response:
+    """Retrieve list of educations or create a new education record.
+
+    Read operations are public. Write operations (POST) are restricted to
+    the Portfolio Owner (superuser). Non-superusers (visitors and editors)
+    are strictly rejected with HTTP 403 Forbidden.
+
+    Args:
+        request (Request): The incoming REST request.
+
+    Query Params:
+        school_name (str, optional): Filter education records by school_name
+            (case-insensitive substring).
+
+    Returns:
+        Response: List of serialized educations (200 OK) or newly created
+            education (201 Created).
+
+    Error Codes:
+        200 OK: Education list successfully retrieved.
+        201 Created: New education record successfully created.
+        400 Bad Request: Invalid input data failed serializer validation.
+        403 Forbidden: Unauthenticated or non-superuser attempted POST.
+    """
+    if request.method in ("GET", "HEAD"):
+        educations = Education.objects.prefetch_related("starred_by").order_by("-start_year", "id")
+        school_name = request.query_params.get("school_name", "").strip()
+        if school_name:
+            educations = educations.filter(school_name__icontains=school_name)
+        serializer = EducationSerializer(educations, many=True, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    with transaction.atomic():
+        serializer = EducationSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(["GET", "HEAD", "PUT", "PATCH", "DELETE"])
+@authentication_classes([SessionAuthentication])
+@permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
+def education_detail(request: Request, education_id: int) -> Response:
+    """Retrieve, update, or delete a specific education record.
+
+    Read operations are public. PUT and PATCH operations are allowed for
+    Portfolio Owner (superuser) and Editors. DELETE operations are restricted
+    strictly to the Portfolio Owner (superuser). Mutating actions are executed
+    inside an atomic transaction.
+
+    Args:
+        request (Request): The incoming REST request.
+        education_id (int): Primary key of the education record.
+
+    Returns:
+        Response: Serialized education data (200 OK) or empty body (204 No Content).
+
+    Error Codes:
+        200 OK: Education details retrieved or updated successfully.
+        204 No Content: Education record successfully deleted.
+        400 Bad Request: Invalid update payload failed serializer validation.
+        403 Forbidden: Request lacking required role permissions.
+        404 Not Found: Education record with given ID not found.
+    """
+    education = get_object_or_404(
+        Education.objects.prefetch_related("starred_by"), pk=education_id,
+    )
+    if request.method in ("GET", "HEAD"):
+        serializer = EducationSerializer(education, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    if request.method == "DELETE":
+        with transaction.atomic():
+            education.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    with transaction.atomic():
+        serializer = EducationSerializer(
+            education,
+            data=request.data,
+            partial=request.method == "PATCH",
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@authentication_classes([SessionAuthentication])
+@permission_classes([IsAuthenticated])
+def education_star(request: Request, education_id: int) -> Response:
+    """Toggle star status on a specific education record for the authenticated user.
+
+    Accessible to any authenticated user (regular user, editor, or superuser).
+    Executed within an atomic transaction.
+
+    Args:
+        request (Request): The incoming REST request.
+        education_id (int): Primary key of the education record.
+
+    Returns:
+        Response: Updated serialized education data with refreshed star status (200 OK).
+
+    Error Codes:
+        200 OK: Star status successfully toggled.
+        403 Forbidden: Unauthenticated user attempted to star.
+        404 Not Found: Education record with given ID not found.
+    """
+    education = get_object_or_404(
+        Education.objects.prefetch_related("starred_by"), pk=education_id,
+    )
+    with transaction.atomic():
+        if education.starred_by.filter(pk=request.user.pk).exists():
+            education.starred_by.remove(request.user)
+        else:
+            education.starred_by.add(request.user)
+        serializer = EducationSerializer(education, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
