@@ -4,7 +4,7 @@ from typing import Any, Optional
 from django.utils.html import strip_tags
 from rest_framework import serializers
 
-from main.models import Experience, Project
+from main.models import Experience, Project, Skill
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -165,4 +165,68 @@ class ExperienceSerializer(serializers.ModelSerializer):
 
     def get_starred_by_names(self, obj: Experience) -> str:
         """Return comma-separated usernames who starred this experience without exposing sensitive data."""
+        return ", ".join(user.username for user in obj.starred_by.all())
+
+
+class SkillSerializer(serializers.ModelSerializer):
+    """Serializer for Skill model with computed stars, RBAC safety, and HTML sanitization."""
+
+    star_count = serializers.SerializerMethodField()
+    is_starred = serializers.SerializerMethodField()
+    starred_by_names = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Skill
+        fields = [
+            "id",
+            "title",
+            "description",
+            "level",
+            "code_snippet",
+            "star_count",
+            "is_starred",
+            "starred_by_names",
+        ]
+        read_only_fields = ["id"]
+
+    def validate_title(self, value: str) -> str:
+        """Sanitize and validate that skill title is not empty after stripping HTML."""
+        value = strip_tags(value).strip()
+        if not value:
+            raise serializers.ValidationError("Title cannot be empty.")
+        return value
+
+    def validate_description(self, value: str) -> str:
+        """Sanitize description by stripping HTML tags."""
+        value = strip_tags(value).strip()
+        if not value:
+            raise serializers.ValidationError("Description cannot be empty.")
+        return value
+
+    def validate_level(self, value: str) -> str:
+        """Sanitize level by stripping HTML tags."""
+        value = strip_tags(value).strip()
+        if not value:
+            raise serializers.ValidationError("Level cannot be empty.")
+        return value
+
+    def validate_code_snippet(self, value: Optional[str]) -> Optional[str]:
+        """Strip extra surrounding whitespaces from code snippet."""
+        if value:
+            return value.strip()
+        return value
+
+    def get_star_count(self, obj: Skill) -> int:
+        """Return total number of users who starred this skill."""
+        return obj.starred_by.count()
+
+    def get_is_starred(self, obj: Skill) -> bool:
+        """Determine whether current authenticated user has starred this skill."""
+        request = self.context.get("request")
+        if request is None or not request.user.is_authenticated:
+            return False
+        return request.user in obj.starred_by.all()
+
+    def get_starred_by_names(self, obj: Skill) -> str:
+        """Return comma-separated usernames who starred this skill without exposing sensitive data."""
         return ", ".join(user.username for user in obj.starred_by.all())
