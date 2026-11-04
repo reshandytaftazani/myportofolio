@@ -15,12 +15,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from main.models import Education, Experience, Project, Skill
+from main.models import Education, Experience, Project, Skill, TechStack
 from main.permissions import (
     IsPortfolioOwnerOrReadOnly,
     IsPortfolioOwnerOrEditorOrReadOnly,
 )
 from main.serializers import (
+    TechStackSerializer,
     EducationSerializer,
     ExperienceSerializer,
     ProjectSerializer,
@@ -520,4 +521,128 @@ def education_star(request: Request, education_id: int) -> Response:
         else:
             education.starred_by.add(request.user)
         serializer = EducationSerializer(education, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET", "HEAD", "POST"])
+@authentication_classes([SessionAuthentication])
+@permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
+def techstack_list(request: Request) -> Response:
+    """Retrieve list of tech stacks or create a new tech stack record.
+
+    Read operations are public. Write operations (POST) are restricted to
+    the Portfolio Owner (superuser). Non-superusers (visitors and editors)
+    are strictly rejected with HTTP 403 Forbidden.
+
+    Args:
+        request (Request): The incoming REST request.
+
+    Query Params:
+        name (str, optional): Filter tech stack records by name
+            (case-insensitive substring).
+
+    Returns:
+        Response: List of serialized tech stacks (200 OK) or newly created
+            tech stack (201 Created).
+
+    Error Codes:
+        200 OK: Tech stack list successfully retrieved.
+        201 Created: New tech stack record successfully created.
+        400 Bad Request: Invalid input data failed serializer validation.
+        403 Forbidden: Unauthenticated or non-superuser attempted POST.
+    """
+    if request.method in ("GET", "HEAD"):
+        techstacks = TechStack.objects.prefetch_related("starred_by").order_by("order", "id")
+        name = request.query_params.get("name", "").strip()
+        if name:
+            techstacks = techstacks.filter(name__icontains=name)
+        serializer = TechStackSerializer(techstacks, many=True, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    with transaction.atomic():
+        serializer = TechStackSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(["GET", "HEAD", "PUT", "PATCH", "DELETE"])
+@authentication_classes([SessionAuthentication])
+@permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
+def techstack_detail(request: Request, techstack_id: int) -> Response:
+    """Retrieve, update, or delete a specific tech stack record.
+
+    Read operations are public. PUT and PATCH operations are allowed for
+    Portfolio Owner (superuser) and Editors. DELETE operations are restricted
+    strictly to the Portfolio Owner (superuser). Mutating actions are executed
+    inside an atomic transaction.
+
+    Args:
+        request (Request): The incoming REST request.
+        techstack_id (int): Primary key of the tech stack record.
+
+    Returns:
+        Response: Serialized tech stack data (200 OK) or empty body (204 No Content).
+
+    Error Codes:
+        200 OK: Tech stack details retrieved or updated successfully.
+        204 No Content: Tech stack record successfully deleted.
+        400 Bad Request: Invalid update payload failed serializer validation.
+        403 Forbidden: Request lacking required role permissions.
+        404 Not Found: Tech stack record with given ID not found.
+    """
+    techstack = get_object_or_404(
+        TechStack.objects.prefetch_related("starred_by"), pk=techstack_id,
+    )
+    if request.method in ("GET", "HEAD"):
+        serializer = TechStackSerializer(techstack, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    if request.method == "DELETE":
+        with transaction.atomic():
+            techstack.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    with transaction.atomic():
+        serializer = TechStackSerializer(
+            techstack,
+            data=request.data,
+            partial=request.method == "PATCH",
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@authentication_classes([SessionAuthentication])
+@permission_classes([IsAuthenticated])
+def techstack_star(request: Request, techstack_id: int) -> Response:
+    """Toggle star status on a specific tech stack record for the authenticated user.
+
+    Accessible to any authenticated user (regular user, editor, or superuser).
+    Executed within an atomic transaction.
+
+    Args:
+        request (Request): The incoming REST request.
+        techstack_id (int): Primary key of the tech stack record.
+
+    Returns:
+        Response: Updated serialized tech stack data with refreshed star status (200 OK).
+
+    Error Codes:
+        200 OK: Star status successfully toggled.
+        403 Forbidden: Unauthenticated user attempted to star.
+        404 Not Found: Tech stack record with given ID not found.
+    """
+    techstack = get_object_or_404(
+        TechStack.objects.prefetch_related("starred_by"), pk=techstack_id,
+    )
+    with transaction.atomic():
+        if techstack.starred_by.filter(pk=request.user.pk).exists():
+            techstack.starred_by.remove(request.user)
+        else:
+            techstack.starred_by.add(request.user)
+        serializer = TechStackSerializer(techstack, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)

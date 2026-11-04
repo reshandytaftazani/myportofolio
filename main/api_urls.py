@@ -26,4 +26,9 @@ urlpatterns = [
     path("education/", api_views.education_list, name="education-list"),
     path("education/<int:education_id>/", api_views.education_detail, name="education-detail"),
     path("education/<int:education_id>/star/", api_views.education_star, name="education-star"),
+
+    # TechStacks Endpoints (Sub-tahap 6.4 Skor 4.0)
+    path("techstacks/", api_views.techstack_list, name="techstack-list"),
+    path("techstacks/<int:techstack_id>/", api_views.techstack_detail, name="techstack-detail"),
+    path("techstacks/<int:techstack_id>/star/", api_views.techstack_star, name="techstack-star"),
 ]

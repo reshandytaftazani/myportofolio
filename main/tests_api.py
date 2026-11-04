@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from main.models import Education, Experience, Project, Skill
+from main.models import Education, Experience, Project, Skill, TechStack
 
 
 class ProjectAPITest(APITestCase):
@@ -1319,3 +1319,585 @@ class EducationAPITest(APITestCase):
         self.assertEqual(del_res.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(Education.objects.count(), 3)
         self.assertTrue(Education.objects.filter(pk=self.edu_ui.id).exists())
+
+
+class TechStackAPITest(APITestCase):
+    def setUp(self):
+        self.owner = User.objects.create_superuser(
+            username="owner", password="test-password", email="owner@example.com",
+        )
+        self.visitor = User.objects.create_user(
+            username="visitor", password="test-password",
+        )
+        self.editor = User.objects.create_user(
+            username="editor", password="test-password",
+        )
+        self.editor_group, _ = Group.objects.get_or_create(name="Editor")
+        self.editor.groups.add(self.editor_group)
+
+        # Create two tech stacks with same order to test tie-breaker id ordering
+        self.ts_python = TechStack.objects.create(
+            name="Python",
+            icon_url="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg",
+            filename="script.py",
+            code_snippet="def greet(name):\n    if 1 < 2 and 3 > 2:\n        return f'Hello, {name}!'\n",
+            order=1,
+        )
+        self.ts_django = TechStack.objects.create(
+            name="Django",
+            icon_url="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/django/django-plain.svg",
+            filename="views.py",
+            code_snippet="from django.http import HttpResponse\n\ndef home(request):\n    return HttpResponse('OK')\n",
+            order=1,
+        )
+        self.ts_js = TechStack.objects.create(
+            name="JavaScript",
+            icon_url="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg",
+            filename="app.js",
+            code_snippet="console.log('<script>alert(\"xss\")</script>');",
+            order=2,
+        )
+
+        self.list_url = reverse("api:techstack-list")
+        self.detail_url = reverse("api:techstack-detail", args=[self.ts_python.id])
+        self.star_url = reverse("api:techstack-star", args=[self.ts_python.id])
+        self.payload = {
+            "name": "TypeScript",
+            "icon_url": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg",
+            "filename": "types.ts",
+            "code_snippet": "interface User {\n  id: number;\n  name: string;\n}\n",
+            "order": 3,
+        }
+
+    def test_public_list_and_detail(self):
+        """Test unauthenticated public access to tech stack list and detail endpoints."""
+        for client_user in (None, self.visitor, self.editor, self.owner):
+            self.client.force_authenticate(user=client_user)
+            response = self.client.get(self.list_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(response.data), 3)
+
+            # Check explicit fields contract
+            item = next((x for x in response.data if x["id"] == self.ts_python.id), None)
+            self.assertIsNotNone(item)
+            self.assertEqual(item["name"], "Python")
+            self.assertEqual(item["icon_url"], "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg")
+            self.assertEqual(item["filename"], "script.py")
+            self.assertEqual(item["code_snippet"], self.ts_python.code_snippet)
+            self.assertEqual(item["order"], 1)
+            self.assertEqual(item["star_count"], 0)
+            self.assertFalse(item["is_starred"])
+            self.assertEqual(item["starred_by_names"], "")
+            self.assertNotIn("fields", item)
+
+            detail_res = self.client.get(self.detail_url)
+            self.assertEqual(detail_res.status_code, status.HTTP_200_OK)
+            self.assertEqual(detail_res.data["id"], self.ts_python.id)
+            self.assertEqual(detail_res.data["name"], "Python")
+            self.assertEqual(detail_res.data["code_snippet"], self.ts_python.code_snippet)
+
+        # Check OPTIONS method works
+        self.client.force_authenticate(user=None)
+        options_res = self.client.options(self.detail_url)
+        self.assertEqual(options_res.status_code, status.HTTP_200_OK)
+
+    def test_search_and_ordering(self):
+        """Test searching by name (match / no match) and ordering (order, id)."""
+        # 1. Search match substring case-insensitive
+        res_match = self.client.get(self.list_url, {"name": "python"})
+        self.assertEqual(res_match.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_match.data), 1)
+        self.assertEqual(res_match.data[0]["name"], "Python")
+
+        res_match_upper = self.client.get(self.list_url, {"name": "DJANGO"})
+        self.assertEqual(res_match_upper.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_match_upper.data), 1)
+        self.assertEqual(res_match_upper.data[0]["name"], "Django")
+
+        # 2. Search no match
+        res_none = self.client.get(self.list_url, {"name": "RustLangNotFound"})
+        self.assertEqual(res_none.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_none.data, [])
+
+        # 3. Test empty list
+        TechStack.objects.all().delete()
+        res_empty = self.client.get(self.list_url)
+        self.assertEqual(res_empty.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_empty.data, [])
+
+        # 4. Recreate fixtures with distinct and tie-breaker orders
+        t1 = TechStack.objects.create(
+            name="Alpha",
+            icon_url="https://example.com/alpha.png",
+            filename="alpha.py",
+            code_snippet="# Alpha code",
+            order=10,
+        )
+        t2 = TechStack.objects.create(
+            name="Beta",
+            icon_url="https://example.com/beta.png",
+            filename="beta.py",
+            code_snippet="# Beta code",
+            order=10,
+        )
+        t3 = TechStack.objects.create(
+            name="Gamma",
+            icon_url="https://example.com/gamma.png",
+            filename="gamma.py",
+            code_snippet="# Gamma code",
+            order=5,
+        )
+        t4 = TechStack.objects.create(
+            name="Delta",
+            icon_url="https://example.com/delta.png",
+            filename="delta.py",
+            code_snippet="# Delta code",
+            order=20,
+        )
+
+        res_order = self.client.get(self.list_url)
+        self.assertEqual(res_order.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_order.data), 4)
+
+        # Ordering should be order, id:
+        # t3 (order 5), t1 (order 10, smaller id), t2 (order 10, larger id), t4 (order 20)
+        self.assertLess(t1.id, t2.id)
+        expected_ids = [t3.id, t1.id, t2.id, t4.id]
+        actual_ids = [item["id"] for item in res_order.data]
+        self.assertEqual(actual_ids, expected_ids)
+
+    def test_missing_techstack_returns_404(self):
+        """Verify 404 Not Found is returned for non-existent tech stack IDs."""
+        non_existent_url = reverse("api:techstack-detail", args=[999999])
+        self.assertEqual(self.client.get(non_existent_url).status_code, status.HTTP_404_NOT_FOUND)
+
+        self.client.force_authenticate(user=self.owner)
+        self.assertEqual(self.client.put(non_existent_url, self.payload, format="json").status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.patch(non_existent_url, {"name": "Ghost"}, format="json").status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.delete(non_existent_url).status_code, status.HTTP_404_NOT_FOUND)
+
+        non_existent_star_url = reverse("api:techstack-star", args=[999999])
+        self.client.force_authenticate(user=self.visitor)
+        self.assertEqual(self.client.post(non_existent_star_url).status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_guest_and_visitor_cannot_write_and_db_remains_intact(self):
+        """Ensure anonymous visitors and regular users cannot perform mutating operations (403),
+        and verify database integrity is completely preserved after EVERY rejected mutation.
+        """
+        for user in (None, self.visitor):
+            self.client.force_authenticate(user=user)
+
+            # POST rejected
+            res_post = self.client.post(self.list_url, self.payload, format="json")
+            self.assertEqual(res_post.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertEqual(TechStack.objects.count(), 3)
+            self.assertFalse(TechStack.objects.filter(name="TypeScript").exists())
+
+            # PUT rejected
+            res_put = self.client.put(self.detail_url, self.payload, format="json")
+            self.assertEqual(res_put.status_code, status.HTTP_403_FORBIDDEN)
+            self.ts_python.refresh_from_db()
+            self.assertEqual(self.ts_python.name, "Python")
+
+            # PATCH rejected
+            res_patch = self.client.patch(self.detail_url, {"name": "Unauthorized"}, format="json")
+            self.assertEqual(res_patch.status_code, status.HTTP_403_FORBIDDEN)
+            self.ts_python.refresh_from_db()
+            self.assertEqual(self.ts_python.name, "Python")
+
+            # DELETE rejected
+            res_del = self.client.delete(self.detail_url)
+            self.assertEqual(res_del.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertEqual(TechStack.objects.count(), 3)
+            self.assertTrue(TechStack.objects.filter(pk=self.ts_python.id).exists())
+
+    def test_owner_can_create_update_delete(self):
+        """Verify superuser can create, update (PUT/PATCH), and delete tech stacks."""
+        self.client.force_authenticate(user=self.owner)
+
+        # Create
+        res_create = self.client.post(self.list_url, self.payload, format="json")
+        self.assertEqual(res_create.status_code, status.HTTP_201_CREATED)
+        new_id = res_create.data["id"]
+        self.assertTrue(isinstance(new_id, int))
+        self.assertTrue(TechStack.objects.filter(pk=new_id).exists())
+        self.assertEqual(TechStack.objects.count(), 4)
+
+        new_detail_url = reverse("api:techstack-detail", args=[new_id])
+
+        # PATCH update
+        res_patch = self.client.patch(new_detail_url, {"filename": "types.d.ts"}, format="json")
+        self.assertEqual(res_patch.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_patch.data["filename"], "types.d.ts")
+
+        # PUT update
+        updated_payload = {
+            "name": "TypeScript Pro",
+            "icon_url": "http://cdn.example.com/ts.svg",
+            "filename": "types.d.ts",
+            "code_snippet": "const x: number = 42;",
+            "order": 4,
+        }
+        res_put = self.client.put(new_detail_url, updated_payload, format="json")
+        self.assertEqual(res_put.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_put.data["name"], "TypeScript Pro")
+        self.assertEqual(res_put.data["icon_url"], "http://cdn.example.com/ts.svg")
+
+        # DELETE
+        res_delete = self.client.delete(new_detail_url)
+        self.assertEqual(res_delete.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(res_delete.content, b"")
+        self.assertFalse(TechStack.objects.filter(pk=new_id).exists())
+        self.assertEqual(TechStack.objects.count(), 3)
+
+    def test_editor_can_put_and_patch_but_cannot_create_or_delete(self):
+        """Verify Editor role can update via PUT and PATCH, but POST create and DELETE are forbidden."""
+        self.client.force_authenticate(user=self.editor)
+
+        # Editor cannot create new tech stack
+        res_post = self.client.post(self.list_url, self.payload, format="json")
+        self.assertEqual(res_post.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(TechStack.objects.count(), 3)
+        self.assertFalse(TechStack.objects.filter(name="TypeScript").exists())
+
+        # Editor can PATCH existing tech stack
+        res_patch = self.client.patch(self.detail_url, {"filename": "main.py"}, format="json")
+        self.assertEqual(res_patch.status_code, status.HTTP_200_OK)
+        self.ts_python.refresh_from_db()
+        self.assertEqual(self.ts_python.filename, "main.py")
+
+        # Editor can PUT existing tech stack
+        put_payload = {
+            "name": "Python 3",
+            "icon_url": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg",
+            "filename": "main.py",
+            "code_snippet": "print('Updated by Editor')\n",
+            "order": 1,
+        }
+        res_put = self.client.put(self.detail_url, put_payload, format="json")
+        self.assertEqual(res_put.status_code, status.HTTP_200_OK)
+        self.ts_python.refresh_from_db()
+        self.assertEqual(self.ts_python.name, "Python 3")
+        self.assertEqual(self.ts_python.code_snippet, "print('Updated by Editor')\n")
+
+        # Editor cannot DELETE tech stack
+        res_del = self.client.delete(self.detail_url)
+        self.assertEqual(res_del.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(TechStack.objects.count(), 3)
+        self.assertTrue(TechStack.objects.filter(pk=self.ts_python.id).exists())
+
+    def test_text_validation_and_sanitization(self):
+        """Verify plain text fields (name, filename) are sanitized, empty values or invalid types
+        are rejected, and database remains unchanged after every failed validation.
+        """
+        self.client.force_authenticate(user=self.owner)
+
+        invalid_cases = [
+            {"name": "   "},
+            {"name": "<b>  </b>"},
+            {"filename": "   "},
+            {"filename": "<i></i>"},
+            {"code_snippet": "   "},
+            {"order": "invalid_integer"},
+            {"order": None},
+        ]
+        for invalid_field in invalid_cases:
+            with self.subTest(invalid_field=invalid_field):
+                initial_count = TechStack.objects.count()
+                res = self.client.post(self.list_url, {**self.payload, **invalid_field}, format="json")
+                self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertEqual(TechStack.objects.count(), initial_count)
+
+        # Sanitization: plain text fields stripped of HTML tags
+        payload_with_html = {
+            "name": "<b>Go Lang</b>",
+            "icon_url": "https://example.com/golang.svg",
+            "filename": "<i>main.go</i>",
+            "code_snippet": "package main\n\nfunc main() {\n    println(\"Hello\")\n}\n",
+            "order": 5,
+        }
+        res_create = self.client.post(self.list_url, payload_with_html, format="json")
+        self.assertEqual(res_create.status_code, status.HTTP_201_CREATED)
+
+        created_ts = TechStack.objects.get(pk=res_create.data["id"])
+        self.assertEqual(created_ts.name, "Go Lang")
+        self.assertEqual(created_ts.filename, "main.go")
+        self.assertEqual(created_ts.order, 5)
+
+    def test_icon_url_scheme_validation(self):
+        """Ensure icon_url permits only http and https schemes and strictly rejects other schemes."""
+        self.client.force_authenticate(user=self.owner)
+
+        # Rejected schemes: ftp, ftps, javascript, data, file
+        for bad_url in [
+            "ftp://example.com/icon.svg",
+            "ftps://example.com/icon.svg",
+            "javascript:alert('xss')",
+            "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=",
+            "file:///etc/passwd",
+            "not-a-valid-url",
+        ]:
+            with self.subTest(bad_url=bad_url):
+                initial_count = TechStack.objects.count()
+                res = self.client.post(self.list_url, {**self.payload, "icon_url": bad_url}, format="json")
+                self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertEqual(TechStack.objects.count(), initial_count)
+
+        # Permitted schemes: http and https
+        for good_url in [
+            "http://example.com/icon.png",
+            "https://cdn.example.org/icon.svg",
+        ]:
+            with self.subTest(good_url=good_url):
+                res = self.client.post(
+                    self.list_url,
+                    {**self.payload, "name": f"Valid-{good_url[:5]}", "icon_url": good_url},
+                    format="json",
+                )
+                self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+                self.assertEqual(res.data["icon_url"], good_url)
+
+    def test_code_snippet_preserves_operators_tags_and_whitespace_exactly(self):
+        """Ensure code_snippet preserves <, >, script tags, leading indentation, trailing spaces,
+        and newlines exactly as raw code without trimming or tag stripping.
+        """
+        self.client.force_authenticate(user=self.owner)
+        exact_code = (
+            "    def complex_fn(a, b):\n"
+            "        if a < b and b > 0:\n"
+            "            <script>alert('test')</script>\n"
+            "            return a << 2    \n"
+        )
+        payload = {
+            "name": "RawCodeLanguage",
+            "icon_url": "https://example.com/lang.svg",
+            "filename": "code.sample",
+            "code_snippet": exact_code,
+            "order": 10,
+        }
+        response = self.client.post(self.list_url, payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["code_snippet"], exact_code)
+
+        created_obj = TechStack.objects.get(pk=response.data["id"])
+        self.assertEqual(created_obj.code_snippet, exact_code)
+
+        # Verify detail endpoint round-trip returns exact code
+        detail_res = self.client.get(reverse("api:techstack-detail", args=[created_obj.id]))
+        self.assertEqual(detail_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(detail_res.data["code_snippet"], exact_code)
+
+    def test_star_requires_login_and_double_toggle_all_authenticated_roles(self):
+        """Ensure anonymous user cannot star, and test two consecutive toggles (star then unstar)
+        for visitor, editor, and superuser individually, verifying DB relations and counters.
+        """
+        # Unauthenticated star attempt rejected
+        self.client.force_authenticate(user=None)
+        res_anon = self.client.post(self.star_url)
+        self.assertEqual(res_anon.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.ts_python.starred_by.count(), 0)
+
+        # Test double toggle for each authenticated role: (visitor, editor, owner)
+        for user_role in (self.visitor, self.editor, self.owner):
+            with self.subTest(user_role=user_role.username):
+                self.client.force_authenticate(user=user_role)
+
+                # Toggle 1: Star
+                res1 = self.client.post(self.star_url)
+                self.assertEqual(res1.status_code, status.HTTP_200_OK)
+                self.assertTrue(res1.data["is_starred"])
+                self.assertEqual(res1.data["star_count"], 1)
+                self.assertIn(user_role.username, res1.data["starred_by_names"])
+                self.assertEqual(self.ts_python.starred_by.count(), 1)
+                self.assertTrue(self.ts_python.starred_by.filter(pk=user_role.pk).exists())
+
+                # Toggle 2: Unstar
+                res2 = self.client.post(self.star_url)
+                self.assertEqual(res2.status_code, status.HTTP_200_OK)
+                self.assertFalse(res2.data["is_starred"])
+                self.assertEqual(res2.data["star_count"], 0)
+                self.assertEqual(res2.data["starred_by_names"], "")
+                self.assertEqual(self.ts_python.starred_by.count(), 0)
+                self.assertFalse(self.ts_python.starred_by.filter(pk=user_role.pk).exists())
+
+    def test_star_actor_cannot_be_forged_and_concurrent_stars_accumulate(self):
+        """Verify star toggling always uses request.user even if forged body is sent,
+        and multiple roles can star concurrently.
+        """
+        # Editor stars with forged payload attempting to set owner as star actor
+        self.client.force_authenticate(user=self.editor)
+        res_editor = self.client.post(
+            self.star_url,
+            {"user": self.owner.id, "user_id": self.owner.id, "actor": "owner"},
+            format="json",
+        )
+        self.assertEqual(res_editor.status_code, status.HTTP_200_OK)
+        self.assertTrue(res_editor.data["is_starred"])
+        self.assertEqual(res_editor.data["star_count"], 1)
+        self.assertIn(self.editor.username, res_editor.data["starred_by_names"])
+        self.assertNotIn(self.owner.username, res_editor.data["starred_by_names"])
+        self.assertTrue(self.ts_python.starred_by.filter(pk=self.editor.pk).exists())
+        self.assertFalse(self.ts_python.starred_by.filter(pk=self.owner.pk).exists())
+
+        # Superuser stars
+        self.client.force_authenticate(user=self.owner)
+        res_owner = self.client.post(self.star_url)
+        self.assertEqual(res_owner.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_owner.data["star_count"], 2)
+        self.assertTrue(res_owner.data["is_starred"])
+        self.assertIn(self.owner.username, res_owner.data["starred_by_names"])
+        self.assertIn(self.editor.username, res_owner.data["starred_by_names"])
+        self.assertEqual(self.ts_python.starred_by.count(), 2)
+
+    def test_computed_fields_and_id_are_read_only_on_create_and_update(self):
+        """Verify computed star fields and ID cannot be manipulated via request payload
+        neither during creation nor during PUT/PATCH updates, and database remains uncorrupted.
+        """
+        self.client.force_authenticate(user=self.owner)
+        forged_create_payload = {
+            **self.payload,
+            "id": 8888,
+            "star_count": 9999,
+            "is_starred": True,
+            "starred_by_names": "fake_owner, fake_visitor",
+            "starred_by": [self.visitor.id],
+        }
+        res_create = self.client.post(self.list_url, forged_create_payload, format="json")
+        self.assertEqual(res_create.status_code, status.HTTP_201_CREATED)
+        self.assertNotEqual(res_create.data["id"], 8888)
+        self.assertEqual(res_create.data["star_count"], 0)
+        self.assertFalse(res_create.data["is_starred"])
+        self.assertEqual(res_create.data["starred_by_names"], "")
+
+        created_id = res_create.data["id"]
+        created_obj = TechStack.objects.get(pk=created_id)
+        self.assertEqual(created_obj.starred_by.count(), 0)
+
+        # Forged payload during PATCH
+        forged_patch_payload = {
+            "id": 9999,
+            "star_count": 500,
+            "is_starred": True,
+            "starred_by_names": "hacker",
+            "filename": "patched.py",
+        }
+        detail_url = reverse("api:techstack-detail", args=[created_id])
+        res_patch = self.client.patch(detail_url, forged_patch_payload, format="json")
+        self.assertEqual(res_patch.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_patch.data["id"], created_id)
+        self.assertEqual(res_patch.data["star_count"], 0)
+        self.assertFalse(res_patch.data["is_starred"])
+        self.assertEqual(res_patch.data["starred_by_names"], "")
+
+        created_obj.refresh_from_db()
+        self.assertEqual(created_obj.id, created_id)
+        self.assertEqual(created_obj.filename, "patched.py")
+        self.assertEqual(created_obj.starred_by.count(), 0)
+
+    def test_wrong_method(self):
+        """Verify unsupported HTTP method on collection endpoint returns 405 Method Not Allowed."""
+        self.client.force_authenticate(user=self.owner)
+        response = self.client.delete(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        star_get = self.client.get(self.star_url)
+        self.assertEqual(star_get.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_session_write_without_csrf_is_rejected(self):
+        """Ensure modifying operations without CSRF token are strictly rejected (HTTP 403)
+        when SessionAuthentication is enforced, preserving database state.
+        """
+        client = APIClient(enforce_csrf_checks=True)
+        self.assertTrue(client.login(username="owner", password="test-password"))
+
+        post_res = client.post(self.list_url, self.payload, format="json")
+        self.assertEqual(post_res.status_code, status.HTTP_403_FORBIDDEN)
+
+        put_res = client.put(self.detail_url, self.payload, format="json")
+        self.assertEqual(put_res.status_code, status.HTTP_403_FORBIDDEN)
+
+        patch_res = client.patch(self.detail_url, {"name": "NoCSRF"}, format="json")
+        self.assertEqual(patch_res.status_code, status.HTTP_403_FORBIDDEN)
+
+        del_res = client.delete(self.detail_url)
+        self.assertEqual(del_res.status_code, status.HTTP_403_FORBIDDEN)
+
+        star_res = client.post(self.star_url)
+        self.assertEqual(star_res.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Confirm DB was not touched
+        self.assertEqual(TechStack.objects.count(), 3)
+        self.ts_python.refresh_from_db()
+        self.assertEqual(self.ts_python.name, "Python")
+        self.assertEqual(self.ts_python.starred_by.count(), 0)
+
+    def test_session_write_with_csrf_succeeds(self):
+        """Ensure session-authenticated write succeeds when legitimate CSRF token is provided."""
+        client = APIClient(enforce_csrf_checks=True)
+        self.assertTrue(client.login(username="owner", password="test-password"))
+
+        # Fetch collection page to populate csrftoken cookie
+        page = client.get(self.list_url, HTTP_ACCEPT="text/html")
+        self.assertEqual(page.status_code, status.HTTP_200_OK)
+        token = client.cookies["csrftoken"].value
+
+        # POST with CSRF
+        response = client.post(
+            self.list_url,
+            self.payload,
+            format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(TechStack.objects.count(), 4)
+        created_id = response.data["id"]
+        detail_url = reverse("api:techstack-detail", args=[created_id])
+
+        # PUT with CSRF
+        put_res = client.put(
+            detail_url,
+            {**self.payload, "name": "TypeScript Enterprise"},
+            format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+        self.assertEqual(put_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(put_res.data["name"], "TypeScript Enterprise")
+
+        # Star toggle with CSRF
+        star_url = reverse("api:techstack-star", args=[created_id])
+        star_res = client.post(star_url, HTTP_X_CSRFTOKEN=token)
+        self.assertEqual(star_res.status_code, status.HTTP_200_OK)
+        self.assertTrue(star_res.data["is_starred"])
+
+        # DELETE with CSRF
+        del_res = client.delete(detail_url, HTTP_X_CSRFTOKEN=token)
+        self.assertEqual(del_res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(TechStack.objects.count(), 3)
+
+    def test_editor_session_with_csrf_can_patch_but_delete_is_forbidden(self):
+        """Ensure Editor using session and valid CSRF token can PATCH data,
+        but DELETE remains strictly forbidden due to RBAC permissions.
+        """
+        client = APIClient(enforce_csrf_checks=True)
+        self.assertTrue(client.login(username="editor", password="test-password"))
+
+        page = client.get(self.list_url, HTTP_ACCEPT="text/html")
+        self.assertEqual(page.status_code, status.HTTP_200_OK)
+        token = client.cookies["csrftoken"].value
+
+        # Editor PATCH with CSRF succeeds
+        patch_res = client.patch(
+            self.detail_url,
+            {"filename": "script_csrf.py"},
+            format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+        self.assertEqual(patch_res.status_code, status.HTTP_200_OK)
+        self.ts_python.refresh_from_db()
+        self.assertEqual(self.ts_python.filename, "script_csrf.py")
+
+        # Editor DELETE with CSRF is forbidden by RBAC
+        del_res = client.delete(self.detail_url, HTTP_X_CSRFTOKEN=token)
+        self.assertEqual(del_res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(TechStack.objects.count(), 3)
+        self.assertTrue(TechStack.objects.filter(pk=self.ts_python.id).exists())
