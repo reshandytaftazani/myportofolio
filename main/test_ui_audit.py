@@ -7,6 +7,7 @@ import json
 import os
 import importlib.util
 import unittest
+import re
 from pathlib import Path
 from html.parser import HTMLParser
 
@@ -97,7 +98,7 @@ class UIPlanBrowserTests(StaticLiveServerTestCase):
     def test_project_background_refresh_does_not_shift_existing_grid(self):
         from playwright.sync_api import expect
         pending = []
-        self.context.route('**/api/**projects/**', lambda route: pending.append(route))
+        self.context.route(re.compile(r'/api/v1/projects/(?:\?[^#]*)?$'), lambda route: pending.append(route))
         self.page.set_viewport_size({'width': 390, 'height': 844})
         self.goto('/projects/')
         expect(self.page.locator('body')).to_have_attribute('data-desktop-ready', '')
