@@ -161,6 +161,7 @@
   max-width: var(--experience-reading-width);
   padding-left: var(--experience-gutter);
   margin: 0 auto;
+  min-height: 1px;
 }
 /* Each segment connects two indicator centers, including when details expand. */
 #experience .timeline-container::before { content: none; }
