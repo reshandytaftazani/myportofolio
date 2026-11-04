@@ -100,7 +100,7 @@ class ProjectsLayoutBrowserTests(StaticLiveServerTestCase):
         expect(self.page.locator('#grid .project-media-placeholder')).to_have_count(1)
         self.context.unroute('**/gallery-preview.svg')
         self.context.route('**/gallery-preview.svg*', lambda route: route.abort())
-        self.page.locator('[data-filter="Web"]').click()
+        self.page.locator('#projects [data-filter="Web"]').click()
         expect(self.page.locator('#grid .project-card')).to_have_count(1)
         self.page.locator('#grid .project-image').evaluate('img => img.src += "?failed=1"')
         expect(self.page.locator('#grid .project-media .image-fallback')).to_be_visible()
