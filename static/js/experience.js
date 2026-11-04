@@ -434,7 +434,9 @@
         }
         await fetchExperiences();
         if (errorState?.classList.contains('hide')) {
-            searchInput?.focus({ preventScroll: true });
+            const target = grid?.classList.contains('hide') ? emptyState : grid;
+            target?.setAttribute('tabindex', '-1');
+            target?.focus({ preventScroll: true });
         }
     });
 
