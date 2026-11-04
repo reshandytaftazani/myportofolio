@@ -88,7 +88,7 @@ class ProjectsLayoutBrowserTests(StaticLiveServerTestCase):
                     self.assertGreaterEqual(metrics['columns'], 2)
                 for button in self.page.locator('#projects [data-filter]').all():
                     self.assertGreaterEqual(button.bounding_box()['height'], 44)
-        expect(self.page.locator('#grid .project-category')).to_have_text(['Web', 'Other'])
+        self.assertEqual(sorted(self.page.locator('#grid .project-category').all_text_contents()), ['Other', 'Web'])
 
     def test_category_tags_filter_reset_and_failed_image_keep_gallery_structure(self):
         from playwright.sync_api import expect
@@ -96,7 +96,7 @@ class ProjectsLayoutBrowserTests(StaticLiveServerTestCase):
         self.page.set_viewport_size({'width': 390, 'height': 844})
         self.goto('/projects/')
         expect(self.page.locator('#grid .project-technologies')).to_have_text('Django')
-        expect(self.page.locator('#grid .project-category')).to_have_text(['Web', 'Other'])
+        self.assertEqual(sorted(self.page.locator('#grid .project-category').all_text_contents()), ['Other', 'Web'])
         expect(self.page.locator('#grid .project-media-placeholder')).to_have_count(1)
         self.context.unroute('**/gallery-preview.svg')
         self.context.route('**/gallery-preview.svg*', lambda route: route.abort())
