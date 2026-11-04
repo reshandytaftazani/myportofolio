@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from main.models import Experience, Project, Skill
+from main.models import Education, Experience, Project, Skill
 
 
 class ProjectAPITest(APITestCase):
@@ -893,3 +893,429 @@ class SkillAPITest(APITestCase):
         self.assertEqual(Skill.objects.count(), 2)
         self.assertTrue(Skill.objects.filter(pk=self.skill.id).exists())
 
+
+class EducationAPITest(APITestCase):
+    def setUp(self):
+        self.owner = User.objects.create_superuser(
+            username="owner", password="test-password", email="owner@example.com",
+        )
+        self.visitor = User.objects.create_user(
+            username="visitor", password="test-password",
+        )
+        self.editor = User.objects.create_user(
+            username="editor", password="test-password",
+        )
+        self.editor_group, _ = Group.objects.get_or_create(name="Editor")
+        self.editor.groups.add(self.editor_group)
+
+        # Create two educations with same start_year to test tie-breaker id ordering
+        # Meta ordering is ['-start_year'], API ordering is ['-start_year', 'id']
+        self.edu_ui = Education.objects.create(
+            school_name="Universitas Indonesia",
+            period="2023 - 2027",
+            detail="Undergraduate Computer Science Program.",
+            start_year=2023,
+        )
+        self.edu_itb = Education.objects.create(
+            school_name="Institut Teknologi Bandung",
+            period="2023 - 2027",
+            detail="Exchange program in software engineering.",
+            start_year=2023,
+        )
+        self.edu_sma = Education.objects.create(
+            school_name="SMAN 1 Jakarta",
+            period="2020 - 2023",
+            detail="High School Diploma in Natural Sciences.",
+            start_year=2020,
+        )
+
+        self.list_url = reverse("api:education-list")
+        self.detail_url = reverse("api:education-detail", args=[self.edu_ui.id])
+        self.star_url = reverse("api:education-star", args=[self.edu_ui.id])
+        self.payload = {
+            "school_name": "National University of Singapore",
+            "period": "2024 - 2025",
+            "detail": "Academic exchange scholarship.",
+            "start_year": 2024,
+        }
+
+    def test_public_list_and_detail(self):
+        """Test unauthenticated public access to education list and detail endpoints."""
+        for client_user in (None, self.visitor, self.editor, self.owner):
+            self.client.force_authenticate(user=client_user)
+            response = self.client.get(self.list_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(response.data), 3)
+
+            # Check explicit fields contract
+            item = next((x for x in response.data if x["id"] == self.edu_ui.id), None)
+            self.assertIsNotNone(item)
+            self.assertEqual(item["school_name"], "Universitas Indonesia")
+            self.assertEqual(item["period"], "2023 - 2027")
+            self.assertEqual(item["detail"], "Undergraduate Computer Science Program.")
+            self.assertEqual(item["start_year"], 2023)
+            self.assertEqual(item["star_count"], 0)
+            self.assertFalse(item["is_starred"])
+            self.assertEqual(item["starred_by_names"], "")
+            self.assertNotIn("fields", item)
+
+            detail_res = self.client.get(self.detail_url)
+            self.assertEqual(detail_res.status_code, status.HTTP_200_OK)
+            self.assertEqual(detail_res.data["id"], self.edu_ui.id)
+            self.assertEqual(detail_res.data["school_name"], "Universitas Indonesia")
+
+        # Check OPTIONS method works
+        self.client.force_authenticate(user=None)
+        options_res = self.client.options(self.detail_url)
+        self.assertEqual(options_res.status_code, status.HTTP_200_OK)
+
+    def test_search_and_ordering(self):
+        """Test searching by school_name (match / no match) and ordering (-start_year, id)."""
+        # 1. Search match substring case-insensitive
+        res_match = self.client.get(self.list_url, {"school_name": "universitas"})
+        self.assertEqual(res_match.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_match.data), 1)
+        self.assertEqual(res_match.data[0]["school_name"], "Universitas Indonesia")
+
+        res_match_upper = self.client.get(self.list_url, {"school_name": "TEKNOLOGI"})
+        self.assertEqual(res_match_upper.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_match_upper.data), 1)
+        self.assertEqual(res_match_upper.data[0]["school_name"], "Institut Teknologi Bandung")
+
+        # 2. Search no match
+        res_none = self.client.get(self.list_url, {"school_name": "Oxford University"})
+        self.assertEqual(res_none.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_none.data, [])
+
+        # 3. Test empty list
+        Education.objects.all().delete()
+        res_empty = self.client.get(self.list_url)
+        self.assertEqual(res_empty.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_empty.data, [])
+
+        # 4. Recreate fixtures with distinct and tie-breaker years
+        e1 = Education.objects.create(
+            school_name="Alpha Academy",
+            period="2023",
+            detail="Detail 1",
+            start_year=2023,
+        )
+        e2 = Education.objects.create(
+            school_name="Beta College",
+            period="2023",
+            detail="Detail 2",
+            start_year=2023,
+        )
+        e3 = Education.objects.create(
+            school_name="Gamma High",
+            period="2021",
+            detail="Detail 3",
+            start_year=2021,
+        )
+        e4 = Education.objects.create(
+            school_name="Delta Primary",
+            period="2025",
+            detail="Detail 4",
+            start_year=2025,
+        )
+
+        res_order = self.client.get(self.list_url)
+        self.assertEqual(res_order.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_order.data), 4)
+
+        # Ordering should be -start_year, id:
+        # e4 (2025) first, then e1 (2023, id smaller), then e2 (2023, id larger), then e3 (2021)
+        self.assertLess(e1.id, e2.id)
+        expected_ids = [e4.id, e1.id, e2.id, e3.id]
+        actual_ids = [item["id"] for item in res_order.data]
+        self.assertEqual(actual_ids, expected_ids)
+
+    def test_missing_education_returns_404(self):
+        """Verify 404 Not Found is returned for non-existent education IDs."""
+        non_existent_url = reverse("api:education-detail", args=[999999])
+        self.assertEqual(self.client.get(non_existent_url).status_code, status.HTTP_404_NOT_FOUND)
+
+        self.client.force_authenticate(user=self.owner)
+        self.assertEqual(self.client.put(non_existent_url, self.payload, format="json").status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.patch(non_existent_url, {"period": "2024"}, format="json").status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.delete(non_existent_url).status_code, status.HTTP_404_NOT_FOUND)
+
+        non_existent_star_url = reverse("api:education-star", args=[999999])
+        self.client.force_authenticate(user=self.visitor)
+        self.assertEqual(self.client.post(non_existent_star_url).status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_guest_and_visitor_cannot_write_and_db_remains_intact(self):
+        """Ensure anonymous visitors and regular users cannot perform mutating operations (403),
+        and verify database integrity is completely preserved.
+        """
+        for user in (None, self.visitor):
+            self.client.force_authenticate(user=user)
+            self.assertEqual(
+                self.client.post(self.list_url, self.payload, format="json").status_code,
+                status.HTTP_403_FORBIDDEN,
+            )
+            self.assertEqual(
+                self.client.put(self.detail_url, self.payload, format="json").status_code,
+                status.HTTP_403_FORBIDDEN,
+            )
+            self.assertEqual(
+                self.client.patch(self.detail_url, {"period": "Unauthorized"}, format="json").status_code,
+                status.HTTP_403_FORBIDDEN,
+            )
+            self.assertEqual(
+                self.client.delete(self.detail_url).status_code,
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        # Verify DB integrity: record count and values remain strictly untouched
+        self.assertEqual(Education.objects.count(), 3)
+        self.edu_ui.refresh_from_db()
+        self.assertEqual(self.edu_ui.school_name, "Universitas Indonesia")
+        self.assertEqual(self.edu_ui.period, "2023 - 2027")
+        self.assertEqual(self.edu_ui.detail, "Undergraduate Computer Science Program.")
+
+    def test_owner_can_create_update_delete(self):
+        """Verify superuser can create, update (PUT/PATCH), and delete educations."""
+        self.client.force_authenticate(user=self.owner)
+
+        # Create
+        res_create = self.client.post(self.list_url, self.payload, format="json")
+        self.assertEqual(res_create.status_code, status.HTTP_201_CREATED)
+        new_id = res_create.data["id"]
+        self.assertTrue(isinstance(new_id, int))
+        self.assertTrue(Education.objects.filter(pk=new_id).exists())
+        self.assertEqual(Education.objects.count(), 4)
+
+        new_detail_url = reverse("api:education-detail", args=[new_id])
+
+        # PATCH update
+        res_patch = self.client.patch(new_detail_url, {"period": "2024 - 2026"}, format="json")
+        self.assertEqual(res_patch.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_patch.data["period"], "2024 - 2026")
+
+        # PUT update
+        updated_payload = {
+            "school_name": "NUS School of Computing",
+            "period": "2024 - 2026",
+            "detail": "Updated scholarship program details.",
+            "start_year": 2024,
+        }
+        res_put = self.client.put(new_detail_url, updated_payload, format="json")
+        self.assertEqual(res_put.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_put.data["school_name"], "NUS School of Computing")
+
+        # DELETE
+        res_delete = self.client.delete(new_detail_url)
+        self.assertEqual(res_delete.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(res_delete.content, b"")
+        self.assertFalse(Education.objects.filter(pk=new_id).exists())
+        self.assertEqual(Education.objects.count(), 3)
+
+    def test_editor_can_put_and_patch_but_cannot_create_or_delete(self):
+        """Verify Editor role can update via PUT and PATCH, but POST create and DELETE are forbidden."""
+        self.client.force_authenticate(user=self.editor)
+
+        # Editor cannot create new education
+        res_post = self.client.post(self.list_url, self.payload, format="json")
+        self.assertEqual(res_post.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Education.objects.count(), 3)
+
+        # Editor can PATCH existing education
+        res_patch = self.client.patch(self.detail_url, {"detail": "Updated by Editor."}, format="json")
+        self.assertEqual(res_patch.status_code, status.HTTP_200_OK)
+        self.edu_ui.refresh_from_db()
+        self.assertEqual(self.edu_ui.detail, "Updated by Editor.")
+
+        # Editor can PUT existing education
+        put_payload = {
+            "school_name": "Universitas Indonesia - Faculty of CS",
+            "period": "2023 - 2027",
+            "detail": "Undergraduate CS with Editor Updates.",
+            "start_year": 2023,
+        }
+        res_put = self.client.put(self.detail_url, put_payload, format="json")
+        self.assertEqual(res_put.status_code, status.HTTP_200_OK)
+        self.edu_ui.refresh_from_db()
+        self.assertEqual(self.edu_ui.school_name, "Universitas Indonesia - Faculty of CS")
+        self.assertEqual(self.edu_ui.detail, "Undergraduate CS with Editor Updates.")
+
+        # Editor cannot DELETE education
+        res_del = self.client.delete(self.detail_url)
+        self.assertEqual(res_del.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Education.objects.count(), 3)
+        self.assertTrue(Education.objects.filter(pk=self.edu_ui.id).exists())
+
+    def test_text_validation_and_sanitization(self):
+        """Verify plain text fields are sanitized and empty values or invalid types are rejected."""
+        self.client.force_authenticate(user=self.owner)
+
+        # Validation failure: empty fields after strip_tags
+        for invalid_field in [
+            {"school_name": "   "},
+            {"school_name": "<b>  </b>"},
+            {"period": "   "},
+            {"period": "<i></i>"},
+            {"detail": "   "},
+            {"detail": "<p></p>"},
+            {"start_year": "invalid_integer"},
+            {"start_year": None},
+        ]:
+            res = self.client.post(self.list_url, {**self.payload, **invalid_field}, format="json")
+            self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Education.objects.count(), 3)
+
+        # Sanitization: plain text fields stripped of HTML tags
+        payload_with_html = {
+            "school_name": "<b>Harvard University</b>",
+            "period": "<i>2024 - 2028</i>",
+            "detail": "<p>Liberal Arts and Computer Science</p>",
+            "start_year": 2024,
+        }
+        res_create = self.client.post(self.list_url, payload_with_html, format="json")
+        self.assertEqual(res_create.status_code, status.HTTP_201_CREATED)
+
+        created_edu = Education.objects.get(pk=res_create.data["id"])
+        self.assertEqual(created_edu.school_name, "Harvard University")
+        self.assertEqual(created_edu.period, "2024 - 2028")
+        self.assertEqual(created_edu.detail, "Liberal Arts and Computer Science")
+        self.assertEqual(created_edu.start_year, 2024)
+
+    def test_star_requires_login_and_toggles(self):
+        """Ensure anonymous user cannot star, while authenticated users can toggle star."""
+        # Unauthenticated star attempt rejected
+        self.client.force_authenticate(user=None)
+        res_anon = self.client.post(self.star_url)
+        self.assertEqual(res_anon.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.edu_ui.starred_by.count(), 0)
+
+        # Authenticated visitor stars education
+        self.client.force_authenticate(user=self.visitor)
+        res_star = self.client.post(self.star_url)
+        self.assertEqual(res_star.status_code, status.HTTP_200_OK)
+        self.assertTrue(res_star.data["is_starred"])
+        self.assertEqual(res_star.data["star_count"], 1)
+        self.assertIn(self.visitor.username, res_star.data["starred_by_names"])
+        self.assertEqual(self.edu_ui.starred_by.count(), 1)
+
+        # Authenticated visitor unstars education
+        res_unstar = self.client.post(self.star_url)
+        self.assertEqual(res_unstar.status_code, status.HTTP_200_OK)
+        self.assertFalse(res_unstar.data["is_starred"])
+        self.assertEqual(res_unstar.data["star_count"], 0)
+        self.assertEqual(res_unstar.data["starred_by_names"], "")
+        self.assertEqual(self.edu_ui.starred_by.count(), 0)
+
+    def test_star_actor_cannot_be_forged_and_roles_can_star(self):
+        """Verify star toggling always uses request.user even if forged body is sent,
+        and all authenticated roles (regular user, editor, superuser) can toggle stars.
+        """
+        # Editor stars
+        self.client.force_authenticate(user=self.editor)
+        # Attempt to forge star actor to owner
+        res_editor = self.client.post(self.star_url, {"user": self.owner.id, "user_id": self.owner.id}, format="json")
+        self.assertEqual(res_editor.status_code, status.HTTP_200_OK)
+        self.assertTrue(res_editor.data["is_starred"])
+        self.assertEqual(res_editor.data["star_count"], 1)
+        self.assertIn(self.editor.username, res_editor.data["starred_by_names"])
+        self.assertNotIn(self.owner.username, res_editor.data["starred_by_names"])
+        self.assertTrue(self.edu_ui.starred_by.filter(pk=self.editor.pk).exists())
+        self.assertFalse(self.edu_ui.starred_by.filter(pk=self.owner.pk).exists())
+
+        # Superuser stars
+        self.client.force_authenticate(user=self.owner)
+        res_owner = self.client.post(self.star_url)
+        self.assertEqual(res_owner.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_owner.data["star_count"], 2)
+        self.assertTrue(res_owner.data["is_starred"])
+        self.assertIn(self.owner.username, res_owner.data["starred_by_names"])
+        self.assertIn(self.editor.username, res_owner.data["starred_by_names"])
+
+    def test_computed_fields_are_read_only(self):
+        """Verify computed star fields cannot be manipulated via request payload."""
+        self.client.force_authenticate(user=self.owner)
+        forged_payload = {
+            **self.payload,
+            "star_count": 9999,
+            "is_starred": True,
+            "starred_by_names": "fake_owner, fake_visitor",
+            "starred_by": [self.visitor.id],
+        }
+        response = self.client.post(self.list_url, forged_payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["star_count"], 0)
+        self.assertFalse(response.data["is_starred"])
+        self.assertEqual(response.data["starred_by_names"], "")
+
+    def test_wrong_method(self):
+        """Verify unsupported HTTP method on collection endpoint returns 405 Method Not Allowed."""
+        self.client.force_authenticate(user=self.owner)
+        response = self.client.delete(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_session_write_without_csrf_is_rejected(self):
+        """Ensure modifying operations without CSRF token are strictly rejected (HTTP 403)
+        when SessionAuthentication is enforced, preserving database state.
+        """
+        client = APIClient(enforce_csrf_checks=True)
+        self.assertTrue(client.login(username="owner", password="test-password"))
+
+        post_res = client.post(self.list_url, self.payload, format="json")
+        self.assertEqual(post_res.status_code, status.HTTP_403_FORBIDDEN)
+
+        put_res = client.put(self.detail_url, self.payload, format="json")
+        self.assertEqual(put_res.status_code, status.HTTP_403_FORBIDDEN)
+
+        del_res = client.delete(self.detail_url)
+        self.assertEqual(del_res.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Confirm DB was not touched
+        self.assertEqual(Education.objects.count(), 3)
+        self.edu_ui.refresh_from_db()
+        self.assertEqual(self.edu_ui.school_name, "Universitas Indonesia")
+
+    def test_session_write_with_csrf_succeeds(self):
+        """Ensure session-authenticated write succeeds when legitimate CSRF token is provided."""
+        client = APIClient(enforce_csrf_checks=True)
+        self.assertTrue(client.login(username="owner", password="test-password"))
+
+        # Fetch collection page to populate csrftoken cookie
+        page = client.get(self.list_url, HTTP_ACCEPT="text/html")
+        self.assertEqual(page.status_code, status.HTTP_200_OK)
+        token = client.cookies["csrftoken"].value
+
+        response = client.post(
+            self.list_url,
+            self.payload,
+            format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Education.objects.count(), 4)
+
+    def test_editor_session_with_csrf_can_patch_but_delete_is_forbidden(self):
+        """Ensure Editor using session and valid CSRF token can PATCH data,
+        but DELETE remains strictly forbidden due to RBAC permissions.
+        """
+        client = APIClient(enforce_csrf_checks=True)
+        self.assertTrue(client.login(username="editor", password="test-password"))
+
+        page = client.get(self.list_url, HTTP_ACCEPT="text/html")
+        self.assertEqual(page.status_code, status.HTTP_200_OK)
+        token = client.cookies["csrftoken"].value
+
+        # Editor PATCH with CSRF succeeds
+        patch_res = client.patch(
+            self.detail_url,
+            {"period": "2023 - 2028 (CSRF Patch)"},
+            format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+        self.assertEqual(patch_res.status_code, status.HTTP_200_OK)
+        self.edu_ui.refresh_from_db()
+        self.assertEqual(self.edu_ui.period, "2023 - 2028 (CSRF Patch)")
+
+        # Editor DELETE with CSRF is forbidden by RBAC
+        del_res = client.delete(self.detail_url, HTTP_X_CSRFTOKEN=token)
+        self.assertEqual(del_res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Education.objects.count(), 3)
+        self.assertTrue(Education.objects.filter(pk=self.edu_ui.id).exists())

@@ -4,7 +4,7 @@ from typing import Any, Optional
 from django.utils.html import strip_tags
 from rest_framework import serializers
 
-from main.models import Experience, Project, Skill
+from main.models import Education, Experience, Project, Skill
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -229,4 +229,62 @@ class SkillSerializer(serializers.ModelSerializer):
 
     def get_starred_by_names(self, obj: Skill) -> str:
         """Return comma-separated usernames who starred this skill without exposing sensitive data."""
+        return ", ".join(user.username for user in obj.starred_by.all())
+
+
+class EducationSerializer(serializers.ModelSerializer):
+    """Serializer for Education model with computed stars, RBAC safety, and HTML sanitization."""
+
+    star_count = serializers.SerializerMethodField()
+    is_starred = serializers.SerializerMethodField()
+    starred_by_names = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Education
+        fields = [
+            "id",
+            "school_name",
+            "period",
+            "detail",
+            "start_year",
+            "star_count",
+            "is_starred",
+            "starred_by_names",
+        ]
+        read_only_fields = ["id"]
+
+    def validate_school_name(self, value: str) -> str:
+        """Sanitize and validate that school name is not empty after stripping HTML."""
+        value = strip_tags(value).strip()
+        if not value:
+            raise serializers.ValidationError("School name cannot be empty.")
+        return value
+
+    def validate_period(self, value: str) -> str:
+        """Sanitize and validate that period is not empty after stripping HTML."""
+        value = strip_tags(value).strip()
+        if not value:
+            raise serializers.ValidationError("Period cannot be empty.")
+        return value
+
+    def validate_detail(self, value: str) -> str:
+        """Sanitize and validate that detail is not empty after stripping HTML."""
+        value = strip_tags(value).strip()
+        if not value:
+            raise serializers.ValidationError("Detail cannot be empty.")
+        return value
+
+    def get_star_count(self, obj: Education) -> int:
+        """Return total number of users who starred this education record."""
+        return obj.starred_by.count()
+
+    def get_is_starred(self, obj: Education) -> bool:
+        """Determine whether current authenticated user has starred this education record."""
+        request = self.context.get("request")
+        if request is None or not request.user.is_authenticated:
+            return False
+        return request.user in obj.starred_by.all()
+
+    def get_starred_by_names(self, obj: Education) -> str:
+        """Return comma-separated usernames who starred this education record without exposing sensitive data."""
         return ", ".join(user.username for user in obj.starred_by.all())
