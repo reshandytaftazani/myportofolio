@@ -4,7 +4,8 @@ from typing import Any, Optional
 from django.utils.html import strip_tags
 from rest_framework import serializers
 
-from main.models import Education, Experience, Project, Skill
+from urllib.parse import urlsplit
+from main.models import Education, Experience, Project, Skill, TechStack
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -287,4 +288,73 @@ class EducationSerializer(serializers.ModelSerializer):
 
     def get_starred_by_names(self, obj: Education) -> str:
         """Return comma-separated usernames who starred this education record without exposing sensitive data."""
+        return ", ".join(user.username for user in obj.starred_by.all())
+
+
+class TechStackSerializer(serializers.ModelSerializer):
+    """Serializer for TechStack model with computed stars, RBAC safety, and input validation."""
+
+    code_snippet = serializers.CharField(
+        trim_whitespace=False,
+        help_text="Contoh kode program",
+    )
+    star_count = serializers.SerializerMethodField()
+    is_starred = serializers.SerializerMethodField()
+    starred_by_names = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TechStack
+        fields = [
+            "id",
+            "name",
+            "icon_url",
+            "filename",
+            "code_snippet",
+            "order",
+            "star_count",
+            "is_starred",
+            "starred_by_names",
+        ]
+        read_only_fields = ["id"]
+
+    def validate_name(self, value: str) -> str:
+        """Sanitize plain text name and reject if empty after stripping tags."""
+        value = strip_tags(value).strip()
+        if not value:
+            raise serializers.ValidationError("Name cannot be empty.")
+        return value
+
+    def validate_filename(self, value: str) -> str:
+        """Sanitize plain text filename and reject if empty after stripping tags."""
+        value = strip_tags(value).strip()
+        if not value:
+            raise serializers.ValidationError("Filename cannot be empty.")
+        return value
+
+    def validate_icon_url(self, value: str) -> str:
+        """Validate that icon_url uses http or https scheme only."""
+        scheme = urlsplit(value).scheme.lower()
+        if scheme not in {"http", "https"}:
+            raise serializers.ValidationError("Only http and https schemes are permitted for icon_url.")
+        return value
+
+    def validate_code_snippet(self, value: str) -> str:
+        """Validate code snippet is not empty while preserving raw code content exactly."""
+        if not value.strip():
+            raise serializers.ValidationError("Code snippet cannot be empty.")
+        return value
+
+    def get_star_count(self, obj: TechStack) -> int:
+        """Return total number of users who starred this tech stack."""
+        return obj.starred_by.count()
+
+    def get_is_starred(self, obj: TechStack) -> bool:
+        """Determine whether current authenticated user has starred this tech stack."""
+        request = self.context.get("request")
+        if request is None or not request.user.is_authenticated:
+            return False
+        return request.user in obj.starred_by.all()
+
+    def get_starred_by_names(self, obj: TechStack) -> str:
+        """Return comma-separated usernames who starred this tech stack without exposing sensitive data."""
         return ", ".join(user.username for user in obj.starred_by.all())
