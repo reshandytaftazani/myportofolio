@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from main.models import Experience, Project
+from main.models import Experience, Project, Skill
 
 
 class ProjectAPITest(APITestCase):
@@ -523,3 +523,373 @@ class ExperienceAPITest(APITestCase):
 
 # Backward compatibility alias
 EditorRoleAPITest = ExperienceAPITest
+
+
+class SkillAPITest(APITestCase):
+    def setUp(self):
+        self.owner = User.objects.create_superuser(
+            username="owner", password="test-password", email="owner@example.com",
+        )
+        self.visitor = User.objects.create_user(
+            username="visitor", password="test-password",
+        )
+        self.editor = User.objects.create_user(
+            username="editor", password="test-password",
+        )
+        self.editor_group, _ = Group.objects.get_or_create(name="Editor")
+        self.editor.groups.add(self.editor_group)
+
+        self.skill = Skill.objects.create(
+            title="Django REST Framework",
+            description="Building robust RESTful APIs in Python.",
+            level="Advanced",
+            code_snippet="def get_queryset(self):\n    return Skill.objects.filter(is_active=True)",
+        )
+        self.skill_beginner = Skill.objects.create(
+            title="Python Basics",
+            description="Introduction to Python programming syntax.",
+            level="Beginner",
+            code_snippet="for x in [1, 2, 3]:\n    if x < 2:\n        print('<div>test</div>')",
+        )
+
+        self.list_url = reverse("api:skill-list")
+        self.detail_url = reverse("api:skill-detail", args=[self.skill.id])
+        self.star_url = reverse("api:skill-star", args=[self.skill.id])
+        self.payload = {
+            "title": "PostgreSQL",
+            "description": "Relational database management and query optimization.",
+            "level": "Intermediate",
+            "code_snippet": "SELECT * FROM skills WHERE level = 'Intermediate' AND count < 10;",
+        }
+
+    def test_public_list_and_detail(self):
+        """Test unauthenticated public access to skill list and detail endpoints."""
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 2)
+
+        # Verify items contain correct fields and no Django internal 'fields' wrapper
+        found = next((item for item in response.data if item["id"] == str(self.skill.id)), None)
+        self.assertIsNotNone(found)
+        self.assertEqual(found["title"], "Django REST Framework")
+        self.assertEqual(found["description"], "Building robust RESTful APIs in Python.")
+        self.assertEqual(found["level"], "Advanced")
+        self.assertEqual(found["code_snippet"], "def get_queryset(self):\n    return Skill.objects.filter(is_active=True)")
+        self.assertFalse(found["is_starred"])
+        self.assertEqual(found["star_count"], 0)
+        self.assertEqual(found["starred_by_names"], "")
+        self.assertNotIn("fields", found)
+
+        detail_response = self.client.get(self.detail_url)
+        self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(detail_response.data["id"], str(self.skill.id))
+        self.assertEqual(detail_response.data["title"], "Django REST Framework")
+
+        options_response = self.client.options(self.detail_url)
+        self.assertEqual(options_response.status_code, status.HTTP_200_OK)
+
+    def test_search_and_filtering(self):
+        """Test searching by title and level: individually, combined, and with no results."""
+        # 1. Filter title individually
+        res_title = self.client.get(self.list_url, {"title": "Django"})
+        self.assertEqual(res_title.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_title.data), 1)
+        self.assertEqual(res_title.data[0]["title"], "Django REST Framework")
+
+        # 2. Filter level individually
+        res_level = self.client.get(self.list_url, {"level": "Beginner"})
+        self.assertEqual(res_level.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_level.data), 1)
+        self.assertEqual(res_level.data[0]["title"], "Python Basics")
+
+        # Level 'all' should return all items without filtering
+        res_all = self.client.get(self.list_url, {"level": "all"})
+        self.assertEqual(res_all.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_all.data), 2)
+
+        # 3. Filter title and level together
+        res_both = self.client.get(self.list_url, {"title": "Python", "level": "Beginner"})
+        self.assertEqual(res_both.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_both.data), 1)
+        self.assertEqual(res_both.data[0]["title"], "Python Basics")
+
+        # 4. Filter with no results (title mismatch)
+        res_no_title = self.client.get(self.list_url, {"title": "NonExistentSkill"})
+        self.assertEqual(res_no_title.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_no_title.data, [])
+
+        # 5. Filter with no results (level mismatch)
+        res_no_level = self.client.get(self.list_url, {"level": "Expert"})
+        self.assertEqual(res_no_level.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_no_level.data, [])
+
+        # 6. Filter with no results (title and level together do not match)
+        res_no_both = self.client.get(self.list_url, {"title": "Django", "level": "Beginner"})
+        self.assertEqual(res_no_both.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_no_both.data, [])
+
+    def test_missing_skill_returns_404(self):
+        """Verify 404 Not Found is returned for non-existent skill UUIDs."""
+        non_existent_url = reverse("api:skill-detail", args=[uuid.uuid4()])
+        self.assertEqual(self.client.get(non_existent_url).status_code, status.HTTP_404_NOT_FOUND)
+
+        self.client.force_authenticate(user=self.owner)
+        self.assertEqual(self.client.put(non_existent_url, self.payload, format="json").status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.patch(non_existent_url, {"title": "Updated"}, format="json").status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.delete(non_existent_url).status_code, status.HTTP_404_NOT_FOUND)
+
+        non_existent_star_url = reverse("api:skill-star", args=[uuid.uuid4()])
+        self.client.force_authenticate(user=self.visitor)
+        self.assertEqual(self.client.post(non_existent_star_url).status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_guest_and_visitor_cannot_write_and_db_remains_intact(self):
+        """Ensure anonymous visitors and regular users cannot perform mutating operations (403),
+        and verify database integrity is completely preserved.
+        """
+        for user in (None, self.visitor):
+            self.client.force_authenticate(user=user)
+            self.assertEqual(
+                self.client.post(self.list_url, self.payload, format="json").status_code,
+                status.HTTP_403_FORBIDDEN,
+            )
+            self.assertEqual(
+                self.client.put(self.detail_url, self.payload, format="json").status_code,
+                status.HTTP_403_FORBIDDEN,
+            )
+            self.assertEqual(
+                self.client.patch(self.detail_url, {"title": "Unauthorized"}, format="json").status_code,
+                status.HTTP_403_FORBIDDEN,
+            )
+            self.assertEqual(
+                self.client.delete(self.detail_url).status_code,
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        # Verify DB integrity: record count and values remain strictly untouched
+        self.assertEqual(Skill.objects.count(), 2)
+        self.skill.refresh_from_db()
+        self.assertEqual(self.skill.title, "Django REST Framework")
+        self.assertEqual(self.skill.description, "Building robust RESTful APIs in Python.")
+
+    def test_owner_can_create_update_delete(self):
+        """Verify superuser can create, update (PUT/PATCH), and delete skills."""
+        self.client.force_authenticate(user=self.owner)
+
+        # Create
+        res_create = self.client.post(self.list_url, self.payload, format="json")
+        self.assertEqual(res_create.status_code, status.HTTP_201_CREATED)
+        new_id = res_create.data["id"]
+        self.assertTrue(Skill.objects.filter(pk=new_id).exists())
+        self.assertEqual(Skill.objects.count(), 3)
+
+        new_detail_url = reverse("api:skill-detail", args=[new_id])
+
+        # PATCH update
+        res_patch = self.client.patch(new_detail_url, {"level": "Expert"}, format="json")
+        self.assertEqual(res_patch.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_patch.data["level"], "Expert")
+
+        # PUT update
+        updated_payload = {
+            "title": "PostgreSQL Advanced",
+            "description": "Deep dive into query planner, indexing, and WAL.",
+            "level": "Expert",
+            "code_snippet": "EXPLAIN ANALYZE SELECT 1;",
+        }
+        res_put = self.client.put(new_detail_url, updated_payload, format="json")
+        self.assertEqual(res_put.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_put.data["title"], "PostgreSQL Advanced")
+
+        # DELETE
+        res_delete = self.client.delete(new_detail_url)
+        self.assertEqual(res_delete.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(res_delete.content, b"")
+        self.assertFalse(Skill.objects.filter(pk=new_id).exists())
+        self.assertEqual(Skill.objects.count(), 2)
+
+    def test_editor_can_put_and_patch_but_cannot_create_or_delete(self):
+        """Verify Editor role can update via PUT and PATCH, but POST create and DELETE are forbidden."""
+        self.client.force_authenticate(user=self.editor)
+
+        # Editor cannot create new skill
+        res_post = self.client.post(self.list_url, self.payload, format="json")
+        self.assertEqual(res_post.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Skill.objects.count(), 2)
+
+        # Editor can PATCH existing skill
+        res_patch = self.client.patch(self.detail_url, {"description": "Updated by Editor."}, format="json")
+        self.assertEqual(res_patch.status_code, status.HTTP_200_OK)
+        self.skill.refresh_from_db()
+        self.assertEqual(self.skill.description, "Updated by Editor.")
+
+        # Editor can PUT existing skill
+        put_payload = {
+            "title": "Django REST Framework 3.15",
+            "description": "Comprehensive REST framework for Django.",
+            "level": "Advanced",
+            "code_snippet": "print('updated')",
+        }
+        res_put = self.client.put(self.detail_url, put_payload, format="json")
+        self.assertEqual(res_put.status_code, status.HTTP_200_OK)
+        self.skill.refresh_from_db()
+        self.assertEqual(self.skill.title, "Django REST Framework 3.15")
+
+        # Editor cannot DELETE skill
+        res_del = self.client.delete(self.detail_url)
+        self.assertEqual(res_del.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Skill.objects.count(), 2)
+        self.assertTrue(Skill.objects.filter(pk=self.skill.id).exists())
+
+    def test_text_validation_and_sanitization(self):
+        """Verify plain text fields are sanitized and empty values are rejected,
+        while code_snippet preserves '<', '>', and HTML examples without code execution or stripping.
+        """
+        self.client.force_authenticate(user=self.owner)
+
+        # Validation failure: empty fields after strip_tags
+        for invalid_field in [
+            {"title": "   "},
+            {"title": "<b>  </b>"},
+            {"description": "   "},
+            {"description": "<p></p>"},
+            {"level": "   "},
+            {"level": "<span></span>"},
+        ]:
+            res = self.client.post(self.list_url, {**self.payload, **invalid_field}, format="json")
+            self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Skill.objects.count(), 2)
+
+        # Sanitization: plain text fields stripped of tags, code_snippet preserves tags and '<'
+        payload_with_html = {
+            "title": "<b>FastAPI</b>",
+            "description": "<p>Modern web framework.</p>",
+            "level": "<strong>Intermediate</strong>",
+            "code_snippet": "if a < b and c > d:\n    return '<div>keep-html</div>'",
+        }
+        res_create = self.client.post(self.list_url, payload_with_html, format="json")
+        self.assertEqual(res_create.status_code, status.HTTP_201_CREATED)
+
+        created_skill = Skill.objects.get(pk=res_create.data["id"])
+        self.assertEqual(created_skill.title, "FastAPI")
+        self.assertEqual(created_skill.description, "Modern web framework.")
+        self.assertEqual(created_skill.level, "Intermediate")
+        # Ensure code_snippet preserves operator '<' and raw HTML strings intact
+        self.assertEqual(created_skill.code_snippet, "if a < b and c > d:\n    return '<div>keep-html</div>'")
+        self.assertIn("< b", created_skill.code_snippet)
+        self.assertIn("<div>keep-html</div>", created_skill.code_snippet)
+
+    def test_star_requires_login_and_toggles(self):
+        """Ensure anonymous user cannot star, while authenticated users can toggle star."""
+        # Unauthenticated star attempt rejected
+        self.client.force_authenticate(user=None)
+        res_anon = self.client.post(self.star_url)
+        self.assertEqual(res_anon.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.skill.starred_by.count(), 0)
+
+        # Authenticated visitor stars skill
+        self.client.force_authenticate(user=self.visitor)
+        res_star = self.client.post(self.star_url)
+        self.assertEqual(res_star.status_code, status.HTTP_200_OK)
+        self.assertTrue(res_star.data["is_starred"])
+        self.assertEqual(res_star.data["star_count"], 1)
+        self.assertIn(self.visitor.username, res_star.data["starred_by_names"])
+        self.assertEqual(self.skill.starred_by.count(), 1)
+
+        # Authenticated visitor unstars skill
+        res_unstar = self.client.post(self.star_url)
+        self.assertEqual(res_unstar.status_code, status.HTTP_200_OK)
+        self.assertFalse(res_unstar.data["is_starred"])
+        self.assertEqual(res_unstar.data["star_count"], 0)
+        self.assertEqual(res_unstar.data["starred_by_names"], "")
+        self.assertEqual(self.skill.starred_by.count(), 0)
+
+    def test_computed_fields_are_read_only(self):
+        """Verify computed star fields cannot be manipulated via request payload."""
+        self.client.force_authenticate(user=self.owner)
+        forged_payload = {
+            **self.payload,
+            "star_count": 9999,
+            "is_starred": True,
+            "starred_by_names": "fake_owner, fake_visitor",
+            "starred_by": [self.visitor.id],
+        }
+        response = self.client.post(self.list_url, forged_payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["star_count"], 0)
+        self.assertFalse(response.data["is_starred"])
+        self.assertEqual(response.data["starred_by_names"], "")
+
+    def test_wrong_method(self):
+        """Verify unsupported HTTP method on collection endpoint returns 405 Method Not Allowed."""
+        self.client.force_authenticate(user=self.owner)
+        response = self.client.delete(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_session_write_without_csrf_is_rejected(self):
+        """Ensure modifying operations without CSRF token are strictly rejected (HTTP 403)
+        when SessionAuthentication is enforced, preserving database state.
+        """
+        client = APIClient(enforce_csrf_checks=True)
+        self.assertTrue(client.login(username="owner", password="test-password"))
+
+        post_res = client.post(self.list_url, self.payload, format="json")
+        self.assertEqual(post_res.status_code, status.HTTP_403_FORBIDDEN)
+
+        put_res = client.put(self.detail_url, self.payload, format="json")
+        self.assertEqual(put_res.status_code, status.HTTP_403_FORBIDDEN)
+
+        del_res = client.delete(self.detail_url)
+        self.assertEqual(del_res.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Confirm DB was not touched
+        self.assertEqual(Skill.objects.count(), 2)
+        self.skill.refresh_from_db()
+        self.assertEqual(self.skill.title, "Django REST Framework")
+
+    def test_session_write_with_csrf_succeeds(self):
+        """Ensure session-authenticated write succeeds when legitimate CSRF token is provided."""
+        client = APIClient(enforce_csrf_checks=True)
+        self.assertTrue(client.login(username="owner", password="test-password"))
+
+        # Fetch collection page to populate csrftoken cookie
+        page = client.get(self.list_url, HTTP_ACCEPT="text/html")
+        self.assertEqual(page.status_code, status.HTTP_200_OK)
+        token = client.cookies["csrftoken"].value
+
+        response = client.post(
+            self.list_url,
+            self.payload,
+            format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Skill.objects.count(), 3)
+
+    def test_editor_session_with_csrf_can_patch_but_delete_is_forbidden(self):
+        """Ensure Editor using session and valid CSRF token can PATCH data,
+        but DELETE remains strictly forbidden due to RBAC permissions.
+        """
+        client = APIClient(enforce_csrf_checks=True)
+        self.assertTrue(client.login(username="editor", password="test-password"))
+
+        page = client.get(self.list_url, HTTP_ACCEPT="text/html")
+        self.assertEqual(page.status_code, status.HTTP_200_OK)
+        token = client.cookies["csrftoken"].value
+
+        # Editor PATCH with CSRF succeeds
+        patch_res = client.patch(
+            self.detail_url,
+            {"title": "CSRF Verified Editor Patch"},
+            format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+        self.assertEqual(patch_res.status_code, status.HTTP_200_OK)
+        self.skill.refresh_from_db()
+        self.assertEqual(self.skill.title, "CSRF Verified Editor Patch")
+
+        # Editor DELETE with CSRF is forbidden by RBAC
+        del_res = client.delete(self.detail_url, HTTP_X_CSRFTOKEN=token)
+        self.assertEqual(del_res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Skill.objects.count(), 2)
+        self.assertTrue(Skill.objects.filter(pk=self.skill.id).exists())
+
