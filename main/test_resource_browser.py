@@ -8,6 +8,8 @@ import importlib.util
 import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+import re
+from urllib.parse import parse_qs, urlsplit
 import unittest
 
 from django.contrib.auth.models import Group, User
@@ -100,14 +102,14 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
         expect(self.page.locator('.timeline-card').first.locator('.experience-title')).to_have_text('Developer')
         self.assertEqual(self.page.locator('.experience-desc img').count(), 0)
         self.assertEqual(self.page.locator('[data-search-input]').count(), 4)
-        self.context.route('**/api/**experience*/**', lambda route: route.fulfill(json=[]))
+        self.context.route(re.compile(re.escape(self.live_server_url) + r'/api/v1/experiences/(?:\?[^#]*)?$'), lambda route: route.fulfill(json=[]))
         self.goto('/experience/')
         expect(self.page.locator('#experience [data-empty]')).to_be_visible()
-        self.context.unroute('**/api/**experience*/**')
-        self.context.route('**/api/**experience*/**', lambda route: route.abort())
+        self.context.unroute(re.compile(re.escape(self.live_server_url) + r'/api/v1/experiences/(?:\?[^#]*)?$'))
+        self.context.route(re.compile(re.escape(self.live_server_url) + r'/api/v1/experiences/(?:\?[^#]*)?$'), lambda route: route.abort())
         self.goto('/experience/')
         expect(self.page.locator('#experience [data-error]')).to_be_visible()
-        self.context.unroute('**/api/**experience*/**')
+        self.context.unroute(re.compile(re.escape(self.live_server_url) + r'/api/v1/experiences/(?:\?[^#]*)?$'))
         self.page.locator('#experience [data-retry]').focus()
         self.page.locator('#experience [data-retry]').press('Enter')
         expect(self.page.locator('.timeline-card:visible')).to_have_count(2)
@@ -369,17 +371,31 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
         self.goto('/experience/')
         root = self.page.locator('#experience')
         expect(root.locator('.timeline-card')).to_have_count(2)
-        requests = []
-        self.page.on('request', lambda request: requests.append(request.url)
-                     if '/api/experience/?q=' in request.url else None)
+        pending = []
+        pattern = re.compile(re.escape(self.live_server_url) + r'/api/v1/experiences/\?[^#]*$')
+        self.context.route(pattern, lambda route: pending.append(route))
         search = root.locator('[data-search-input]')
-        search.fill('A')
-        search.fill('Ac')
-        search.fill('Acme')
+        # Dispatch the typing burst in one browser turn; only the final title
+        # should reach the API after the 300 ms debounce.
+        with self.page.expect_request(pattern) as requested:
+            search.evaluate("""input => {
+                for (const value of ['D', 'Dev', 'Developer']) {
+                    input.value = value;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }""")
+        self.assertEqual(parse_qs(urlsplit(requested.value.url).query), {'title': ['Developer']})
+        expect(root.locator('[data-list]')).to_have_attribute('aria-busy', 'true')
         expect(root.locator('[data-loading]')).to_be_visible()
+        expect(root.locator('.timeline-card')).to_have_count(2)
+        self.assertEqual(len(pending), 1)
+        held = pending.pop()
+        held.fulfill(response=held.fetch())
+        expect(root.locator('[data-list]')).to_have_attribute('aria-busy', 'false')
+        expect(root.locator('[data-loading]')).to_be_hidden()
         expect(root.locator('.timeline-card')).to_have_count(1)
-        expect(root.locator('.experience-company')).to_have_text('Acme')
-        self.assertEqual(len(requests), 1)
+        expect(root.locator('.experience-title')).to_have_text('Developer')
+        self.context.unroute(pattern)
         search.fill('missing')
         expect(root.locator('[data-empty]')).to_be_visible()
         self.login(self.owner)
@@ -389,8 +405,9 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
         attack = '<img src="x" onerror="alert(\'XSS!\')">'
         self.fill_form(dialog, {'title': attack, 'description': 'Safe', 'category': 'volunteer'})
         dialog.locator('[type=submit]').click()
-        expect(dialog.locator('#id_experience_title_error')).to_be_visible()
-        expect(self.page.locator('#toast-message')).to_contain_text('sanitasi')
+        expect(dialog.locator('[data-field-error=title]')).to_be_visible()
+        expect(dialog.locator('[name=title]')).to_have_attribute('aria-invalid', 'true')
+        expect(self.page.locator('#toast-message')).to_contain_text('Title cannot be empty.')
         alerts = []
         self.page.on('dialog', lambda alert: (alerts.append(alert.message), alert.dismiss()))
         dialog.locator('[name=title]').fill('Safe ' + attack)
@@ -403,16 +420,16 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
 
     def test_projects_keyboard_retry_preserves_search_category_and_loading_status(self):
         from playwright.sync_api import expect
-        self.context.route('**/api/**projects/**', lambda route: route.fulfill(
+        self.context.route(re.compile(r'/api/v1/projects/(?:\?[^#]*)?$'), lambda route: route.fulfill(
             status=503, content_type='text/html', body='<h1>Unavailable</h1>'))
         self.goto('/projects/?title=Port&category=Web')
         expect(self.page.locator('#error')).to_be_visible()
         expect(self.page.locator('#error')).to_have_attribute('role', 'alert')
-        self.context.unroute('**/api/**projects/**')
+        self.context.unroute(re.compile(r'/api/v1/projects/(?:\?[^#]*)?$'))
         self.page.evaluate('''() => {
             const original = window.fetch;
             window.fetch = (url, options) => {
-                if (!new URL(url, location.origin).pathname.includes('/projects/')) return original(url, options);
+                if (new URL(url, location.origin).pathname !== '/api/v1/projects/') return original(url, options);
                 return new Promise(resolve => {
                     window.releaseProjects = () => resolve(original(url, options));
                 });
@@ -663,11 +680,13 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
         # Isolate the fallback app under test. The in-memory SQLite connection
         # is shared by LiveServer request threads, so parallel unrelated reads
         # must not race this test's ORM connection.
-        for resource in ('skills', 'education', 'techstack', 'projects'):
+        for resource in ('skills', 'education', 'techstack'):
             self.context.route(f'**/api/{resource}/**', lambda route: route.fulfill(json=[]))
+        self.context.route(re.compile(r'/api/v1/projects/(?:\?[^#]*)?$'), lambda route: route.fulfill(json=[]))
         self.context.route('**/js/desktop/windows.js', lambda route: route.abort())
         self.goto('/experience/')
-        expect(self.page.locator('#experience [data-list]')).to_be_visible()
+        expect(self.page.locator('#experience .timeline-card')).to_have_count(2)
+        expect(self.page.locator('#experience .experience-title').first).to_be_visible()
         self.assertFalse(self.page.locator('body').get_attribute('data-desktop-ready') is not None)
         self.context.unroute('**/js/desktop/windows.js')
         self.page.add_init_script('''(() => {
@@ -683,7 +702,8 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
         })();''')
         self.goto('/experience/')
         self.page.locator('#experience .section-title').click()
-        expect(self.page.locator('#experience [data-list]')).to_be_visible()
+        expect(self.page.locator('#experience .timeline-card')).to_have_count(2)
+        expect(self.page.locator('#experience .experience-title').first).to_be_visible()
         self.assertIsNone(self.page.locator('body').get_attribute('data-desktop-ready'))
 
     def test_system_mobile_navigation_does_not_extend_document(self):

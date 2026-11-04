@@ -1147,7 +1147,7 @@
         fetchExperiences();
     }
     window.addEventListener('load', () => {
-        if (app.classList.contains('is-open') && !activated) {
+        if (!activated && (app.classList.contains('is-open') || !document.body.hasAttribute('data-desktop-ready'))) {
             activated = true;
             fetchExperiences();
         }
