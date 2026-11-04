@@ -1,3 +1,20 @@
 {% extends 'layouts/desktop.html' %}
 {% load static %}
 {% block title %}Experience - {{ owner_name }}{% endblock %}
+
+{% block extra_scripts %}
+{{ block.super }}
+<script>
+    const BASE_EXPERIENCES_ENDPOINT = "{% url 'api:experience-list' %}";
+    const DETAIL_EXPERIENCE_ENDPOINT = "{% url 'api:experience-detail' '00000000-0000-0000-0000-000000000000' %}";
+    const STAR_EXPERIENCE_ENDPOINT = "{% url 'api:experience-star' '00000000-0000-0000-0000-000000000000' %}";
+    const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
+    const IS_AUTHENTICATED = "{{ user.is_authenticated|yesno:'true,false' }}" === "true";
+
+    window.BASE_EXPERIENCES_ENDPOINT = BASE_EXPERIENCES_ENDPOINT;
+    window.DETAIL_EXPERIENCE_ENDPOINT = DETAIL_EXPERIENCE_ENDPOINT;
+    window.STAR_EXPERIENCE_ENDPOINT = STAR_EXPERIENCE_ENDPOINT;
+    window.IS_SUPERUSER = IS_SUPERUSER;
+    window.IS_AUTHENTICATED = IS_AUTHENTICATED;
+</script>
+{% endblock %}
