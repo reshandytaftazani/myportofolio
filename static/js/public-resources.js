@@ -254,6 +254,7 @@
             frame.append(node('span', 'tech-icon-fallback', name.slice(0, 2).toUpperCase()));
         }
         summary.setAttribute('aria-controls', `tech-code-${item.pk}`);
+        summary.setAttribute('aria-expanded', 'false');
         summary.append(frame, node('span', 'tech-tab-label', name));
         const snippet = node('div', 'tech-code-snippet mac-window');
         snippet.id = `tech-code-${item.pk}`;
@@ -270,9 +271,15 @@
         snippet.append(header, pre);
         wrapper.addEventListener('toggle', () => {
             wrapper.classList.toggle('expanded', wrapper.open);
+            summary.setAttribute('aria-expanded', wrapper.open ? 'true' : 'false');
             if (wrapper.open) {
                 root.querySelectorAll('.tech-item[open]').forEach(other => {
-                    if (other !== wrapper) { other.open = false; other.classList.remove('expanded'); }
+                    if (other !== wrapper) {
+                        other.open = false;
+                        other.classList.remove('expanded');
+                        const otherSummary = other.querySelector('.tech-icon-wrapper');
+                        if (otherSummary) otherSummary.setAttribute('aria-expanded', 'false');
+                    }
                 });
                 requestAnimationFrame(() => wrapper.scrollIntoView({
                     block: 'start',

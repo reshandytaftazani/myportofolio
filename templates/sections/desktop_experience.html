@@ -76,18 +76,18 @@
         </div>
 
         <!-- Loading State -->
-        <div id="experience-loading" class="empty-state hide" role="status" aria-live="polite" aria-atomic="true">
+        <div id="experience-loading" data-loading class="empty-state hide" role="status" aria-live="polite" aria-atomic="true">
             <p>Memuat data pengalaman...</p>
         </div>
 
         <!-- Error State -->
-        <div id="experience-error" class="empty-state hide" role="alert">
+        <div id="experience-error" data-error class="empty-state hide" role="alert">
             <p>Gagal memuat data pengalaman. Silakan coba lagi.</p>
-            <button type="button" class="button button-secondary" data-experience-retry>Coba lagi</button>
+            <button type="button" class="button button-secondary" data-experience-retry data-retry>Coba lagi</button>
         </div>
 
         <!-- Empty State -->
-        <div id="experience-empty" class="empty-state hide">
+        <div id="experience-empty" data-empty class="empty-state hide">
             <h3 data-empty-title>Belum ada pengalaman</h3>
             <p data-empty-description>Pengalaman akan tampil di sini setelah ditambahkan.</p>
             <button type="button" class="button button-secondary" data-experience-reset hidden>Reset pencarian</button>

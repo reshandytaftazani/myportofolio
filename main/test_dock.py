@@ -66,7 +66,9 @@ class DockBrowserTests(StaticLiveServerTestCase):
         self.assertAlmostEqual(projects.locator('.dock-icon').bounding_box()['width'], 48, places=1)
 
     def test_separator_stays_between_contact_and_github_during_magnification(self):
+        from playwright.sync_api import expect
         self.prepare()
+        self.settle()
         divider = self.dock.locator('.dock-divider')
         resting_x = divider.bounding_box()['x']
         self.page.evaluate('''() => {
@@ -104,10 +106,48 @@ class DockBrowserTests(StaticLiveServerTestCase):
         self.dock.locator('[data-dock-id="contact"]').hover()
         self.settle()
         self.page.emulate_media(reduced_motion='reduce')
+        # emulate_media changes the preference before the asynchronous media
+        # listener has necessarily reset the JS transforms. Wait for refresh.
+        expect(self.dock).not_to_have_attribute('data-dock-motion', '')
+        self.settle()
+        self.assertEqual(divider.evaluate("n => n.style.getPropertyValue('--dock-shift')"), '')
         self.assertAlmostEqual(divider.bounding_box()['x'], resting_x, places=1)
         self.page.set_viewport_size({'width': 390, 'height': 844})
         self.assertFalse(divider.is_visible())
         self.capture('separator-mobile.png')
+
+    def test_reduced_motion_at_boot_and_during_animation_clears_transforms(self):
+        from playwright.sync_api import expect
+        self.page.emulate_media(reduced_motion='reduce')
+        self.prepare()
+        self.settle()
+        divider = self.dock.locator('.dock-divider')
+        resting_x = divider.bounding_box()['x']
+        contact = self.dock.locator('[data-dock-id="contact"]')
+        contact.hover()
+        expect(self.dock).not_to_have_attribute('data-dock-motion', '')
+        expect(contact.locator('.dock-icon')).to_have_css('transform', 'none')
+        self.assertAlmostEqual(divider.bounding_box()['x'], resting_x, places=1)
+
+        self.page.emulate_media(reduced_motion='no-preference')
+        expect(self.dock).to_have_attribute('data-dock-motion', '')
+        self.page.mouse.move(20, 200)
+        contact.hover()
+        expect(self.dock).to_have_attribute('data-dock-animating', '')
+        self.page.wait_for_function("""() => {
+            const link = document.querySelector('[data-dock-id="contact"]');
+            const scale = Number(link.style.getPropertyValue('--dock-scale'));
+            return scale > 1 && scale < 1.46;
+        }""")
+        # Change preference while a frame is still pending, not only at rest.
+        self.page.emulate_media(reduced_motion='reduce')
+        expect(self.dock).not_to_have_attribute('data-dock-motion', '')
+        self.settle()
+        self.assertTrue(self.dock.locator('a, .dock-divider').evaluate_all("""nodes =>
+            nodes.every(node => ['--dock-scale', '--dock-lift', '--dock-shift', '--dock-rise']
+                .every(name => !node.style.getPropertyValue(name)))"""))
+        expect(contact.locator('.dock-icon')).to_have_css('transform', 'none')
+        self.assertAlmostEqual(divider.bounding_box()['x'], resting_x, places=1)
 
     def test_tooltip_keyboard_escape_hover_and_dark_theme(self):
         from playwright.sync_api import expect
