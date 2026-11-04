@@ -14,11 +14,33 @@
     const searchInput = document.getElementById('experience-search-input') || app.querySelector('#experience-search-input');
     const filters = app.querySelector('.experience-filters') || app.querySelector('.project-filters');
 
+    // Dialog & Form elements for CRUD
+    const dialog = document.getElementById('experience-dialog') || app.querySelector('#experience-dialog');
+    const form = document.getElementById('experience-modal-form') || dialog?.querySelector('form');
+    const formTitle = dialog?.querySelector('[data-dialog-title]');
+    const formSubtitle = dialog?.querySelector('[data-dialog-subtitle]');
+    const formIcon = dialog?.querySelector('[data-dialog-icon]');
+    const submitBtn = dialog?.querySelector('[data-submit-button]');
+    const submitLabel = dialog?.querySelector('[data-submit-label]');
+    const formError = dialog?.querySelector('[data-form-error]');
+
+    const deleteDialog = document.getElementById('experience-delete-dialog') || app.querySelector('#experience-delete-dialog');
+    const deleteLabel = deleteDialog?.querySelector('[data-delete-label]');
+    const deleteConfirmBtn = deleteDialog?.querySelector('[data-confirm-delete]');
+    const deleteSubmitLabel = deleteDialog?.querySelector('[data-delete-submit-label]');
+    const deleteError = deleteDialog?.querySelector('[data-delete-error]');
+
     let activeCategory = config.initialCategory || 'all';
     let activeRequest = null;
     let activated = false;
     let hasContent = Boolean(grid?.querySelector('.timeline-card, .exp-timeline-item'));
     const experienceIdPlaceholder = '00000000-0000-0000-0000-000000000000';
+
+    let modalOpener = null;
+    let deleteOpener = null;
+    let pendingDeleteId = null;
+    let isSaving = false;
+    let isDeleting = false;
 
     app.setAttribute('data-resource-ready', '');
 
@@ -91,6 +113,12 @@
         return `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeHtml(ajax.getCsrfToken())}">`;
     }
 
+    function experienceEndpoint(pattern, id) {
+        return pattern
+            .replace(experienceIdPlaceholder, encodeURIComponent(id))
+            .replace('__pk__', encodeURIComponent(id));
+    }
+
     function adaptExperience(raw) {
         const fields = raw.fields || raw;
         const id = raw.id || raw.pk || fields.id;
@@ -152,9 +180,7 @@
         }
 
         const starUrlTemplate = config.starUrlTemplate || '/api/v1/experiences/__pk__/star/';
-        const starUrl = starUrlTemplate
-            .replace(experienceIdPlaceholder, encodeURIComponent(exp.id))
-            .replace('__pk__', encodeURIComponent(exp.id));
+        const starUrl = experienceEndpoint(starUrlTemplate, exp.id);
 
         const starIcon = '<svg class="resource-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.3.9-4.5 4.4 1.1 6.2-5.7-3-5.7 3 1.1-6.2-4.5-4.4 6.3-.9Z"/></svg>';
         const starCount = `<span class="star-count resource-star-count" aria-live="polite">${exp.star_count}</span>`;
@@ -210,14 +236,50 @@
         `;
 
         const actionsDiv = article.querySelector('.resource-actions');
-        if (actionsDiv && resources?.actions) {
-            const itemObj = { pk: exp.id, fields: exp };
-            const mgmt = resources.actions(app, itemObj);
-            if (mgmt && mgmt.children.length) {
-                while (mgmt.firstChild) {
-                    actionsDiv.appendChild(mgmt.firstChild);
-                }
+        const canEdit = config.canEdit === 'true' || config.isEditor === 'true' || config.isSuperuser === 'true';
+        const canDelete = config.canDelete === 'true' || config.isSuperuser === 'true';
+
+        if (actionsDiv && (canEdit || canDelete)) {
+            const mgmtGroup = document.createElement('div');
+            mgmtGroup.className = 'resource-actions exp-card-mgmt-actions';
+            mgmtGroup.setAttribute('role', 'group');
+            mgmtGroup.setAttribute('aria-label', `Kelola ${exp.title}`);
+
+            if (canEdit) {
+                const editBtn = document.createElement('button');
+                editBtn.type = 'button';
+                editBtn.className = 'button resource-action resource-action--edit';
+                editBtn.dataset.resourceAction = 'edit';
+                editBtn.dataset.pk = exp.id;
+                editBtn.dataset.label = exp.title;
+                editBtn.setAttribute('aria-label', `Edit ${exp.title}`);
+                editBtn.innerHTML = `
+                    <svg class="resource-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L9 17l-4 1 1-4Z"/>
+                    </svg>
+                    <span class="resource-action__label">Edit</span>
+                `;
+                mgmtGroup.appendChild(editBtn);
             }
+
+            if (canDelete) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'button resource-action resource-action--delete';
+                deleteBtn.dataset.resourceAction = 'delete';
+                deleteBtn.dataset.pk = exp.id;
+                deleteBtn.dataset.label = exp.title;
+                deleteBtn.setAttribute('aria-label', `Hapus ${exp.title}`);
+                deleteBtn.innerHTML = `
+                    <svg class="resource-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/>
+                    </svg>
+                    <span class="resource-action__label">Hapus</span>
+                `;
+                mgmtGroup.appendChild(deleteBtn);
+            }
+
+            actionsDiv.appendChild(mgmtGroup);
         }
 
         wrapper.appendChild(article);
@@ -432,6 +494,475 @@
         }
     });
 
+    // -------------------------------------------------------------
+    // MODAL FORM CRUD & TOAST ERROR HANDLING (TAHAP 4)
+    // -------------------------------------------------------------
+
+    function resetModalErrors() {
+        if (formError) {
+            formError.textContent = '';
+            formError.hidden = true;
+        }
+        dialog?.querySelectorAll('[data-field-error]').forEach(el => {
+            el.textContent = '';
+            el.hidden = true;
+        });
+        form?.querySelectorAll('[aria-invalid]').forEach(el => {
+            el.removeAttribute('aria-invalid');
+        });
+    }
+
+    function handleValidationErrors(errorData) {
+        let firstInvalidField = null;
+        const generalErrors = [];
+
+        for (const [key, val] of Object.entries(errorData || {})) {
+            const messageText = Array.isArray(val) ? val.join(' ') : String(val);
+            const field = form?.querySelector(`[name="${key}"]`);
+            const inlineError = dialog?.querySelector(`[data-field-error="${key}"]`);
+
+            if (field && inlineError) {
+                inlineError.textContent = messageText;
+                inlineError.hidden = false;
+                field.setAttribute('aria-invalid', 'true');
+                if (!firstInvalidField) firstInvalidField = field;
+            } else {
+                generalErrors.push(`${key}: ${messageText}`);
+            }
+        }
+
+        if (generalErrors.length && formError) {
+            formError.textContent = generalErrors.join(' | ');
+            formError.hidden = false;
+        }
+
+        if (firstInvalidField) {
+            firstInvalidField.focus({ preventScroll: true });
+        }
+    }
+
+    function showInlineError(fieldName, messageText) {
+        const field = form?.querySelector(`[name="${fieldName}"]`);
+        const inlineError = dialog?.querySelector(`[data-field-error="${fieldName}"]`);
+        if (inlineError) {
+            inlineError.textContent = messageText;
+            inlineError.hidden = false;
+        }
+        if (field) {
+            field.setAttribute('aria-invalid', 'true');
+            field.focus({ preventScroll: true });
+        }
+    }
+
+    function setSavingState(busy) {
+        isSaving = busy;
+        dialog?.querySelectorAll('button').forEach(btn => {
+            btn.disabled = busy;
+        });
+        form?.setAttribute('aria-busy', String(busy));
+        const spinner = submitBtn?.querySelector('.resource-spinner');
+        if (spinner) spinner.style.display = busy ? 'inline-block' : 'none';
+
+        const id = form?.querySelector('#experience-form-id')?.value;
+        if (submitLabel) {
+            submitLabel.textContent = busy
+                ? 'Menyimpan...'
+                : (id ? 'Perbarui Pengalaman' : 'Simpan Pengalaman');
+        }
+    }
+
+    function setDeletingState(busy) {
+        isDeleting = busy;
+        deleteDialog?.querySelectorAll('button').forEach(btn => {
+            btn.disabled = busy;
+        });
+        deleteDialog?.setAttribute('aria-busy', String(busy));
+        const spinner = deleteConfirmBtn?.querySelector('.resource-spinner');
+        if (spinner) spinner.style.display = busy ? 'inline-block' : 'none';
+
+        if (deleteSubmitLabel) {
+            deleteSubmitLabel.textContent = busy ? 'Menghapus...' : 'Ya, hapus data';
+        }
+    }
+
+    function openCreateModal(opener) {
+        if (!dialog || !form) return;
+        if (config.isSuperuser !== 'true') {
+            showToast('Aksi ditolak', 'Hanya Pemilik Portofolio yang dapat menambahkan pengalaman.', 'error');
+            return;
+        }
+
+        modalOpener = opener;
+        form.reset();
+        const idField = form.querySelector('#experience-form-id');
+        if (idField) idField.value = '';
+
+        if (formTitle) formTitle.textContent = 'Tambah Pengalaman';
+        if (formSubtitle) formSubtitle.textContent = 'Lengkapi informasi untuk ditampilkan di portofolio.';
+        if (submitLabel) submitLabel.textContent = 'Simpan Pengalaman';
+
+        if (formIcon) {
+            formIcon.innerHTML = '<svg class="resource-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+        }
+
+        resetModalErrors();
+        dialog.showModal();
+        form.querySelector('#exp-field-title')?.focus({ preventScroll: true });
+    }
+
+    async function openEditModal(pk, opener) {
+        if (!dialog || !form) return;
+        const canEdit = config.canEdit === 'true' || config.isEditor === 'true' || config.isSuperuser === 'true';
+        if (!canEdit) {
+            showToast('Aksi ditolak', 'Anda tidak memiliki izin untuk mengedit pengalaman.', 'error');
+            return;
+        }
+
+        modalOpener = opener;
+        if (opener) opener.disabled = true;
+
+        const detailUrlTemplate = config.detailUrlTemplate || '/api/v1/experiences/__pk__/';
+        const detailUrl = experienceEndpoint(detailUrlTemplate, pk);
+
+        try {
+            const response = await fetch(detailUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                },
+            });
+
+            if (response.status === 404) {
+                showToast('Tidak ditemukan', 'Data pengalaman tidak ditemukan atau sudah dihapus.', 'error');
+                return;
+            }
+            if (response.status === 403) {
+                showToast('Aksi ditolak', 'Aksi ditolak: Anda tidak memiliki izin untuk melakukan tindakan ini.', 'error');
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(`Detail request failed (${response.status})`);
+            }
+
+            const data = await response.json();
+            form.reset();
+
+            const idField = form.querySelector('#experience-form-id');
+            if (idField) idField.value = data.id || pk;
+
+            const titleField = form.querySelector('#exp-field-title');
+            if (titleField) titleField.value = data.title || '';
+
+            const companyField = form.querySelector('#exp-field-company');
+            if (companyField) companyField.value = data.company || '';
+
+            const categoryField = form.querySelector('#exp-field-category');
+            if (categoryField) categoryField.value = data.category || 'full-time';
+
+            const thumbField = form.querySelector('#exp-field-thumbnail');
+            if (thumbField) thumbField.value = data.thumbnail || '';
+
+            const startField = form.querySelector('#exp-field-started_at');
+            if (startField) startField.value = data.started_at || '';
+
+            const endField = form.querySelector('#exp-field-ended_at');
+            if (endField) endField.value = data.ended_at || '';
+
+            const descField = form.querySelector('#exp-field-description');
+            if (descField) descField.value = data.description || '';
+
+            if (formTitle) formTitle.textContent = 'Edit Pengalaman';
+            if (formSubtitle) formSubtitle.textContent = 'Perbarui informasi agar portofolio tetap relevan.';
+            if (submitLabel) submitLabel.textContent = 'Perbarui Pengalaman';
+
+            if (formIcon) {
+                formIcon.innerHTML = '<svg class="resource-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';
+            }
+
+            resetModalErrors();
+            dialog.showModal();
+            titleField?.focus({ preventScroll: true });
+        } catch (error) {
+            console.error('Error opening edit modal for experience:', error);
+            showToast('Gagal memuat formulir', 'Terjadi kesalahan saat memuat data pengalaman.', 'error');
+        } finally {
+            if (opener) opener.disabled = false;
+        }
+    }
+
+    function openDeleteModal(pk, label, opener) {
+        if (!deleteDialog) return;
+        if (config.isSuperuser !== 'true') {
+            showToast('Aksi ditolak', 'Hanya Pemilik Portofolio yang dapat menghapus pengalaman.', 'error');
+            return;
+        }
+
+        deleteOpener = opener;
+        pendingDeleteId = pk;
+
+        if (deleteLabel) {
+            deleteLabel.textContent = label || 'Pengalaman';
+        }
+        if (deleteError) {
+            deleteError.textContent = '';
+            deleteError.hidden = true;
+        }
+
+        deleteDialog.showModal();
+    }
+
+    // Live validation error clearing on input
+    form?.addEventListener('input', event => {
+        const field = event.target;
+        if (!field.hasAttribute('aria-invalid')) return;
+        field.removeAttribute('aria-invalid');
+        const inlineError = dialog?.querySelector(`[data-field-error="${field.name}"]`);
+        if (inlineError) {
+            inlineError.textContent = '';
+            inlineError.hidden = true;
+        }
+        if (!form.querySelector('[aria-invalid]')) {
+            resetModalErrors();
+        }
+    });
+
+    // Modal submit handler (POST create / PATCH update)
+    form?.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (isSaving) return;
+
+        resetModalErrors();
+
+        const idField = form.querySelector('#experience-form-id');
+        const id = idField?.value.trim() || '';
+        const isEdit = Boolean(id);
+
+        const title = form.querySelector('#exp-field-title')?.value.trim() || '';
+        const company = form.querySelector('#exp-field-company')?.value.trim() || null;
+        const category = form.querySelector('#exp-field-category')?.value || 'full-time';
+        const thumbnail = form.querySelector('#exp-field-thumbnail')?.value.trim() || null;
+        const startedAt = form.querySelector('#exp-field-started_at')?.value || null;
+        const endedAt = form.querySelector('#exp-field-ended_at')?.value || null;
+        const description = form.querySelector('#exp-field-description')?.value.trim() || '';
+
+        // Client-side quick check
+        let hasClientError = false;
+        if (!title) {
+            showInlineError('title', 'Posisi / Peran tidak boleh kosong.');
+            hasClientError = true;
+        }
+        if (!description) {
+            showInlineError('description', 'Deskripsi tidak boleh kosong.');
+            hasClientError = true;
+        }
+        if (startedAt && endedAt && endedAt < startedAt) {
+            showInlineError('ended_at', 'Tanggal selesai tidak boleh lebih awal dari tanggal mulai.');
+            hasClientError = true;
+        }
+        if (hasClientError) return;
+
+        const payload = {
+            title,
+            company,
+            category,
+            thumbnail,
+            started_at: startedAt,
+            ended_at: endedAt,
+            description,
+        };
+
+        const listUrl = config.listUrl || '/api/v1/experiences/';
+        const detailUrlTemplate = config.detailUrlTemplate || '/api/v1/experiences/__pk__/';
+        const url = isEdit ? experienceEndpoint(detailUrlTemplate, id) : listUrl;
+        const method = isEdit ? 'PATCH' : 'POST';
+
+        setSavingState(true);
+        try {
+            const csrfToken = ajax.getCsrfToken(form) || ajax.getCsrfToken();
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (response.status === 201 || response.status === 200) {
+                dialog.close();
+                showToast(
+                    'Berhasil',
+                    isEdit ? 'Pengalaman berhasil diperbarui!' : 'Pengalaman baru berhasil ditambahkan!',
+                    'success'
+                );
+                await fetchExperiences();
+                return;
+            }
+
+            if (response.status === 400) {
+                const errorData = await response.json().catch(() => ({}));
+                handleValidationErrors(errorData);
+
+                const messages = [];
+                for (const [key, val] of Object.entries(errorData)) {
+                    const msg = Array.isArray(val) ? val.join(' ') : String(val);
+                    messages.push(`${key}: ${msg}`);
+                }
+                showToast('Validasi Gagal', messages.join(' | ') || 'Mohon periksa kolom yang ditandai.', 'error');
+                return;
+            }
+
+            if (response.status === 403) {
+                const errorMsg = 'Aksi ditolak: Anda tidak memiliki izin untuk melakukan tindakan ini.';
+                if (formError) {
+                    formError.textContent = errorMsg;
+                    formError.hidden = false;
+                }
+                showToast('Aksi ditolak', errorMsg, 'error');
+                return;
+            }
+
+            throw new Error(`Server returned HTTP ${response.status}`);
+        } catch (error) {
+            console.error('Error saving experience:', error);
+            if (formError) {
+                formError.textContent = 'Tidak dapat terhubung ke server. Silakan coba lagi.';
+                formError.hidden = false;
+            }
+            showToast('Kesalahan Server', 'Terjadi kesalahan pada server. Silakan coba lagi nanti.', 'error');
+        } finally {
+            setSavingState(false);
+        }
+    });
+
+    // Delete confirmation handler (DELETE /api/v1/experiences/<id>/)
+    deleteConfirmBtn?.addEventListener('click', async () => {
+        if (!pendingDeleteId || isDeleting) return;
+        const pk = pendingDeleteId;
+        setDeletingState(true);
+
+        const detailUrlTemplate = config.detailUrlTemplate || '/api/v1/experiences/__pk__/';
+        const deleteUrl = experienceEndpoint(detailUrlTemplate, pk);
+
+        try {
+            const csrfToken = ajax.getCsrfToken() || ajax.getCsrfToken(form);
+            const response = await fetch(deleteUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+            });
+
+            if (response.status === 204 || response.status === 200) {
+                pendingDeleteId = null;
+                deleteDialog.close();
+                showToast('Berhasil', 'Pengalaman berhasil dihapus!', 'success');
+                await fetchExperiences();
+                return;
+            }
+
+            if (response.status === 403) {
+                const errorMsg = 'Aksi ditolak: Anda tidak memiliki izin untuk menghapus pengalaman ini.';
+                if (deleteError) {
+                    deleteError.textContent = errorMsg;
+                    deleteError.hidden = false;
+                }
+                showToast('Aksi ditolak', errorMsg, 'error');
+                return;
+            }
+
+            throw new Error(`Delete failed (HTTP ${response.status})`);
+        } catch (error) {
+            console.error('Error deleting experience:', error);
+            if (deleteError) {
+                deleteError.textContent = 'Gagal menghapus pengalaman. Silakan coba lagi.';
+                deleteError.hidden = false;
+            }
+            showToast('Gagal Menghapus', 'Terjadi kesalahan saat menghapus data.', 'error');
+        } finally {
+            setDeletingState(false);
+        }
+    });
+
+    // Modal dialog close & cancel handlers
+    dialog?.querySelectorAll('[data-close-dialog]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (!isSaving) dialog.close();
+        });
+    });
+    dialog?.addEventListener('cancel', event => {
+        if (isSaving) event.preventDefault();
+    });
+    dialog?.addEventListener('close', () => {
+        if (modalOpener?.isConnected) {
+            modalOpener.focus({ preventScroll: true });
+        }
+    });
+
+    deleteDialog?.querySelectorAll('[data-close-delete]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (!isDeleting) {
+                pendingDeleteId = null;
+                deleteDialog.close();
+            }
+        });
+    });
+    deleteDialog?.addEventListener('cancel', event => {
+        if (isDeleting) event.preventDefault();
+        else pendingDeleteId = null;
+    });
+    deleteDialog?.addEventListener('close', () => {
+        if (deleteOpener?.isConnected) {
+            deleteOpener.focus({ preventScroll: true });
+        }
+    });
+
+    // Modal focus trap for Tab key
+    [dialog, deleteDialog].forEach(modal => {
+        modal?.addEventListener('keydown', event => {
+            if (event.key !== 'Tab' || event.defaultPrevented) return;
+            const focusables = [...modal.querySelectorAll('a[href], button, input, textarea, select, [tabindex]')]
+                .filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length);
+            const first = focusables[0];
+            const last = focusables.at(-1);
+            if (!first) {
+                event.preventDefault();
+                return;
+            }
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        });
+    });
+
+    // Click event delegation for Create, Edit, and Delete triggers
+    app.querySelector('[data-open-create]')?.addEventListener('click', event => {
+        event.preventDefault();
+        openCreateModal(event.currentTarget);
+    });
+
+    app.addEventListener('click', event => {
+        const btn = event.target.closest('[data-resource-action]');
+        if (!btn || btn.disabled) return;
+        const action = btn.dataset.resourceAction;
+        const pk = btn.dataset.pk;
+        const label = btn.dataset.label;
+
+        if (action === 'edit') {
+            event.preventDefault();
+            openEditModal(pk, btn);
+        } else if (action === 'delete') {
+            event.preventDefault();
+            openDeleteModal(pk, label, btn);
+        }
+    });
+
     app.addEventListener('desktop:open', () => {
         if (!activated) {
             activated = true;
@@ -463,12 +994,6 @@
             throw new Error(messages.join(' ') || `Request failed (HTTP ${response.status}).`);
         }
         return data;
-    }
-
-    function experienceEndpoint(pattern, id) {
-        return pattern
-            .replace(experienceIdPlaceholder, id)
-            .replace('__pk__', id);
     }
 
     window.writeExperience = writeExperience;

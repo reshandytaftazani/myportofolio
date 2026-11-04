@@ -1,0 +1,146 @@
+{% load static %}
+<dialog class="resource-dialog" id="experience-dialog" aria-labelledby="experience-dialog-title">
+    <p class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-toast-announcement></p>
+    <form id="experience-modal-form" method="post" data-experience-form novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="id" id="experience-form-id" value="">
+        <div class="resource-dialog__header">
+            <span class="resource-dialog__icon" data-dialog-icon>
+                {% include 'components/resource_icon.html' with name='plus' %}
+            </span>
+            <div class="resource-dialog__heading">
+                <p class="resource-dialog__eyebrow">Experience</p>
+                <h2 id="experience-dialog-title" data-dialog-title>Tambah Pengalaman</h2>
+                <p class="resource-dialog__subtitle" data-dialog-subtitle>Lengkapi informasi untuk ditampilkan di portofolio.</p>
+            </div>
+            <button type="button" class="resource-dialog__close" data-close-dialog aria-label="Tutup formulir">
+                {% include 'components/resource_icon.html' with name='close' %}
+            </button>
+        </div>
+        <div class="resource-dialog__body">
+            <p class="resource-form-note">Field bertanda <span class="resource-required" aria-hidden="true">*</span> wajib diisi.</p>
+            <div class="resource-form-grid" data-form-fields>
+                <!-- Title -->
+                <div class="form-group resource-field">
+                    <label id="exp-field-title-label" for="exp-field-title">
+                        Posisi / Peran <span class="resource-required" aria-hidden="true">*</span>
+                    </label>
+                    <input type="text" id="exp-field-title" name="title" required
+                           placeholder="Contoh: Software Engineer Intern" autocomplete="organization-title">
+                    <p id="exp-field-title-error" class="resource-field-error" data-field-error="title" role="alert" hidden></p>
+                </div>
+
+                <!-- Company -->
+                <div class="form-group resource-field">
+                    <label id="exp-field-company-label" for="exp-field-company">
+                        Perusahaan / Organisasi <span class="resource-optional">Opsional</span>
+                    </label>
+                    <input type="text" id="exp-field-company" name="company"
+                           placeholder="Contoh: Google, Ristek Fasilkom UI" autocomplete="organization">
+                    <p id="exp-field-company-error" class="resource-field-error" data-field-error="company" role="alert" hidden></p>
+                </div>
+
+                <!-- Category -->
+                <div class="form-group resource-field resource-field--half">
+                    <label id="exp-field-category-label" for="exp-field-category">
+                        Kategori <span class="resource-required" aria-hidden="true">*</span>
+                    </label>
+                    <select id="exp-field-category" name="category" required>
+                        <option value="full-time">Full-Time</option>
+                        <option value="internship">Internship</option>
+                        <option value="part-time">Part-Time</option>
+                        <option value="organization">Organization</option>
+                        <option value="research">Research</option>
+                        <option value="volunteer">Volunteer</option>
+                        <option value="freelance">Freelance</option>
+                        <option value="competition">Competition</option>
+                    </select>
+                    <p id="exp-field-category-error" class="resource-field-error" data-field-error="category" role="alert" hidden></p>
+                </div>
+
+                <!-- Thumbnail URL -->
+                <div class="form-group resource-field resource-field--half">
+                    <label id="exp-field-thumbnail-label" for="exp-field-thumbnail">
+                        URL Logo / Thumbnail <span class="resource-optional">Opsional</span>
+                    </label>
+                    <input type="url" id="exp-field-thumbnail" name="thumbnail"
+                           placeholder="https://example.com/logo.png">
+                    <p id="exp-field-thumbnail-error" class="resource-field-error" data-field-error="thumbnail" role="alert" hidden></p>
+                </div>
+
+                <!-- Started At -->
+                <div class="form-group resource-field resource-field--half">
+                    <label id="exp-field-started_at-label" for="exp-field-started_at">
+                        Tanggal Mulai <span class="resource-optional">Opsional</span>
+                    </label>
+                    <input type="date" id="exp-field-started_at" name="started_at">
+                    <p id="exp-field-started_at-error" class="resource-field-error" data-field-error="started_at" role="alert" hidden></p>
+                </div>
+
+                <!-- Ended At -->
+                <div class="form-group resource-field resource-field--half">
+                    <label id="exp-field-ended_at-label" for="exp-field-ended_at">
+                        Tanggal Selesai <span class="resource-optional">Opsional</span>
+                    </label>
+                    <input type="date" id="exp-field-ended_at" name="ended_at">
+                    <small id="exp-field-ended_at-help" class="resource-field-help">Kosongkan jika posisi masih berlangsung (Ongoing).</small>
+                    <p id="exp-field-ended_at-error" class="resource-field-error" data-field-error="ended_at" role="alert" hidden></p>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group resource-field">
+                    <label id="exp-field-description-label" for="exp-field-description">
+                        Deskripsi <span class="resource-required" aria-hidden="true">*</span>
+                    </label>
+                    <textarea id="exp-field-description" name="description" rows="4" required
+                              placeholder="Jelaskan peran, tanggung jawab, teknologi yang digunakan, serta pencapaian..."></textarea>
+                    <p id="exp-field-description-error" class="resource-field-error" data-field-error="description" role="alert" hidden></p>
+                </div>
+            </div>
+            <p class="resource-form-feedback" data-form-error role="alert" hidden></p>
+        </div>
+        <div class="resource-dialog__actions">
+            <button type="button" class="button resource-button resource-button--quiet" data-close-dialog>Batal</button>
+            <button type="submit" class="button resource-button resource-button--primary" data-submit-button>
+                <span data-submit-icon>{% include 'components/resource_icon.html' with name='save' %}</span>
+                <span class="resource-spinner" aria-hidden="true"></span>
+                <span data-submit-label>Simpan Pengalaman</span>
+            </button>
+        </div>
+    </form>
+</dialog>
+
+{% if user.is_superuser %}
+<dialog class="resource-dialog resource-dialog--delete" id="experience-delete-dialog"
+        aria-labelledby="experience-delete-title" aria-describedby="experience-delete-description">
+    <p class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-toast-announcement></p>
+    <div class="resource-dialog__header">
+        <span class="resource-dialog__icon resource-dialog__icon--danger">
+            {% include 'components/resource_icon.html' with name='trash' %}
+        </span>
+        <div class="resource-dialog__heading">
+            <p class="resource-dialog__eyebrow">Experience</p>
+            <h2 id="experience-delete-title">Hapus Pengalaman ini?</h2>
+        </div>
+        <button type="button" class="resource-dialog__close" data-close-delete aria-label="Tutup konfirmasi hapus">
+            {% include 'components/resource_icon.html' with name='close' %}
+        </button>
+    </div>
+    <div class="resource-dialog__body">
+        <p id="experience-delete-description" class="resource-delete-description">Data pengalaman berikut akan dihapus dari portofolio. Tindakan ini tidak dapat dibatalkan.</p>
+        <div class="resource-delete-item">
+            {% include 'components/resource_icon.html' with name='trash' %}
+            <strong data-delete-label></strong>
+        </div>
+        <p class="resource-form-feedback" data-delete-error role="alert" hidden></p>
+    </div>
+    <div class="resource-dialog__actions">
+        <button type="button" class="button resource-button resource-button--quiet" data-close-delete autofocus>Batal</button>
+        <button type="button" class="button resource-button resource-button--danger" data-confirm-delete>
+            <span data-delete-icon>{% include 'components/resource_icon.html' with name='trash' %}</span>
+            <span class="resource-spinner" aria-hidden="true"></span>
+            <span data-delete-submit-label>Ya, hapus data</span>
+        </button>
+    </div>
+</dialog>
+{% endif %}
