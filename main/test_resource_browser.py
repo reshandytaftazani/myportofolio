@@ -591,7 +591,7 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
             document.querySelector('#about [data-window-action="close"]').click();
             document.querySelector('.desktop-icon[data-app-id="about"]').click();
         }''')
-        self.page.wait_for_timeout(500)
+        self.page.wait_for_function('!document.querySelector("#about").getAnimations().length')
         expect(about).to_be_visible()
         expect(about.locator('.window-titlebar h2')).to_be_focused()
         self.assertFalse(about.evaluate('element => element.inert'))
@@ -610,7 +610,7 @@ class ResourceBrowserTests(StaticLiveServerTestCase):
             document.querySelector('#experience [data-window-action="close"]').click();
             document.querySelector('.desktop-icon[data-app-id="experience"]').click();
         }''')
-        self.page.wait_for_timeout(500)
+        self.page.wait_for_function('!document.querySelector("#experience").getAnimations().length')
         expect(experience).to_be_visible()
         expect(self.page).to_have_url(self.live_server_url + '/experience/')
         self.page.keyboard.press('Escape')

@@ -33,6 +33,8 @@
     let activeCategory = config.initialCategory || 'all';
     let searchAbortController = null;
     let currentExperiences = [];
+    const starUpdates = new Map();
+    let starRevision = 0;
     let activated = false;
     let hasContent = Boolean(grid?.querySelector('.timeline-card, .exp-timeline-item'));
     const experienceIdPlaceholder = '00000000-0000-0000-0000-000000000000';
@@ -62,6 +64,31 @@
         if (ongoingEl) ongoingEl.textContent = String(ongoing);
         if (completedEl) completedEl.textContent = String(completed);
         if (starsEl) starsEl.textContent = String(stars);
+    }
+
+    function setStarState(id, values, pending) {
+        // Track by record ID: filtering can replace both the card and its data object.
+        const state = {
+            is_starred: values.is_starred,
+            star_count: values.star_count,
+            starred_by_names: values.starred_by_names,
+            pending,
+            revision: ++starRevision,
+        };
+        starUpdates.set(id, state);
+        const item = currentExperiences.find(item => item.id === id);
+        if (item) Object.assign(item, state);
+        grid?.querySelectorAll('[data-action="star"]').forEach(button => {
+            if (button.dataset.id !== id) return;
+            button.dataset.starBusy = String(pending);
+            button.setAttribute('aria-pressed', String(state.is_starred));
+            button.querySelector('.star-label').textContent = state.is_starred ? 'Unstar' : 'Star';
+            button.querySelector('.star-count').textContent = String(state.star_count);
+            button.title = state.starred_by_names
+                ? `Dibintangi oleh ${state.starred_by_names}`
+                : 'Jadilah yang pertama memberi star';
+        });
+        updateMetrics(currentExperiences);
     }
 
     let modalOpener = null;
@@ -221,7 +248,7 @@
         const starHtml = config.isAuthenticated === 'true'
             ? `<form method="post" action="${escapeHtml(starUrl)}" class="star-form" data-experience-star-form>
                 ${csrfInput()}
-                <button type="submit" class="button resource-action resource-star" aria-pressed="${isStarred}" title="${escapeHtml(starTitle)}" data-action="star" data-id="${escapeHtml(exp.id)}">
+                <button type="submit" class="button resource-action resource-star" aria-pressed="${isStarred}" title="${escapeHtml(starTitle)}" data-action="star" data-id="${escapeHtml(exp.id)}" data-star-busy="${Boolean(starUpdates.get(exp.id)?.pending)}">
                     ${starIcon}<span class="star-label">${isStarred ? 'Unstar' : 'Star'}</span>${starCount}
                 </button>
               </form>`
@@ -320,6 +347,7 @@
         }
         searchAbortController = new AbortController();
         const request = searchAbortController;
+        const requestStarRevision = starRevision;
 
         displaySection({ loading: true });
 
@@ -379,8 +407,14 @@
                 return;
             }
 
-            currentExperiences = data.map(adaptExperience);
-            data.forEach(item => {
+            currentExperiences = data.map(raw => {
+                const item = adaptExperience(raw);
+                const state = starUpdates.get(item.id);
+                // A GET started before a star settled can contain an older DB snapshot.
+                return state && (state.pending || state.revision > requestStarRevision)
+                    ? { ...item, ...state } : item;
+            });
+            currentExperiences.forEach(item => {
                 const card = buildExperienceCard(item);
                 grid.appendChild(card);
             });
@@ -491,42 +525,18 @@
         }
 
         const button = form.querySelector('button[type="submit"], [data-action="star"]');
-        const label = button?.querySelector('.star-label');
-        const count = button?.querySelector('.star-count');
-        if (!button || button.dataset.starBusy === 'true') return;
-
-        // Find corresponding experience item in memory
+        if (!button) return;
         const expId = button.dataset.id || form.closest('.exp-timeline-item, .timeline-card')?.dataset.id;
-        const expItem = currentExperiences.find(item => String(item.id) === String(expId));
-
-        // 1. Snapshot previous UI & state for rollback
-        const prevIsStarred = button.getAttribute('aria-pressed') === 'true';
-        const prevCountText = count ? count.textContent : '0';
-        const prevCount = parseInt(prevCountText, 10) || 0;
-        const prevLabel = label ? label.textContent : (prevIsStarred ? 'Unstar' : 'Star');
-        const prevTitle = button.title || '';
-        const prevItemStarred = expItem ? expItem.is_starred : prevIsStarred;
-        const prevItemCount = expItem ? expItem.star_count : prevCount;
-
-        // 2. Compute optimistic target state (0ms instant response)
-        const nextIsStarred = !prevIsStarred;
-        const nextCount = Math.max(0, prevCount + (nextIsStarred ? 1 : -1));
-
-        // Lock button interaction during in-flight request
-        button.dataset.starBusy = 'true';
-
-        // 3. Immediately apply Optimistic UI update
-        button.setAttribute('aria-pressed', String(nextIsStarred));
-        if (label) label.textContent = nextIsStarred ? 'Unstar' : 'Star';
-        if (count) count.textContent = String(nextCount);
-        button.title = nextIsStarred ? 'Anda membintangi pengalaman ini' : 'Beri star untuk pengalaman ini';
-
-        // Update in-memory state and live summary metrics bar
-        if (expItem) {
-            expItem.is_starred = nextIsStarred;
-            expItem.star_count = nextCount;
-        }
-        updateMetrics(currentExperiences);
+        if (starUpdates.get(expId)?.pending) return;
+        const expItem = currentExperiences.find(item => item.id === expId);
+        const previous = {
+            is_starred: expItem?.is_starred ?? (button.getAttribute('aria-pressed') === 'true'),
+            star_count: expItem?.star_count ?? (Number(button.querySelector('.star-count')?.textContent) || 0),
+            starred_by_names: expItem?.starred_by_names || '',
+        };
+        const nextIsStarred = !previous.is_starred;
+        const nextCount = Math.max(0, previous.star_count + (nextIsStarred ? 1 : -1));
+        setStarState(expId, { ...previous, is_starred: nextIsStarred, star_count: nextCount }, true);
 
         try {
             const csrfToken = ajax.getCsrfToken(form) || ajax.getCsrfToken();
@@ -550,25 +560,12 @@
                 throw new Error(`Star request failed (${response.status})`);
             }
 
-            // 4. Server confirmed: synchronize with authoritative server values
             const serverIsStarred = Boolean(data.is_starred);
-            const serverCount = data.star_count !== undefined ? data.star_count : (data.count || nextCount);
-
-            button.setAttribute('aria-pressed', String(serverIsStarred));
-            if (label) label.textContent = serverIsStarred ? 'Unstar' : 'Star';
-            if (count) count.textContent = String(serverCount);
-            button.title = data.starred_by_names
-                ? `Dibintangi oleh ${data.starred_by_names}`
-                : 'Jadilah yang pertama memberi star';
-
-            if (expItem) {
-                expItem.is_starred = serverIsStarred;
-                expItem.star_count = serverCount;
-                if (data.starred_by_names !== undefined) {
-                    expItem.starred_by_names = data.starred_by_names;
-                }
-            }
-            updateMetrics(currentExperiences);
+            setStarState(expId, {
+                is_starred: serverIsStarred,
+                star_count: data.star_count ?? data.count ?? nextCount,
+                starred_by_names: data.starred_by_names ?? previous.starred_by_names,
+            }, false);
 
             showToast(
                 'Berhasil',
@@ -578,21 +575,12 @@
         } catch (error) {
             console.error('Error toggling star on experience (rolling back):', error);
 
-            // 5. AUTO-ROLLBACK: Revert immediately to original snapshot values
-            button.setAttribute('aria-pressed', String(prevIsStarred));
-            if (label) label.textContent = prevLabel;
-            if (count) count.textContent = String(prevCount);
-            button.title = prevTitle;
-
-            if (expItem) {
-                expItem.is_starred = prevItemStarred;
-                expItem.star_count = prevItemCount;
-            }
-            updateMetrics(currentExperiences);
+            setStarState(expId, previous, false);
 
             showToast('Gagal memperbarui star', 'Permintaan gagal. Perubahan dibatalkan.', 'error');
         } finally {
-            button.dataset.starBusy = 'false';
+            const state = starUpdates.get(expId);
+            if (state?.pending) setStarState(expId, state, false);
         }
     });
 
