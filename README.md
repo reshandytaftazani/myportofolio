@@ -29,8 +29,12 @@ Portofolio pribadi berbasis Django untuk menampilkan pengalaman, proyek, keteram
 
 ## Demo
 
-- URL Deployment: [URL DEPLOY: ISI]
-- Tangkapan Layar: [SCREENSHOT: ISI]
+- URL Deployment: [URL Deployment](https://reshandy-taftazani-myportofolio.pws.cs.ui.ac.id)
+### Tangkapan layar
+
+![Halaman utama portofolio](screenshots/home.png)
+![Halaman Experience dengan pencarian dan star](screenshots/experience.png)
+![Browsable API untuk Experience](screenshots/api.png)
 
 ## Daftar isi
 
@@ -228,7 +232,7 @@ git push origin main
 git push origin main:master
 ```
 
-URL Deployment: [URL DEPLOY: ISI]
+URL Deployment:[URL Deployment](https://reshandy-taftazani-myportofolio.pws.cs.ui.ac.id)
 
 ## Progres mingguan
 
@@ -236,16 +240,16 @@ Ringkasan berdasarkan tanggal commit Git, bukan bukti waktu pengumpulan. Commit 
 
 | Pekan | Jumlah commit | Progres | Contoh commit | Kendala/pelajaran |
 | :--- | :---: | :--- | :--- | :--- |
-| 31 Agustus - 6 September 2026 | 4 | README awal. | `55ec167`, `88b1cac`, `1148d3c`, `dc4bf70` | [ISI] |
-| 7 - 13 September 2026 | 7 | Tugas 1 dan checkpoint Tutorial 2. | `5feba1c`, `0ffd21f` | [ISI] |
-| 14 - 20 September 2026 | 76 | Data dinamis, form Tutorial 3, Experience, tags, dan CRUD TechStack. | `d6fb447`, `3fb5f2d`, `09ea6b9`, `7542d1f` | [ISI] |
-| 21 - 27 September 2026 | 12 | Refleksi Tugas 3, Tutorial 4, dan pengembangan UI. | `108799a`, `6a25ecb`, `3a46c91` | [ISI] |
-| 28 September - 4 Oktober 2026 | 24 | Registrasi/login, JavaScript Tutorial 05, dan AJAX resource. | `40407d4`, `57612c5`, `280e9f2` | [ISI] |
-| 5 - 11 Oktober 2026 | 3 | Desktop multiwindow dan refleksi Tugas 5. | `3c47967`, `9a20e1d` | [ISI] |
-| 12 - 18 Oktober 2026 | 0 | Tidak ada commit | - | [ISI] |
-| 19 - 25 Oktober 2026 | 0 | Tidak ada commit | - | [ISI] |
-| 26 Oktober - 1 November 2026 | 0 | Tidak ada commit | - | [ISI] |
-| 2 - 8 November 2026 | 45 | DRF Project/Experience, test peran/CSRF, API Skill/Education/TechStack, dan perbaikan state star. | `408068b`, `77d7fa0`, `d57bf03`, `4b67418`, `8636b0c`, `984059e` | [ISI] |
+| 31 Agustus - 6 September 2026 | 4 | README awal. | `55ec167`, `88b1cac`, `1148d3c`, `dc4bf70` | - |
+| 7 - 13 September 2026 | 7 | Tugas 1 dan checkpoint Tutorial 2. | `5feba1c`, `0ffd21f` | - |
+| 14 - 20 September 2026 | 76 | Data dinamis, form Tutorial 3, Experience, tags, dan CRUD TechStack. | `d6fb447`, `3fb5f2d`, `09ea6b9`, `7542d1f` | - |
+| 21 - 27 September 2026 | 12 | Refleksi Tugas 3, Tutorial 4, dan pengembangan UI. | `108799a`, `6a25ecb`, `3a46c91` | - |
+| 28 September - 4 Oktober 2026 | 24 | Registrasi/login, JavaScript Tutorial 05, dan AJAX resource. | `40407d4`, `57612c5`, `280e9f2` | - |
+| 5 - 11 Oktober 2026 | 3 | Desktop multiwindow dan refleksi Tugas 5. | `3c47967`, `9a20e1d` | - |
+| 12 - 18 Oktober 2026 | 0 | Tidak ada commit | - | - |
+| 19 - 25 Oktober 2026 | 0 | Tidak ada commit | - | - |
+| 26 Oktober - 1 November 2026 | 0 | Tidak ada commit | - | - |
+| 2 - 8 November 2026 | 45 | DRF Project/Experience, test peran/CSRF, API Skill/Education/TechStack, dan perbaikan state star. | `408068b`, `77d7fa0`, `d57bf03`, `4b67418`, `8636b0c`, `984059e` | - |
 
 Tugas 6 dikembangkan pada branch fitur dan quality, lalu digabungkan bertahap ke `main`.
 
