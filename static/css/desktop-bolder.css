@@ -72,7 +72,6 @@ html[data-theme='dark'] .desktop-page {
 .desktop-page .desktop-icon svg { filter: drop-shadow(0 5px 3px rgb(29 66 110 / .14)); }
 .desktop-page .desktop-icon:hover,
 .desktop-page .desktop-icon:focus-visible { background: color-mix(in srgb, var(--accent) 9%, transparent); }
-.desktop-page .desktop-caption { left: 36px; right: auto; font-size: 12px; }
 .desktop-page .desktop-menubar .desktop-brand { color: var(--desk-name); }
 .desktop-page .desktop-theme { border-radius: 8px; }
 .desktop-page .desktop-theme:hover { background: var(--paper); }
@@ -110,7 +109,6 @@ html[data-theme='dark'] .desktop-page {
   .desktop-introduction { left: 220px; right: 235px; }
   .desktop-introduction h1 { font-size: clamp(2.6rem, 4.7vw, 3.5rem); }
   .desktop-introduction-actions { gap: 16px; }
-  .desktop-page .desktop-caption { display: none; }
 }
 @media (min-width: 901px) and (max-height: 760px) {
   .desktop-page .desktop-workspace { padding-top: 66px; }
@@ -118,7 +116,6 @@ html[data-theme='dark'] .desktop-page {
   .desktop-page .desktop-profile img { height: 144px; }
   .desktop-page .desktop-profile .profile-focus { display: none; }
   .desktop-introduction { top: 38dvh; }
-  .desktop-page .desktop-caption { display: none; }
 }
 @media (max-width: 900px) {
   .desktop-page .desktop-workspace { padding: 88px 20px 108px; }
@@ -139,7 +136,6 @@ html[data-theme='dark'] .desktop-page {
   .desktop-page .desktop-profile .profile-social a { min-height: 44px; }
   .desktop-page .desktop-apps { max-width: 620px; }
   .desktop-page .desktop-apps ul { grid-template-rows: repeat(2, 96px); }
-  .desktop-page .desktop-caption { position: static; margin-top: -10px; }
   .desktop-page .about-identity img { width: 72px; height: 80px; }
   .desktop-page .about-identity h1 { font-size: 25px; }
   .desktop-page .about-intro { font-size: 18px; }
