@@ -29,8 +29,16 @@ from main.serializers import (
 )
 
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def api_logout(request: Request) -> Response:
+    """Delete the current user's DRF auth token to log out."""
+    if request.auth is not None:
+        request.auth.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 @api_view(["GET", "HEAD", "POST"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsPortfolioOwnerOrReadOnly])
 def project_list(request: Request) -> Response:
     """Retrieve list of projects or create a new project.
@@ -72,7 +80,6 @@ def project_list(request: Request) -> Response:
 
 
 @api_view(["GET", "HEAD", "PUT", "PATCH", "DELETE"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsPortfolioOwnerOrReadOnly])
 def project_detail(request: Request, project_id: uuid.UUID) -> Response:
     """Retrieve, update, or delete a specific project.
@@ -116,7 +123,6 @@ def project_detail(request: Request, project_id: uuid.UUID) -> Response:
 
 
 @api_view(["POST"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsAuthenticated])
 def project_star(request: Request, project_id: uuid.UUID) -> Response:
     """Toggle star status on a specific project for the authenticated user.
