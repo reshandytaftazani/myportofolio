@@ -187,6 +187,85 @@ class TokenAuthAPITest(APITestCase):
         )
         self.assertEqual(reuse_resp.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_token_auth_post_and_delete_all_sections(self):
+        login_resp = self.client.post(
+            self.token_url, {"username": "owner", "password": "test-password"}, format="json",
+        )
+        self.assertEqual(login_resp.status_code, status.HTTP_200_OK)
+        auth_header = f"Token {login_resp.data['token']}"
+
+        sections = [
+            (
+                "experience",
+                reverse("api:experience-list"),
+                "api:experience-detail",
+                {
+                    "title": "Token Experience",
+                    "company": "Token Corp",
+                    "description": "Created via DRF token auth.",
+                    "category": "internship",
+                    "started_at": "2025-01-01",
+                    "ended_at": "2025-06-30",
+                },
+            ),
+            (
+                "skill",
+                reverse("api:skill-list"),
+                "api:skill-detail",
+                {
+                    "title": "Token Skill",
+                    "description": "Created via DRF token auth.",
+                    "level": "Advanced",
+                    "code_snippet": "print('token')",
+                },
+            ),
+            (
+                "education",
+                reverse("api:education-list"),
+                "api:education-detail",
+                {
+                    "school_name": "Token University",
+                    "period": "2023 - 2027",
+                    "detail": "Created via DRF token auth.",
+                    "start_year": 2023,
+                },
+            ),
+            (
+                "techstack",
+                reverse("api:techstack-list"),
+                "api:techstack-detail",
+                {
+                    "name": "Flutter",
+                    "icon_url": "https://example.com/flutter.svg",
+                    "filename": "main.dart",
+                    "code_snippet": "void main() {}",
+                    "order": 1,
+                },
+            ),
+        ]
+
+        for label, list_url, detail_url_name, payload in sections:
+            with self.subTest(section=label):
+                create_resp = self.client.post(
+                    list_url, payload, format="json", HTTP_AUTHORIZATION=auth_header,
+                )
+                self.assertEqual(create_resp.status_code, status.HTTP_201_CREATED)
+                created_id = create_resp.data["id"]
+
+                detail_url = reverse(detail_url_name, args=[created_id])
+                delete_resp = self.client.delete(detail_url, HTTP_AUTHORIZATION=auth_header)
+                self.assertEqual(delete_resp.status_code, status.HTTP_204_NO_CONTENT)
+
+        logout_resp = self.client.post(self.logout_url, HTTP_AUTHORIZATION=auth_header)
+        self.assertEqual(logout_resp.status_code, status.HTTP_204_NO_CONTENT)
+
+        for label, list_url, _, payload in sections:
+            with self.subTest(revoked_section=label):
+                revoked_resp = self.client.post(
+                    list_url, payload, format="json", HTTP_AUTHORIZATION=auth_header,
+                )
+                self.assertEqual(revoked_resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
 
 class ExperienceAPITest(APITestCase):
     """Comprehensive test suite for Experience REST API implementing 4-role RBAC,
@@ -298,26 +377,29 @@ class ExperienceAPITest(APITestCase):
         self.assertEqual(self.client.delete(non_existent_url).status_code, status.HTTP_404_NOT_FOUND)
 
     def test_guest_and_visitor_cannot_write_and_db_remains_intact(self):
-        """Ensure anonymous visitors and regular users cannot perform mutating operations (403),
+        """Ensure anonymous visitors (401) and regular users (403) cannot perform mutating operations,
         and verify database integrity is completely preserved.
         """
-        for user in (None, self.visitor):
+        for user, expected_status in (
+            (None, status.HTTP_401_UNAUTHORIZED),
+            (self.visitor, status.HTTP_403_FORBIDDEN),
+        ):
             self.client.force_authenticate(user=user)
             self.assertEqual(
                 self.client.post(self.list_url, self.payload, format="json").status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
             self.assertEqual(
                 self.client.put(self.detail_url, self.payload, format="json").status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
             self.assertEqual(
                 self.client.patch(self.detail_url, {"title": "Unauthorized"}, format="json").status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
             self.assertEqual(
                 self.client.delete(self.detail_url).status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
 
         # Verify DB integrity: record count and values remain strictly untouched
@@ -327,10 +409,10 @@ class ExperienceAPITest(APITestCase):
         self.assertEqual(self.experience.company, "TechCorp")
 
     def test_star_requires_login(self):
-        """Ensure unauthenticated visitors cannot star experiences (403 Forbidden)."""
+        """Ensure unauthenticated visitors cannot star experiences (401 Unauthorized)."""
         self.client.force_authenticate(user=None)
         response = self.client.post(self.star_url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(self.experience.starred_by.count(), 0)
 
     def test_regular_user_can_star_and_toggle(self):
@@ -692,26 +774,29 @@ class SkillAPITest(APITestCase):
         self.assertEqual(self.client.post(non_existent_star_url).status_code, status.HTTP_404_NOT_FOUND)
 
     def test_guest_and_visitor_cannot_write_and_db_remains_intact(self):
-        """Ensure anonymous visitors and regular users cannot perform mutating operations (403),
+        """Ensure anonymous visitors (401) and regular users (403) cannot perform mutating operations,
         and verify database integrity is completely preserved.
         """
-        for user in (None, self.visitor):
+        for user, expected_status in (
+            (None, status.HTTP_401_UNAUTHORIZED),
+            (self.visitor, status.HTTP_403_FORBIDDEN),
+        ):
             self.client.force_authenticate(user=user)
             self.assertEqual(
                 self.client.post(self.list_url, self.payload, format="json").status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
             self.assertEqual(
                 self.client.put(self.detail_url, self.payload, format="json").status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
             self.assertEqual(
                 self.client.patch(self.detail_url, {"title": "Unauthorized"}, format="json").status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
             self.assertEqual(
                 self.client.delete(self.detail_url).status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
 
         # Verify DB integrity: record count and values remain strictly untouched
@@ -832,7 +917,7 @@ class SkillAPITest(APITestCase):
         # Unauthenticated star attempt rejected
         self.client.force_authenticate(user=None)
         res_anon = self.client.post(self.star_url)
-        self.assertEqual(res_anon.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res_anon.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(self.skill.starred_by.count(), 0)
 
         # Authenticated visitor stars skill
@@ -1094,26 +1179,29 @@ class EducationAPITest(APITestCase):
         self.assertEqual(self.client.post(non_existent_star_url).status_code, status.HTTP_404_NOT_FOUND)
 
     def test_guest_and_visitor_cannot_write_and_db_remains_intact(self):
-        """Ensure anonymous visitors and regular users cannot perform mutating operations (403),
+        """Ensure anonymous visitors (401) and regular users (403) cannot perform mutating operations,
         and verify database integrity is completely preserved.
         """
-        for user in (None, self.visitor):
+        for user, expected_status in (
+            (None, status.HTTP_401_UNAUTHORIZED),
+            (self.visitor, status.HTTP_403_FORBIDDEN),
+        ):
             self.client.force_authenticate(user=user)
             self.assertEqual(
                 self.client.post(self.list_url, self.payload, format="json").status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
             self.assertEqual(
                 self.client.put(self.detail_url, self.payload, format="json").status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
             self.assertEqual(
                 self.client.patch(self.detail_url, {"period": "Unauthorized"}, format="json").status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
             self.assertEqual(
                 self.client.delete(self.detail_url).status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
 
         # Verify DB integrity: record count and values remain strictly untouched
@@ -1234,7 +1322,7 @@ class EducationAPITest(APITestCase):
         # Unauthenticated star attempt rejected
         self.client.force_authenticate(user=None)
         res_anon = self.client.post(self.star_url)
-        self.assertEqual(res_anon.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res_anon.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(self.edu_ui.starred_by.count(), 0)
 
         # Authenticated visitor stars education
@@ -1530,33 +1618,36 @@ class TechStackAPITest(APITestCase):
         self.assertEqual(self.client.post(non_existent_star_url).status_code, status.HTTP_404_NOT_FOUND)
 
     def test_guest_and_visitor_cannot_write_and_db_remains_intact(self):
-        """Ensure anonymous visitors and regular users cannot perform mutating operations (403),
+        """Ensure anonymous visitors (401) and regular users (403) cannot perform mutating operations,
         and verify database integrity is completely preserved after EVERY rejected mutation.
         """
-        for user in (None, self.visitor):
+        for user, expected_status in (
+            (None, status.HTTP_401_UNAUTHORIZED),
+            (self.visitor, status.HTTP_403_FORBIDDEN),
+        ):
             self.client.force_authenticate(user=user)
 
             # POST rejected
             res_post = self.client.post(self.list_url, self.payload, format="json")
-            self.assertEqual(res_post.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertEqual(res_post.status_code, expected_status)
             self.assertEqual(TechStack.objects.count(), 3)
             self.assertFalse(TechStack.objects.filter(name="TypeScript").exists())
 
             # PUT rejected
             res_put = self.client.put(self.detail_url, self.payload, format="json")
-            self.assertEqual(res_put.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertEqual(res_put.status_code, expected_status)
             self.ts_python.refresh_from_db()
             self.assertEqual(self.ts_python.name, "Python")
 
             # PATCH rejected
             res_patch = self.client.patch(self.detail_url, {"name": "Unauthorized"}, format="json")
-            self.assertEqual(res_patch.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertEqual(res_patch.status_code, expected_status)
             self.ts_python.refresh_from_db()
             self.assertEqual(self.ts_python.name, "Python")
 
             # DELETE rejected
             res_del = self.client.delete(self.detail_url)
-            self.assertEqual(res_del.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertEqual(res_del.status_code, expected_status)
             self.assertEqual(TechStack.objects.count(), 3)
             self.assertTrue(TechStack.objects.filter(pk=self.ts_python.id).exists())
 
@@ -1743,7 +1834,7 @@ class TechStackAPITest(APITestCase):
         # Unauthenticated star attempt rejected
         self.client.force_authenticate(user=None)
         res_anon = self.client.post(self.star_url)
-        self.assertEqual(res_anon.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res_anon.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(self.ts_python.starred_by.count(), 0)
 
         # Test double toggle for each authenticated role: (visitor, editor, owner)

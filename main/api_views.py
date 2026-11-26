@@ -5,10 +5,8 @@ from typing import Any
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import (
     api_view,
-    authentication_classes,
     permission_classes,
 )
 from rest_framework.permissions import IsAuthenticated
@@ -152,7 +150,6 @@ def project_star(request: Request, project_id: uuid.UUID) -> Response:
 
 
 @api_view(["GET", "HEAD", "POST"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
 def experience_list(request: Request) -> Response:
     """Retrieve list of experiences or create a new experience.
@@ -203,7 +200,6 @@ def experience_list(request: Request) -> Response:
 
 
 @api_view(["GET", "HEAD", "PUT", "PATCH", "DELETE"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
 def experience_detail(request: Request, experience_id: uuid.UUID) -> Response:
     """Retrieve, update, or delete a specific experience.
@@ -252,7 +248,6 @@ def experience_detail(request: Request, experience_id: uuid.UUID) -> Response:
 
 
 @api_view(["POST"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsAuthenticated])
 def experience_star(request: Request, experience_id: uuid.UUID) -> Response:
     """Toggle star status on a specific experience for the authenticated user.
@@ -285,7 +280,6 @@ def experience_star(request: Request, experience_id: uuid.UUID) -> Response:
 
 
 @api_view(["GET", "HEAD", "POST"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
 def skill_list(request: Request) -> Response:
     """Retrieve list of skills or create a new skill.
@@ -325,7 +319,6 @@ def skill_list(request: Request) -> Response:
 
 
 @api_view(["GET", "HEAD", "PUT", "PATCH", "DELETE"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
 def skill_detail(request: Request, skill_id: uuid.UUID) -> Response:
     """Retrieve, update, or delete a specific skill.
@@ -374,7 +367,6 @@ def skill_detail(request: Request, skill_id: uuid.UUID) -> Response:
 
 
 @api_view(["POST"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsAuthenticated])
 def skill_star(request: Request, skill_id: uuid.UUID) -> Response:
     """Toggle star status on a specific skill for the authenticated user.
@@ -407,7 +399,6 @@ def skill_star(request: Request, skill_id: uuid.UUID) -> Response:
 
 
 @api_view(["GET", "HEAD", "POST"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
 def education_list(request: Request) -> Response:
     """Retrieve list of educations or create a new education record.
@@ -449,7 +440,6 @@ def education_list(request: Request) -> Response:
 
 
 @api_view(["GET", "HEAD", "PUT", "PATCH", "DELETE"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
 def education_detail(request: Request, education_id: int) -> Response:
     """Retrieve, update, or delete a specific education record.
@@ -498,7 +488,6 @@ def education_detail(request: Request, education_id: int) -> Response:
 
 
 @api_view(["POST"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsAuthenticated])
 def education_star(request: Request, education_id: int) -> Response:
     """Toggle star status on a specific education record for the authenticated user.
@@ -531,7 +520,6 @@ def education_star(request: Request, education_id: int) -> Response:
 
 
 @api_view(["GET", "HEAD", "POST"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
 def techstack_list(request: Request) -> Response:
     """Retrieve list of tech stacks or create a new tech stack record.
@@ -573,7 +561,6 @@ def techstack_list(request: Request) -> Response:
 
 
 @api_view(["GET", "HEAD", "PUT", "PATCH", "DELETE"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
 def techstack_detail(request: Request, techstack_id: int) -> Response:
     """Retrieve, update, or delete a specific tech stack record.
@@ -622,7 +609,6 @@ def techstack_detail(request: Request, techstack_id: int) -> Response:
 
 
 @api_view(["POST"])
-@authentication_classes([SessionAuthentication])
 @permission_classes([IsAuthenticated])
 def techstack_star(request: Request, techstack_id: int) -> Response:
     """Toggle star status on a specific tech stack record for the authenticated user.
